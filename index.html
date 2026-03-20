@@ -1,28 +1,908 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Para Geraldine - Magia AR</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-      }
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>✨ Para Geraldine ✨</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  overflow: hidden;
+  background: #000;
+  width: 100vw;
+  height: 100dvh;
+  font-family: 'Cormorant Garamond', serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#videoFeed {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transform: scaleX(-1);
+}
+
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Vignette romántico */
+#vignette {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 40%,
+    rgba(180, 30, 60, 0.15) 70%,
+    rgba(80, 0, 20, 0.5) 100%
+  );
+}
+
+/* Efecto de luz cálida pulsante */
+#warmGlow {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgba(255, 180, 120, 0.08) 0%,
+    transparent 70%
+  );
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Canvas para partículas */
+#particleCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Nombre principal */
+#nameContainer {
+  position: fixed;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeInName 3s ease forwards 1s;
+}
+
+@keyframes fadeInName {
+  0% { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.8); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+#nameContainer h1 {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(3rem, 10vw, 6rem);
+  color: #fff;
+  text-shadow:
+    0 0 20px rgba(255, 100, 150, 0.8),
+    0 0 40px rgba(255, 50, 100, 0.6),
+    0 0 80px rgba(255, 50, 100, 0.4),
+    0 0 120px rgba(200, 0, 60, 0.3);
+  letter-spacing: 4px;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 20px rgba(255, 100, 150, 0.8),
+      0 0 40px rgba(255, 50, 100, 0.6),
+      0 0 80px rgba(255, 50, 100, 0.4),
+      0 0 120px rgba(200, 0, 60, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 30px rgba(255, 150, 180, 1),
+      0 0 60px rgba(255, 80, 130, 0.8),
+      0 0 100px rgba(255, 50, 100, 0.6),
+      0 0 160px rgba(200, 0, 60, 0.5);
+  }
+}
+
+#nameContainer .subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(0.8rem, 3vw, 1.2rem);
+  color: rgba(255, 200, 220, 0.9);
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  margin-top: 5px;
+  font-weight: 300;
+  font-style: italic;
+}
+
+/* Mensajes flotantes románticos */
+.floatingMsg {
+  position: fixed;
+  z-index: 8;
+  pointer-events: none;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(255, 230, 240, 0.9);
+  text-shadow: 0 0 15px rgba(255, 100, 150, 0.5), 0 2px 10px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  animation: floatMsg 12s ease-in-out infinite;
+}
+
+@keyframes floatMsg {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translateY(-30px) rotate(1deg); opacity: 0.9; }
+  90% { opacity: 1; }
+}
+
+/* Corazón 3D central */
+#heart3D {
+  position: fixed;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeInHeart 2s ease forwards 2.5s;
+}
+
+@keyframes fadeInHeart {
+  to { opacity: 1; }
+}
+
+#heart3D svg {
+  width: clamp(80px, 20vw, 140px);
+  height: auto;
+  filter: drop-shadow(0 0 20px rgba(255, 50, 100, 0.6))
+          drop-shadow(0 0 40px rgba(255, 30, 80, 0.4));
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
+}
+
+/* Anillo dorado giratorio */
+#goldenRing {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeIn 3s ease forwards 3s;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+#goldenRing .ring {
+  width: clamp(200px, 55vw, 380px);
+  height: clamp(200px, 55vw, 380px);
+  border: 2px solid rgba(255, 200, 120, 0.3);
+  border-radius: 50%;
+  animation: rotateRing 20s linear infinite;
+  position: relative;
+}
+
+#goldenRing .ring::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border: 1px solid rgba(255, 180, 100, 0.15);
+  border-radius: 50%;
+  animation: rotateRing 15s linear infinite reverse;
+}
+
+#goldenRing .ring::after {
+  content: '♡';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
+  color: rgba(255, 180, 200, 0.8);
+  text-shadow: 0 0 10px rgba(255, 100, 150, 0.6);
+}
+
+@keyframes rotateRing {
+  to { transform: rotate(360deg); }
+}
+
+/* Segundo anillo */
+#goldenRing .ring2 {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(160px, 45vw, 300px);
+  height: clamp(160px, 45vw, 300px);
+  border: 1px solid rgba(255, 150, 200, 0.2);
+  border-radius: 50%;
+  animation: rotateRing 25s linear infinite reverse;
+}
+
+.ring2::after {
+  content: '✦';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  color: rgba(255, 220, 180, 0.7);
+}
+
+/* Estrellas centelleantes */
+.sparkle {
+  position: fixed;
+  z-index: 6;
+  pointer-events: none;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px 2px rgba(255, 200, 220, 0.8);
+}
+
+/* Mensaje inferior */
+#bottomMsg {
+  position: fixed;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeInBottom 2s ease forwards 4s;
+}
+
+@keyframes fadeInBottom {
+  to { opacity: 1; }
+}
+
+#bottomMsg p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(0.7rem, 2.5vw, 1rem);
+  color: rgba(255, 220, 230, 0.8);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+/* Fireflies / luciérnagas */
+.firefly {
+  position: fixed;
+  z-index: 4;
+  pointer-events: none;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 220, 150, 0.9);
+  box-shadow: 0 0 8px 4px rgba(255, 200, 100, 0.4),
+              0 0 20px 8px rgba(255, 180, 80, 0.2);
+}
+
+/* Start screen */
+#startScreen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 100;
+  background: linear-gradient(135deg, #1a0011 0%, #2d0015 30%, #0d0008 70%, #1a0011 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 1.5s ease, visibility 1.5s ease;
+}
+
+#startScreen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#startScreen h2 {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  color: #fff;
+  text-shadow: 0 0 30px rgba(255, 80, 130, 0.6);
+  margin-bottom: 10px;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+#startScreen .tap {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  color: rgba(255, 180, 200, 0.7);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  animation: pulseTap 2s ease-in-out infinite;
+}
+
+@keyframes pulseTap {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+#startScreen .deco {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  margin: 15px 0;
+  color: rgba(255, 150, 180, 0.5);
+  letter-spacing: 15px;
+}
+
+/* Pétalos de rosa */
+.petal {
+  position: fixed;
+  z-index: 7;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Transición de mensajes */
+#messageCarousel {
+  position: fixed;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  width: 90%;
+  max-width: 500px;
+  opacity: 0;
+  animation: fadeIn 2s ease forwards 5s;
+}
+
+#messageCarousel .msg {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(1rem, 3.5vw, 1.5rem);
+  color: rgba(255, 240, 245, 0.95);
+  text-shadow: 0 0 20px rgba(255, 80, 130, 0.5), 0 2px 15px rgba(0,0,0,0.7);
+  opacity: 0;
+  transition: opacity 2s ease;
+  line-height: 1.6;
+}
+
+#messageCarousel .msg.active {
+  opacity: 1;
+}
+
+/* Touch sparkle effect */
+.touchSparkle {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 200, 220, 0.9);
+  box-shadow: 0 0 10px 5px rgba(255, 150, 180, 0.6);
+}
+
+/* Aurora borealis effect */
+#aurora {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.15;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 80, 150, 0.3) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(255, 120, 80, 0.2) 100%
+  );
+  animation: auroraShift 8s ease-in-out infinite;
+}
+
+@keyframes auroraShift {
+  0%, 100% {
+    background: linear-gradient(180deg, rgba(255, 80, 150, 0.3) 0%, transparent 30%, transparent 70%, rgba(255, 120, 80, 0.2) 100%);
+  }
+  33% {
+    background: linear-gradient(200deg, rgba(200, 50, 150, 0.3) 0%, transparent 35%, transparent 65%, rgba(255, 150, 100, 0.2) 100%);
+  }
+  66% {
+    background: linear-gradient(160deg, rgba(255, 100, 180, 0.3) 0%, transparent 25%, transparent 75%, rgba(220, 100, 60, 0.2) 100%);
+  }
+}
+</style>
 </head>
 <body>
-    <div id="ui-container">
-        <h1 class="title">Para Geraldine ❤️</h1>
-        <p id="instruction-text">Mueve tu teléfono apuntando al suelo para encontrar un espacio libre.</p>
-        <button id="start-btn" style="display:none;">Toca para abrir el Portal</button>
-    </div>
 
-    <!-- El botón de AR será inyectado por Three.js -->
+<!-- Start screen -->
+<div id="startScreen">
+  <h2>Geraldine</h2>
+  <div class="deco">♡ ✦ ♡</div>
+  <div class="tap">toca para comenzar</div>
+</div>
+
+<!-- Camera feed -->
+<video id="videoFeed" autoplay playsinline muted></video>
+
+<!-- Visual layers -->
+<div id="vignette"></div>
+<div id="warmGlow"></div>
+<div id="aurora"></div>
+<canvas id="particleCanvas"></canvas>
+
+<!-- Golden rings -->
+<div id="goldenRing">
+  <div class="ring">
+    <div class="ring2"></div>
+  </div>
+</div>
+
+<!-- Name -->
+<div id="nameContainer">
+  <h1>Geraldine</h1>
+  <div class="subtitle">eres mi universo</div>
+</div>
+
+<!-- Heart -->
+<div id="heart3D">
+  <svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ff4d7a;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#ff1a53;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#cc0033;stop-opacity:1" />
+      </linearGradient>
+      <filter id="heartGlow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <path d="M60 100 C60 100 5 65 5 30 C5 10 25 0 40 0 C50 0 57 6 60 15 C63 6 70 0 80 0 C95 0 115 10 115 30 C115 65 60 100 60 100Z"
+          fill="url(#heartGrad)" filter="url(#heartGlow)" />
+    <path d="M60 95 C60 95 12 63 12 32 C12 15 28 5 40 5 C49 5 56 10 60 18"
+          fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<!-- Message carousel -->
+<div id="messageCarousel">
+  <div class="msg active" data-index="0">Cada momento contigo es un regalo del cielo</div>
+  <div class="msg" data-index="1">Tu sonrisa ilumina hasta la noche más oscura</div>
+  <div class="msg" data-index="2">Eres la poesía que mi corazón siempre quiso escribir</div>
+  <div class="msg" data-index="3">En un universo infinito, te encontré a ti</div>
+  <div class="msg" data-index="4">Geraldine, eres todo lo que siempre soñé</div>
+  <div class="msg" data-index="5">Mi mundo comenzó el día que te conocí</div>
+  <div class="msg" data-index="6">Cada latido de mi corazón lleva tu nombre</div>
+  <div class="msg" data-index="7">Eres la estrella que guía mi camino</div>
+</div>
+
+<!-- Bottom message -->
+<div id="bottomMsg">
+  <p>✦ hecho con todo mi corazón ✦</p>
+</div>
+
+<script>
+// ========== INIT ==========
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let particles = [];
+let petals = [];
+let fireflies = [];
+let sparkles = [];
+let started = false;
+let msgIndex = 0;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ========== START ==========
+document.getElementById('startScreen').addEventListener('click', async () => {
+  document.getElementById('startScreen').classList.add('hidden');
+  started = true;
+  await startCamera();
+  initParticles();
+  initPetals();
+  initFireflies();
+  initSparkles();
+  startMessageCarousel();
+  animate();
+});
+
+// ========== CAMERA ==========
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    document.getElementById('videoFeed').srcObject = stream;
+  } catch(e) {
+    // Si no hay cámara, fondo romántico
+    document.body.style.background = 'linear-gradient(135deg, #1a0011, #2d0020, #150010)';
+  }
+}
+
+// ========== PARTICLES (hearts, stars, diamonds) ==========
+function initParticles() {
+  for (let i = 0; i < 60; i++) {
+    particles.push(createParticle());
+  }
+}
+
+function createParticle() {
+  const types = ['heart', 'star', 'diamond', 'circle'];
+  return {
+    x: Math.random() * W,
+    y: H + Math.random() * 100,
+    size: Math.random() * 14 + 6,
+    speedY: -(Math.random() * 1.2 + 0.3),
+    speedX: (Math.random() - 0.5) * 0.8,
+    opacity: Math.random() * 0.6 + 0.2,
+    rotation: Math.random() * 360,
+    rotSpeed: (Math.random() - 0.5) * 2,
+    type: types[Math.floor(Math.random() * types.length)],
+    hue: Math.random() * 40 + 330, // pinks and reds
+    pulse: Math.random() * Math.PI * 2,
+    pulseSpeed: Math.random() * 0.03 + 0.01
+  };
+}
+
+function drawHeart(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot * Math.PI / 180);
+  ctx.beginPath();
+  const s = size / 15;
+  ctx.moveTo(0, s * 3);
+  ctx.bezierCurveTo(-s * 5, -s * 3, -s * 10, s * 2, 0, s * 10);
+  ctx.bezierCurveTo(s * 10, s * 2, s * 5, -s * 3, 0, s * 3);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawStar(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot * Math.PI / 180);
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+    const px = Math.cos(angle) * size / 2;
+    const py = Math.sin(angle) * size / 2;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDiamond(x, y, size, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot * Math.PI / 180);
+  const s = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.6, 0);
+  ctx.lineTo(0, s);
+  ctx.lineTo(-s * 0.6, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    p.x += p.speedX;
+    p.y += p.speedY;
+    p.rotation += p.rotSpeed;
+    p.pulse += p.pulseSpeed;
+    const op = p.opacity * (0.7 + Math.sin(p.pulse) * 0.3);
+
+    const h = p.hue > 360 ? p.hue - 360 : p.hue;
+    ctx.fillStyle = `hsla(${h}, 80%, 70%, ${op})`;
+    ctx.shadowColor = `hsla(${h}, 90%, 60%, ${op * 0.5})`;
+    ctx.shadowBlur = 15;
+
+    if (p.type === 'heart') drawHeart(p.x, p.y, p.size, p.rotation);
+    else if (p.type === 'star') drawStar(p.x, p.y, p.size, p.rotation);
+    else if (p.type === 'diamond') drawDiamond(p.x, p.y, p.size, p.rotation);
+    else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size / 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    if (p.y < -50 || p.x < -50 || p.x > W + 50) {
+      Object.assign(p, createParticle());
+    }
+  });
+}
+
+// ========== ROSE PETALS ==========
+function initPetals() {
+  for (let i = 0; i < 15; i++) {
+    petals.push(createPetal());
+  }
+}
+
+function createPetal() {
+  return {
+    x: Math.random() * W,
+    y: -20 - Math.random() * 200,
+    size: Math.random() * 20 + 12,
+    speedY: Math.random() * 1.5 + 0.5,
+    speedX: (Math.random() - 0.5) * 1.5,
+    rotation: Math.random() * 360,
+    rotSpeed: (Math.random() - 0.5) * 3,
+    opacity: Math.random() * 0.5 + 0.3,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: Math.random() * 0.02 + 0.01,
+    shade: Math.floor(Math.random() * 3)
+  };
+}
+
+function drawPetals() {
+  petals.forEach(p => {
+    p.wobble += p.wobbleSpeed;
+    p.x += p.speedX + Math.sin(p.wobble) * 0.8;
+    p.y += p.speedY;
+    p.rotation += p.rotSpeed;
+
+    const colors = [
+      `rgba(255, 120, 150, ${p.opacity})`,
+      `rgba(255, 80, 120, ${p.opacity})`,
+      `rgba(220, 60, 100, ${p.opacity})`
+    ];
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation * Math.PI / 180);
+    ctx.fillStyle = colors[p.shade];
+    ctx.shadowColor = 'rgba(255, 100, 150, 0.3)';
+    ctx.shadowBlur = 8;
     
-    <script type="module" src="main.js"></script>
+    // Petal shape
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(
+      p.size * 0.4, -p.size * 0.3,
+      p.size * 0.8, -p.size * 0.1,
+      p.size, 0
+    );
+    ctx.bezierCurveTo(
+      p.size * 0.8, p.size * 0.3,
+      p.size * 0.3, p.size * 0.4,
+      0, 0
+    );
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    if (p.y > H + 50) Object.assign(p, createPetal());
+  });
+}
+
+// ========== FIREFLIES ==========
+function initFireflies() {
+  for (let i = 0; i < 25; i++) {
+    fireflies.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      size: Math.random() * 3 + 1.5,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: (Math.random() - 0.5) * 0.5,
+      phase: Math.random() * Math.PI * 2,
+      freq: Math.random() * 0.02 + 0.008
+    });
+  }
+}
+
+function drawFireflies() {
+  fireflies.forEach(f => {
+    f.x += f.speedX + Math.sin(f.phase) * 0.3;
+    f.y += f.speedY + Math.cos(f.phase * 0.7) * 0.2;
+    f.phase += f.freq;
+
+    const op = 0.3 + Math.sin(f.phase) * 0.5;
+    if (op < 0.05) return;
+
+    const grd = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size * 6);
+    grd.addColorStop(0, `rgba(255, 220, 150, ${op})`);
+    grd.addColorStop(0.3, `rgba(255, 180, 100, ${op * 0.5})`);
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.size * 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bright center
+    ctx.fillStyle = `rgba(255, 245, 220, ${op * 0.9})`;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wrap
+    if (f.x < -20) f.x = W + 20;
+    if (f.x > W + 20) f.x = -20;
+    if (f.y < -20) f.y = H + 20;
+    if (f.y > H + 20) f.y = -20;
+  });
+}
+
+// ========== SPARKLES ==========
+function initSparkles() {
+  for (let i = 0; i < 40; i++) {
+    sparkles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      size: Math.random() * 2 + 0.5,
+      phase: Math.random() * Math.PI * 2,
+      freq: Math.random() * 0.05 + 0.02
+    });
+  }
+}
+
+function drawSparkles() {
+  sparkles.forEach(s => {
+    s.phase += s.freq;
+    const op = Math.max(0, Math.sin(s.phase));
+    if (op < 0.1) return;
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${op * 0.8})`;
+    ctx.shadowColor = `rgba(255, 200, 230, ${op})`;
+    ctx.shadowBlur = 6;
+    
+    // Cross sparkle
+    const sz = s.size;
+    ctx.fillRect(s.x - sz * 2, s.y - sz * 0.3, sz * 4, sz * 0.6);
+    ctx.fillRect(s.x - sz * 0.3, s.y - sz * 2, sz * 0.6, sz * 4);
+    ctx.shadowBlur = 0;
+  });
+}
+
+// ========== CONNECTING LIGHT LINES ==========
+function drawConnections() {
+  const pts = fireflies.slice(0, 10);
+  ctx.strokeStyle = 'rgba(255, 180, 200, 0.04)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x;
+      const dy = pts[i].y - pts[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 200) {
+        ctx.beginPath();
+        ctx.moveTo(pts[i].x, pts[i].y);
+        ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// ========== MESSAGE CAROUSEL ==========
+function startMessageCarousel() {
+  const msgs = document.querySelectorAll('#messageCarousel .msg');
+  setInterval(() => {
+    msgs[msgIndex].classList.remove('active');
+    msgIndex = (msgIndex + 1) % msgs.length;
+    msgs[msgIndex].classList.add('active');
+  }, 5000);
+}
+
+// ========== TOUCH EFFECTS ==========
+function addTouchSparkles(x, y) {
+  for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 * i) / 12;
+    const speed = Math.random() * 3 + 2;
+    const sp = {
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      size: Math.random() * 4 + 2,
+      hue: Math.random() * 40 + 330
+    };
+    touchParticles.push(sp);
+  }
+}
+
+let touchParticles = [];
+
+function drawTouchParticles() {
+  for (let i = touchParticles.length - 1; i >= 0; i--) {
+    const p = touchParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.life -= 0.02;
+    if (p.life <= 0) { touchParticles.splice(i, 1); continue; }
+
+    ctx.fillStyle = `hsla(${p.hue}, 80%, 75%, ${p.life})`;
+    ctx.shadowColor = `hsla(${p.hue}, 90%, 60%, ${p.life * 0.5})`;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!started) return;
+  addTouchSparkles(e.clientX, e.clientY);
+});
+document.addEventListener('touchstart', (e) => {
+  if (!started) return;
+  Array.from(e.touches).forEach(t => addTouchSparkles(t.clientX, t.clientY));
+}, { passive: true });
+document.addEventListener('touchmove', (e) => {
+  if (!started) return;
+  Array.from(e.touches).forEach(t => {
+    if (Math.random() > 0.5) addTouchSparkles(t.clientX, t.clientY);
+  });
+}, { passive: true });
+
+// ========== ANIMATION LOOP ==========
+function animate() {
+  if (!started) return;
+  ctx.clearRect(0, 0, W, H);
+  drawConnections();
+  drawFireflies();
+  drawSparkles();
+  drawPetals();
+  drawParticles();
+  drawTouchParticles();
+  requestAnimationFrame(animate);
+}
+</script>
 </body>
 </html>
