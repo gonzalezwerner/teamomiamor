@@ -33,7 +33,7 @@
             object-fit: cover;
             z-index: 0;
             display: none;
-            transform: scaleX(-1); /* Efecto espejo si fuera frontal, pero usaremos trasera */
+            transform: scaleX(-1); /* Efecto espejo de cámara */
         }
         #canvas-container {
             position: absolute;
@@ -205,7 +205,6 @@
          ============================================================================ -->
     <div id="ui-layer">
         <script>
-            // Generador de polvo estelar CSS para la pantalla de carga
             for(let i=0; i<150; i++) {
                 const s = document.createElement('div');
                 s.className = 'magic-dust';
@@ -219,7 +218,6 @@
                 s.style.animation = `pulseText ${duration}s infinite alternate ${delay}s, floatText ${duration*2}s infinite ease-in-out ${delay}s`;
                 s.style.boxShadow = `0 0 ${size*3}px rgba(255, 255, 255, 0.8)`;
                 
-                // Colores aleatorios
                 const colors = ['#ff1493', '#00ffff', '#ffd700', '#ffffff'];
                 s.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                 
@@ -234,9 +232,9 @@
 
     <div id="instruction-layer">
         <h2 class="text-glow instruction-text">
-            ✨ Atraviesa el Portal de Luz ✨<br>
+            ✨ El Portal te atrae... ✨<br>
             <span style="font-size:1.2rem; color:#b0e0e6; font-weight:normal; letter-spacing:2px; display:block; margin-top:15px;">
-                (Camina hacia adelante o toca la pantalla para sumergirte en el cosmos 360º)
+                (Espera a ser absorbido o toca la pantalla para cruzar a la velocidad de la luz)
             </span>
         </h2>
     </div>
@@ -505,7 +503,6 @@
             document.body.appendChild(arButton);
             arButton.style.display = 'none';
 
-            // Ocultar la cámara de fondo si el WebXR nativo arranca
             renderer.xr.addEventListener('sessionstart', () => {
                 const video = document.getElementById('camera-bg');
                 if (video) video.style.display = 'none';
@@ -527,7 +524,7 @@
                     .then(function(stream) {
                         video.srcObject = stream;
                         video.style.display = 'block';
-                        video.style.transform = 'scaleX(1)'; // Ajustar rotación de cámara trasera
+                        video.style.transform = 'scaleX(1)'; 
                     })
                     .catch(function(err) {
                         console.warn("No se pudo acceder a la cámara nativa: ", err);
@@ -551,7 +548,8 @@
         // ============================================================================
         function construirMonPortalEntrada() {
             rootGroup.add(portalGroup);
-            portalGroup.position.set(0, 0, -3.0);
+            // Portal más cerca para no exigir caminar tanto
+            portalGroup.position.set(0, 0, -2.0);
             
             const ringGeo = new THREE.TorusGeometry(1.5, 0.08, 64, 200);
             const ringMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.8 });
@@ -613,6 +611,7 @@
             crearSistemaCometesEstelas(); 
             crearTextosEsfericos100(); 
             crearOndasDeChoqueColosales();
+            crearEsferaArmilarCelestial();
         }
 
         // --- SISTEMAS GEOMÉTRICOS Y FÍSICOS MASIVOS ---
@@ -1067,7 +1066,9 @@
             function onTouch(event) {
                 if(!isStarted) return;
                 if(!hasCrossedPortal) {
-                    if (renderer.xr.isPresenting) { const tempCamPos = new THREE.Vector3(); camera.getWorldPosition(tempCamPos); triggerPortalCrossing(tempCamPos); } else { isAutoWalking = true; }
+                    isAutoWalking = true;
+                    // ABSORCIÓN FORZADA TÁCTIL (El portal vuela hacia el usuario al tocar)
+                    portalGroup.position.z = camera.position.z - 0.5;
                     return;
                 }
                 let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0); let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
@@ -1135,12 +1136,19 @@
                 portalUniforms.uTime.value = elapsedTime;
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1; 
 
-                if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 6.0; // Velocidad inmersiva
+                // LA FÍSICA INELUDIBLE DE GRAVEDAD CUÁNTICA: El portal siempre se acerca a ti
+                portalGroup.position.z += delta * 0.8; 
+                pathGroup.position.z += delta * 0.8;
+
+                if (isAutoWalking) {
+                    camera.position.z -= delta * 12.0; // Velocidad de absorción masiva
                     camera.getWorldPosition(camPos); 
                 }
                 
-                if (camPos.distanceTo(portalGroup.position) < 1.8 || camPos.z <= portalGroup.position.z + 0.5) {
+                // Nueva regla de colisión 2D (Ignora la altura Y para funcionar perfectamente en AR)
+                const dist2D = Math.hypot(camPos.x - portalGroup.position.x, camPos.z - portalGroup.position.z);
+                
+                if (dist2D < 1.5 || camPos.z <= portalGroup.position.z + 0.2) {
                     triggerPortalCrossing(camPos);
                 }
             } 
