@@ -127,13 +127,13 @@
         let clock = new THREE.Clock();
         let isStarted = false;
         let hasCrossedPortal = false;
-        let isAutoWalking = false; // Nueva variable para simular la caminata
+        let isAutoWalking = false; 
         
-        let userCenter = new THREE.Vector3(); // El centro del universo que seguirá al usuario
+        let userCenter = new THREE.Vector3(); 
         let floatingTexts = [];
         let fireflies = [];
         
-        // --- NUEVAS VARIABLES SÚPER WOW ---
+        // --- VARIABLES SÚPER WOW Y SÚPER ROMÁNTICAS ---
         let petals = [];
         let shootingStars = [];
         let geometricFlower;
@@ -141,6 +141,9 @@
         let isFlashing = false;
         let butterflies = [];
         let auroraBorealis, magicFloor;
+        let etherealMoon;
+        let goldenRingsGroup;
+        let lightPillarsGroup;
         
         const frases = [
             "Eres mi destino",
@@ -178,7 +181,7 @@
             // 1. Crear el grupo del Universo (Romance), ESTRICTAMENTE OCULTO al inicio
             universeGroup = new THREE.Group();
             universeGroup.visible = false;
-            universeGroup.scale.set(0.001, 0.001, 0.001); // Nace desde un punto microscópico
+            universeGroup.scale.set(0.001, 0.001, 0.001); 
             scene.add(universeGroup);
 
             // 2. Construir Elementos
@@ -197,6 +200,9 @@
             createButterflies();
             createAuroraBorealis();
             createMagicFloor();
+            createEtherealMoon();
+            createGoldenRings();
+            createLightPillars();
 
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
@@ -206,14 +212,13 @@
             arButton.style.display = 'none';
             
             document.getElementById('start-btn').addEventListener('click', (e) => {
-                e.stopPropagation(); // Evita que se toque la pantalla accidentalmente al dar clic en el botón
+                e.stopPropagation(); 
                 document.getElementById('ui-layer').style.opacity = '0';
                 setTimeout(() => document.getElementById('ui-layer').style.display = 'none', 1000);
                 
                 document.getElementById('instruction-layer').style.display = 'flex';
                 arButton.style.display = 'block';
                 
-                // Dar un pequeño retraso antes de habilitar los toques para evitar cruces accidentales
                 setTimeout(() => { isStarted = true; }, 500); 
             });
         }
@@ -422,12 +427,93 @@
             }
         }
 
-        // --- LOS NUEVOS EFECTOS SÚPER WOW ---
+        // --- LOS NUEVOS EFECTOS SÚPER WOW Y ROMÁNTICOS ---
+        
+        function createEtherealMoon() {
+            // Una luna gigante y mágica en la distancia
+            const moonGeo = new THREE.SphereGeometry(15, 64, 64);
+            const moonMat = new THREE.MeshBasicMaterial({
+                color: 0xffebf0, 
+                transparent: true, 
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                map: (()=>{
+                    const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+                    const ctx = c.getContext('2d');
+                    const g = ctx.createRadialGradient(256,256,0,256,256,256);
+                    g.addColorStop(0,'rgba(255, 255, 255, 1)');
+                    g.addColorStop(0.4,'rgba(255, 182, 193, 0.9)');
+                    g.addColorStop(0.8,'rgba(138, 43, 226, 0.5)');
+                    g.addColorStop(1,'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle=g; ctx.fillRect(0,0,512,512); 
+                    return new THREE.CanvasTexture(c);
+                })()
+            });
+            etherealMoon = new THREE.Mesh(moonGeo, moonMat);
+            etherealMoon.position.set(0, 20, -60); // Lejos y en lo alto
+            universeGroup.add(etherealMoon);
+        }
+
+        function createGoldenRings() {
+            // Anillos entrelazados orbitando el corazón
+            goldenRingsGroup = new THREE.Group();
+            const ringGeo = new THREE.TorusGeometry(1.2, 0.02, 32, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ 
+                color: 0xffdf00, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, side: THREE.DoubleSide 
+            });
+
+            const ring1 = new THREE.Mesh(ringGeo, ringMat);
+            ring1.rotation.x = Math.PI / 3;
+            goldenRingsGroup.add(ring1);
+
+            const ring2 = new THREE.Mesh(ringGeo, ringMat);
+            ring2.rotation.y = Math.PI / 3;
+            ring2.rotation.x = -Math.PI / 4;
+            goldenRingsGroup.add(ring2);
+
+            mainHeartGroup.add(goldenRingsGroup); // Siguen al corazón principal
+        }
+
+        function createLightPillars() {
+            // Un templo sagrado de luz que rodea al usuario
+            lightPillarsGroup = new THREE.Group();
+            const pillarGeo = new THREE.CylinderGeometry(0.3, 0.8, 20, 32, 1, true);
+            pillarGeo.translate(0, 10, 0); // Anclar en la base
+
+            const pillarMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    void main() {
+                        float alpha = (1.0 - vUv.y); // Se desvanece hacia arriba
+                        float pulse = sin(vUv.y * 10.0 - uTime * 2.0) * 0.5 + 0.5;
+                        vec3 color = mix(vec3(1.0, 0.4, 0.8), vec3(0.0, 1.0, 1.0), pulse);
+                        gl_FragColor = vec4(color, alpha * pulse * 0.5); // Etéreo y suave
+                    }
+                `,
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+            });
+
+            // Crear 8 pilares en círculo
+            for(let i = 0; i < 8; i++) {
+                const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+                const angle = (i / 8) * Math.PI * 2;
+                const radius = 6; // 6 metros alrededor del usuario
+                pillar.position.set(Math.cos(angle) * radius, -2, Math.sin(angle) * radius);
+                lightPillarsGroup.add(pillar);
+            }
+            universeGroup.add(lightPillarsGroup);
+        }
         
         function createButterflies() {
-            // Mariposas de cristal con alas que aletean
             const wingGeo = new THREE.PlaneGeometry(0.06, 0.1);
-            wingGeo.translate(0.03, 0, 0); // Anclar el ala por el borde
+            wingGeo.translate(0.03, 0, 0); 
             const wingMat = new THREE.MeshBasicMaterial({
                 color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
             });
@@ -436,7 +522,7 @@
                 const butterfly = new THREE.Group();
                 const wing1 = new THREE.Mesh(wingGeo, wingMat);
                 const wing2 = new THREE.Mesh(wingGeo, wingMat);
-                wing2.rotation.y = Math.PI; // Espejar la segunda ala
+                wing2.rotation.y = Math.PI; 
                 
                 butterfly.add(wing1, wing2);
                 
@@ -456,7 +542,6 @@
         }
 
         function createAuroraBorealis() {
-            // Una inmensa cortina de luz procedural
             const auroraGeo = new THREE.CylinderGeometry(8, 8, 15, 64, 1, true);
             auroraUniforms = { uTime: { value: 0.0 } };
             
@@ -473,9 +558,9 @@
                         vec2 uv = vUv;
                         float wave1 = sin(uv.x * 15.0 + uTime * 0.5) * 0.5 + 0.5;
                         float wave2 = sin(uv.x * 25.0 - uTime * 0.8) * 0.5 + 0.5;
-                        float alpha = sin(uv.y * 3.1415) * (wave1 * wave2); // Difuminar arriba y abajo
-                        vec3 color = mix(vec3(0.0, 1.0, 0.8), vec3(0.8, 0.0, 1.0), uv.y + wave1*0.3); // Cian a Magenta
-                        gl_FragColor = vec4(color, alpha * 0.35); // Translúcido
+                        float alpha = sin(uv.y * 3.1415) * (wave1 * wave2); 
+                        vec3 color = mix(vec3(0.0, 1.0, 0.8), vec3(0.8, 0.0, 1.0), uv.y + wave1*0.3); 
+                        gl_FragColor = vec4(color, alpha * 0.35); 
                     }
                 `,
                 transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
@@ -486,7 +571,6 @@
         }
 
         function createMagicFloor() {
-            // Suelo que pulsa ondas de energía
             const floorGeo = new THREE.PlaneGeometry(20, 20, 32, 32);
             floorUniforms = { uTime: { value: 0.0 } };
             
@@ -504,7 +588,7 @@
                         float dist = length(uv);
                         float ripple = sin(dist * 40.0 - uTime * 5.0) * 0.5 + 0.5;
                         float alpha = smoothstep(0.5, 0.0, dist) * ripple;
-                        vec3 color = vec3(0.2, 0.8, 1.0); // Azul eléctrico
+                        vec3 color = vec3(0.2, 0.8, 1.0); 
                         gl_FragColor = vec4(color, alpha * 0.4);
                     }
                 `,
@@ -513,12 +597,11 @@
             
             magicFloor = new THREE.Mesh(floorGeo, floorMat);
             magicFloor.rotation.x = -Math.PI / 2;
-            magicFloor.position.y = -1.5; // Bajo los pies
+            magicFloor.position.y = -1.5; 
             universeGroup.add(magicFloor);
         }
 
         function createFlashAndShockwave() {
-            // 1. Esfera Flash
             const geo = new THREE.SphereGeometry(0.1, 32, 32);
             const mat = new THREE.MeshBasicMaterial({
                 color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
@@ -526,13 +609,12 @@
             flashSphere = new THREE.Mesh(geo, mat);
             scene.add(flashSphere);
 
-            // 2. Anillo Shockwave
             const ringGeo = new THREE.TorusGeometry(0.5, 0.05, 16, 100);
             const ringMat = new THREE.MeshBasicMaterial({
                 color: 0x00ffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
             });
             shockwaveRing = new THREE.Mesh(ringGeo, ringMat);
-            shockwaveRing.rotation.x = Math.PI / 2; // Acostado
+            shockwaveRing.rotation.x = Math.PI / 2; 
             scene.add(shockwaveRing);
         }
 
@@ -643,13 +725,11 @@
 
         // --- FUNCIÓN CENTRALIZADA PARA CRUZAR EL PORTAL ---
         function triggerPortalCrossing(currentCamPos) {
-            if (hasCrossedPortal) return; // Evitar que se dispare múltiples veces
+            if (hasCrossedPortal) return; 
             hasCrossedPortal = true;
             
-            // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN EXACTAMENTE AL CRUZAR!
             isFlashing = true; 
             
-            // Nacer el universo instantáneamente a tu alrededor
             universeGroup.visible = true;
             userCenter.copy(currentCamPos);
             universeGroup.position.copy(userCenter);
@@ -666,7 +746,6 @@
                 shockwaveRing.visible = true;
             }
 
-            // Ocultar la entrada
             portalGroup.visible = false;
             pathGroup.visible = false;
 
@@ -682,15 +761,12 @@
             function onTouch(event) {
                 if(!isStarted) return;
                 
-                // Si aún no hemos cruzado el portal...
                 if(!hasCrossedPortal) {
                     if (renderer.xr.isPresenting) {
-                        // En AR, si el usuario toca la pantalla forzamos el cruce por si no puede caminar.
                         const tempCamPos = new THREE.Vector3();
                         camera.getWorldPosition(tempCamPos);
                         triggerPortalCrossing(tempCamPos);
                     } else {
-                        // En escritorio/móvil normal, iniciamos caminata automática
                         isAutoWalking = true;
                     }
                     return;
@@ -738,36 +814,32 @@
             if(!isStarted) { renderer.render(scene, camera); return; }
 
             const elapsedTime = clock.getElapsedTime();
-            const delta = clock.getDelta(); // Obtenemos el tiempo transcurrido por frame
+            const delta = clock.getDelta(); 
             
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
 
-            // 1. FASE DE PORTAL (Mundo totalmente oculto hasta cruzar)
+            // 1. FASE DE PORTAL
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1;
 
-                // LÓGICA DE CAMINATA AUTOMÁTICA
                 if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 4.0; // Caminata visual un poco más rápida
+                    camera.position.z -= delta * 4.0; 
                     camera.getWorldPosition(camPos); 
                 }
 
-                // Lógica de colisión mucho más indulgente y a prueba de fallos
-                // Activamos por distancia de captura O cruzando el umbral en Z
                 if (camPos.distanceTo(portalGroup.position) < 1.8 || camPos.z <= portalGroup.position.z + 0.5) {
                     triggerPortalCrossing(camPos);
                 }
             } 
             
-            // 2. FASE DE UNIVERSO INMERSIVO (Después de cruzar)
+            // 2. FASE DE UNIVERSO INMERSIVO
             else {
-                // Escala fluida pero rápida para que nazca a tu alrededor
                 universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
 
                 userCenter.lerp(camPos, 0.05);
-                universeGroup.position.copy(userCenter); // Todo el grupo sigue al usuario
+                universeGroup.position.copy(userCenter); 
                 particleSystem.position.set(0,0,0); 
 
                 auroraUniforms.uTime.value = elapsedTime;
@@ -787,6 +859,30 @@
                 const scaleOffset = 1.0 + (beat1 + beat2) * 0.15;
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
                 
+                // ANIMACIONES SÚPER ROMÁNTICAS NUEVAS
+                if (goldenRingsGroup) {
+                    goldenRingsGroup.rotation.y += 0.01;
+                    goldenRingsGroup.rotation.z += 0.005;
+                    goldenRingsGroup.children[0].rotation.x += 0.005;
+                    goldenRingsGroup.children[1].rotation.y -= 0.008;
+                }
+
+                if (etherealMoon) {
+                    etherealMoon.rotation.z += 0.001;
+                    etherealMoon.scale.setScalar(1.0 + Math.sin(elapsedTime * 0.5) * 0.02);
+                    // La luna orbita gigante en la lejanía
+                    etherealMoon.position.x = Math.cos(elapsedTime * 0.05) * 60;
+                    etherealMoon.position.z = Math.sin(elapsedTime * 0.05) * 60;
+                }
+
+                if (lightPillarsGroup) {
+                    lightPillarsGroup.children.forEach(pillar => {
+                        pillar.material.uniforms.uTime.value = elapsedTime;
+                    });
+                    // Los pilares giran suavemente rodeándote
+                    lightPillarsGroup.rotation.y -= 0.002;
+                }
+
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData;
                     data.angle += 0.003 * data.speed; 
