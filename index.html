@@ -23,6 +23,18 @@
             -webkit-user-select: none;
             perspective: 1000px;
         }
+        /* Video de fondo para forzar el encendido de la cámara */
+        #camera-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            display: none;
+            transform: scaleX(-1); /* Efecto espejo si fuera frontal, pero usaremos trasera */
+        }
         #canvas-container {
             position: absolute;
             top: 0;
@@ -185,6 +197,9 @@
 </head>
 <body>
 
+    <!-- Capa de Video para forzar cámara si WebXR falla -->
+    <video id="camera-bg" autoplay playsinline></video>
+
     <!-- ============================================================================
          2. CAPA DE INTERFAZ DE USUARIO (MENÚ Y OVERLAYS)
          ============================================================================ -->
@@ -221,7 +236,7 @@
         <h2 class="text-glow instruction-text">
             ✨ Atraviesa el Portal de Luz ✨<br>
             <span style="font-size:1.2rem; color:#b0e0e6; font-weight:normal; letter-spacing:2px; display:block; margin-top:15px;">
-                (Camina hacia adelante en AR o toca la pantalla para sumergirte en el cosmos 360º)
+                (Camina hacia adelante o toca la pantalla para sumergirte en el cosmos 360º)
             </span>
         </h2>
     </div>
@@ -240,10 +255,6 @@
         // 3.1. MOTORES MATEMÁTICOS Y FÍSICOS PERSONALIZADOS
         // ============================================================================
         
-        /* * MOTOR DE RUIDO SIMPLEX (Simplex Noise Engine)
-         * Implementación cruda y ultra-optimizada en JS para generar terrenos montañosos 360 y turbulencias.
-         * Fundamental para la "Generación Procedural Extrema".
-         */
         const SimplexNoise = function() {
             var F3 = 1.0/3.0, G3 = 1.0/6.0;
             var p = new Uint8Array(256);
@@ -311,10 +322,9 @@
         const simplex = SimplexNoise();
 
         // ============================================================================
-        // 3.2. REPOSITORIO MASIVO DE FRASES ROMÁNTICAS (100+ LÍNEAS DE POESÍA)
+        // 3.2. REPOSITORIO MASIVO DE FRASES ROMÁNTICAS
         // ============================================================================
         const frasesAmor = [
-            // Cósmicas y Eternas
             "Eres mi destino escrito en las estrellas",
             "Mi alma te reconoce desde el inicio de los tiempos",
             "A cada latido, mi corazón pronuncia tu nombre en silencio",
@@ -354,7 +364,6 @@
             "Mires hacia donde mires, siempre me encontrarás a tu lado",
             "Eres el centro gravitacional absoluto de todas mis galaxias",
             "Mi universo entero gira única y exclusivamente alrededor de ti",
-            // Devoción y Pasión
             "Tus abrazos son el escudo que me protege de la entropía",
             "El roce de tus dedos reprograma todo mi código genético",
             "Eres el arte más fino que la naturaleza ha esculpido",
@@ -388,18 +397,15 @@
         let hasCrossedPortal = false;
         let isAutoWalking = false; 
         
-        // GRUPOS ESPACIALES (Arquitectura de Nodos)
-        let rootGroup = new THREE.Group(); // Contiene TODO el universo
+        let rootGroup = new THREE.Group(); 
         let portalGroup = new THREE.Group();
         let pathGroup; 
         let universeGroup = new THREE.Group();
         let mainHeartGroup = new THREE.Group();
         let terrainGroup = new THREE.Group();
         
-        // VECTORES DE CONTROL
         let userCenter = new THREE.Vector3(); 
         
-        // ARRAYS DE ENTIDADES PROCEDURALES
         let floatingTexts = [];
         let fireflies = [];
         let petals = [];
@@ -410,13 +416,10 @@
         let boids = []; 
         let floatingDiamonds = []; 
         let fractalTrees = [];
-        let waterRipples = [];
         
-        // MATERIALES Y UNIFORMES MAESTROS
         let heartUniforms, portalUniforms, lotusUniforms, auroraUniforms, nebulaUniforms, terrainUniforms;
         let innerCoreUniforms, wireframeUniforms;
         
-        // OBJETOS SINGULARES Y SISTEMAS
         let particleSystem;
         let flashSphere, shockwaveRing, shockwaveDisk;
         let isFlashing = false;
@@ -436,44 +439,38 @@
         function init() {
             const container = document.getElementById('canvas-container');
 
-            // ESCENA Y ENTORNO
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010008, 0.015); // Niebla reactiva espesa
+            scene.fog = new THREE.FogExp2(0x010008, 0.015); 
 
-            // CÁMARA (FOV amplio para inmersión 360)
             camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.01, 1000); 
             camera.position.set(0, 0, 3); 
 
-            // RENDERER (Configuración Extrema)
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.xr.enabled = true; 
             
-            // ToneMapping cinematográfico
+            // ¡CRUCIAL PARA LA CÁMARA DE FONDO! Asegura que el canvas sea transparente
+            renderer.setClearColor(0x000000, 0); 
+            
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.4; 
             container.appendChild(renderer.domElement);
 
             scene.add(rootGroup);
 
-            // ILUMINACIÓN FOTORREALISTA
             setupLighting();
 
-            // PREPARACIÓN DE GRUPOS
             universeGroup.visible = false;
             universeGroup.scale.set(0.00001, 0.00001, 0.00001); 
             rootGroup.add(universeGroup);
 
-            // EJECUCIÓN DE CONSTRUCTORES DE MUNDOS
             construirMonPortalEntrada();
             construirEcosistemaExtremo360();
 
-            // EVENTOS Y CONTROLES
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
 
-            // CONFIGURACIÓN AR/VR
             setupAR();
             configurarBotonInicioHUD();
         }
@@ -493,7 +490,6 @@
             blueLight.position.set(0, 20, -20);
             universeGroup.add(blueLight);
 
-            // Anillos de luz envolventes para iluminación volumétrica 360
             const purpleLight = new THREE.PointLight(0x8a2be2, 4, 80);
             purpleLight.position.set(30, 10, 30);
             universeGroup.add(purpleLight);
@@ -508,11 +504,36 @@
             arButton.id = "ARButton";
             document.body.appendChild(arButton);
             arButton.style.display = 'none';
+
+            // Ocultar la cámara de fondo si el WebXR nativo arranca
+            renderer.xr.addEventListener('sessionstart', () => {
+                const video = document.getElementById('camera-bg');
+                if (video) video.style.display = 'none';
+            });
+            renderer.xr.addEventListener('sessionend', () => {
+                const video = document.getElementById('camera-bg');
+                if (video && video.srcObject) video.style.display = 'block';
+            });
         }
 
         function configurarBotonInicioHUD() {
             document.getElementById('start-btn').addEventListener('click', (e) => {
                 e.stopPropagation(); 
+                
+                // --- INICIO DE CÁMARA MANUAL (FALLBACK SI FALLA WEBXR) ---
+                const video = document.getElementById('camera-bg');
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(function(stream) {
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        video.style.transform = 'scaleX(1)'; // Ajustar rotación de cámara trasera
+                    })
+                    .catch(function(err) {
+                        console.warn("No se pudo acceder a la cámara nativa: ", err);
+                    });
+                }
+                
                 document.getElementById('ui-layer').style.opacity = '0';
                 document.getElementById('ui-layer').style.backdropFilter = 'blur(0px)';
                 setTimeout(() => document.getElementById('ui-layer').style.display = 'none', 2000);
@@ -532,11 +553,8 @@
             rootGroup.add(portalGroup);
             portalGroup.position.set(0, 0, -3.0);
             
-            // Geometría Sagrada del Aro
             const ringGeo = new THREE.TorusGeometry(1.5, 0.08, 64, 200);
-            const ringMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.8 
-            });
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.8 });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             portalGroup.add(ring);
 
@@ -544,55 +562,16 @@
             const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
             portalGroup.add(new THREE.Mesh(innerRingGeo, innerRingMat));
 
-            // Vórtice Cuántico Hiper-Realista (Custom GLSL)
             const veilGeo = new THREE.PlaneGeometry(2.9, 2.9, 128, 128);
             portalUniforms = { uTime: { value: 0 } };
             const veilMat = new THREE.ShaderMaterial({
                 uniforms: portalUniforms,
-                vertexShader: `
-                    varying vec2 vUv; uniform float uTime;
-                    void main() { 
-                        vUv = uv; vec3 pos = position;
-                        float dist = distance(uv, vec2(0.5));
-                        pos.z += sin(dist * 20.0 - uTime * 4.0) * 0.15 * smoothstep(0.5, 0.0, dist);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv;
-                    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-                    float noise(vec2 p) {
-                        vec2 i = floor(p); vec2 f = fract(p);
-                        vec2 u = f*f*(3.0-2.0*f);
-                        return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x), mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
-                    }
-                    void main() {
-                        vec2 uv = vUv - 0.5; float dist = length(uv); float angle = atan(uv.y, uv.x);
-                        float spiral1 = sin(dist * 30.0 - uTime * 5.0 + angle * 4.0);
-                        float spiral2 = cos(dist * 20.0 + uTime * 3.0 - angle * 3.0);
-                        float vortex = (spiral1 + spiral2) * 0.5;
-                        float n = noise(uv * 15.0 - uTime*2.0); vortex += n * 0.8;
-                        
-                        float alpha = smoothstep(0.5, 0.05, dist) * (0.5 + 0.5 * vortex);
-                        
-                        vec3 color1 = vec3(0.02, 0.0, 0.1); 
-                        vec3 color2 = vec3(1.0, 0.0, 0.5); 
-                        vec3 color3 = vec3(0.0, 1.0, 1.0); 
-                        
-                        vec3 color = mix(color1, color2, vortex + 0.5);
-                        color = mix(color, color3, smoothstep(0.25, 0.0, dist));
-                        
-                        // Agujero blanco central
-                        color += vec3(1.0, 1.0, 1.0) * pow(smoothstep(0.18, 0.0, dist), 4.0) * 4.0;
-                        
-                        gl_FragColor = vec4(color, alpha);
-                    }
-                `,
+                vertexShader: `varying vec2 vUv; uniform float uTime; void main() { vUv = uv; vec3 pos = position; float dist = distance(uv, vec2(0.5)); pos.z += sin(dist * 20.0 - uTime * 4.0) * 0.15 * smoothstep(0.5, 0.0, dist); gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); } float noise(vec2 p) { vec2 i = floor(p); vec2 f = fract(p); vec2 u = f*f*(3.0-2.0*f); return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x), mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y); } void main() { vec2 uv = vUv - 0.5; float dist = length(uv); float angle = atan(uv.y, uv.x); float spiral1 = sin(dist * 30.0 - uTime * 5.0 + angle * 4.0); float spiral2 = cos(dist * 20.0 + uTime * 3.0 - angle * 3.0); float vortex = (spiral1 + spiral2) * 0.5; float n = noise(uv * 15.0 - uTime*2.0); vortex += n * 0.8; float alpha = smoothstep(0.5, 0.05, dist) * (0.5 + 0.5 * vortex); vec3 color1 = vec3(0.02, 0.0, 0.1); vec3 color2 = vec3(1.0, 0.0, 0.5); vec3 color3 = vec3(0.0, 1.0, 1.0); vec3 color = mix(color1, color2, vortex + 0.5); color = mix(color, color3, smoothstep(0.25, 0.0, dist)); color += vec3(1.0, 1.0, 1.0) * pow(smoothstep(0.18, 0.0, dist), 4.0) * 4.0; gl_FragColor = vec4(color, alpha); }`,
                 transparent: true, side: THREE.DoubleSide, depthWrite: false
             });
             portalGroup.add(new THREE.Mesh(veilGeo, veilMat));
 
-            // Camino de Luz hacia el Portal
             crearCaminoEstelar();
         }
 
@@ -601,30 +580,8 @@
             const pathGeo = new THREE.PlaneGeometry(2.0, 5, 64, 64);
             const pathMat = new THREE.ShaderMaterial({
                 uniforms: { uTime: portalUniforms.uTime },
-                vertexShader: `
-                    varying vec2 vUv; uniform float uTime;
-                    void main() { 
-                        vUv = uv; vec3 pos = position;
-                        pos.z += sin(pos.y * 10.0 + uTime*2.0) * 0.05;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv;
-                    void main() {
-                        float flow = sin(vUv.y * 30.0 + uTime * 8.0) * 0.5 + 0.5;
-                        float edge = sin(vUv.x * 3.1415); 
-                        float fade = smoothstep(0.0, 1.0, vUv.y);
-                        
-                        vec3 color = vec3(1.0, 0.1, 0.8) * flow + vec3(0.0, 1.0, 1.0) * (1.0 - flow);
-                        
-                        // Partículas simuladas en el shader
-                        float sparkles = pow(fract(sin(dot(vUv+uTime*0.1, vec2(12.9898,78.233))) * 43758.5453), 20.0);
-                        color += vec3(1.0) * sparkles * 5.0;
-
-                        gl_FragColor = vec4(color, pow(edge, 2.0) * fade * 0.8);
-                    }
-                `,
+                vertexShader: `varying vec2 vUv; uniform float uTime; void main() { vUv = uv; vec3 pos = position; pos.z += sin(pos.y * 10.0 + uTime*2.0) * 0.05; gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; void main() { float flow = sin(vUv.y * 30.0 + uTime * 8.0) * 0.5 + 0.5; float edge = sin(vUv.x * 3.1415); float fade = smoothstep(0.0, 1.0, vUv.y); vec3 color = vec3(1.0, 0.1, 0.8) * flow + vec3(0.0, 1.0, 1.0) * (1.0 - flow); float sparkles = pow(fract(sin(dot(vUv+uTime*0.1, vec2(12.9898,78.233))) * 43758.5453), 20.0); color += vec3(1.0) * sparkles * 5.0; gl_FragColor = vec4(color, pow(edge, 2.0) * fade * 0.8); }`,
                 transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
             });
             const path = new THREE.Mesh(pathGeo, pathMat);
@@ -636,320 +593,133 @@
         // 6. CONSTRUCCIÓN DEL ECOSISTEMA EXTREMO 360 (Fase 2 - Santuario)
         // ============================================================================
         function construirEcosistemaExtremo360() {
-            // Sistemas Centrales (El Núcleo del Amor)
             crearCorazonTetradimensional();
             crearLotoDeCristall(); 
             crearHalosSagradosProcedurales(); 
             crearAlesCelestialsMagnificas();
             crearAnillosDelDestino();
             crearHiloRojoCuantico();
-            
-            // Entorno de 360 Grados (El Mundo)
-            crearTerrenoMontanoso360(); // NOU MASSIU
+            crearTerrenoMontanoso360(); 
             crearSolMandalaLoto();
-            crearArbolesFractalesDeLaVida(); // NOU MASSIU
+            crearArbolesFractalesDeLaVida(); 
             crearVoltaNebulosaMulticapa();
             crearPilaresDeLuzInfinitos();
             crearConstelacionesCosmicas();
-            
-            // Sistemas de Partículas y Físicas (El Flujo vital)
             crearTornadoDePetalosMasivo();
             crearSistemaBoidsIA(); 
             crearGalaxiaParticulas10K();
             crearLlanternasRomanticas360();
-            crearDiamantesLevitantes(); // CORREGIDO AQUÍ
+            crearDiamantesLevitantes(); 
             crearSistemaCometesEstelas(); 
-            crearTextosEsfericos100(); // NOU MASSIU
-            
-            // Transiciones Post-Procesado
+            crearTextosEsfericos100(); 
             crearOndasDeChoqueColosales();
         }
 
         // --- SISTEMAS GEOMÉTRICOS Y FÍSICOS MASIVOS ---
 
-        // 6.1 Terreno Montañoso 360 Procedural (Usando el motor Simplex Noise)
         function crearTerrenoMontanoso360() {
             terrainGroup = new THREE.Group();
-            // Geometría masiva circular para rodear al jugador a gran distancia
             const terrainGeo = new THREE.PlaneGeometry(200, 200, 128, 128);
             terrainGeo.rotateX(-Math.PI / 2);
-            
             const vertices = terrainGeo.attributes.position.array;
             
-            // Esculpir montañas con Simplex Noise
             for (let i = 0; i < vertices.length; i += 3) {
-                const x = vertices[i];
-                const z = vertices[i + 2];
-                
-                const dist = Math.sqrt(x*x + z*z);
-                
-                // Zona plana en el centro (Santuario), montañas en los bordes
+                const x = vertices[i]; const z = vertices[i + 2]; const dist = Math.sqrt(x*x + z*z);
                 let elevation = 0;
                 if (dist > 15.0) {
-                    // Múltiples octavas de ruido para detalle fractal
-                    const nx = x * 0.05;
-                    const nz = z * 0.05;
-                    let e = 1.0 * simplex.noise3D(1 * nx, 1 * nz, 0)
-                          + 0.5 * simplex.noise3D(2 * nx, 2 * nz, 0)
-                          + 0.25 * simplex.noise3D(4 * nx, 4 * nz, 0);
-                    
-                    e = e / (1.0 + 0.5 + 0.25); // Normalizar
-                    
-                    // Curva de poder para hacer picos afilados
-                    e = Math.pow(Math.abs(e), 2.0) * Math.sign(e);
-                    
-                    // Suavizar la transición del borde del santuario a las montañas
+                    const nx = x * 0.05; const nz = z * 0.05;
+                    let e = 1.0 * simplex.noise3D(1 * nx, 1 * nz, 0) + 0.5 * simplex.noise3D(2 * nx, 2 * nz, 0) + 0.25 * simplex.noise3D(4 * nx, 4 * nz, 0);
+                    e = e / (1.0 + 0.5 + 0.25); e = Math.pow(Math.abs(e), 2.0) * Math.sign(e);
                     const blend = smoothstep(15.0, 40.0, dist);
-                    elevation = e * 30.0 * blend; // Altura máxima 30m
+                    elevation = e * 30.0 * blend; 
                 }
-                
-                vertices[i + 1] = elevation; // Asignar altura Y
+                vertices[i + 1] = elevation; 
             }
-            
             terrainGeo.computeVertexNormals();
 
             terrainUniforms = { uTime: { value: 0 } };
             const terrainMat = new THREE.ShaderMaterial({
                 uniforms: terrainUniforms,
-                vertexShader: `
-                    varying float vElevation; varying vec2 vUv; varying vec3 vNormal;
-                    void main() {
-                        vElevation = position.y; vUv = uv; vNormal = normalize(normalMatrix * normal);
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    varying float vElevation; varying vec2 vUv; varying vec3 vNormal; uniform float uTime;
-                    void main() {
-                        // Colores de la montaña cósmica
-                        vec3 baseColor = vec3(0.01, 0.0, 0.05); // Profundo abismo
-                        vec3 peakColor = vec3(1.0, 0.2, 0.8); // Picos magenta iluminados
-                        vec3 gridColor = vec3(0.0, 1.0, 1.0); // Retícula cian Tron-style
-                        
-                        // Mezcla basada en la elevación
-                        float h = clamp(vElevation / 30.0, 0.0, 1.0);
-                        vec3 color = mix(baseColor, peakColor, h);
-                        
-                        // Añadir retícula tecnológica (Grid)
-                        vec2 grid = abs(fract(vUv * 100.0 - 0.5) - 0.5) / fwidth(vUv * 100.0);
-                        float line = min(grid.x, grid.y);
-                        float gridAlpha = 1.0 - min(line, 1.0);
-                        
-                        // Pulsación de la retícula
-                        float pulse = sin(vElevation * 2.0 - uTime * 5.0) * 0.5 + 0.5;
-                        color += gridColor * gridAlpha * pulse * h * 2.0;
-
-                        // Efecto Fresnel en los bordes de la geometría
-                        float fresnel = dot(vec3(0.0, 0.0, 1.0), vNormal);
-                        fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
-                        color += vec3(0.5, 0.0, 1.0) * pow(fresnel, 3.0);
-
-                        gl_FragColor = vec4(color, 1.0);
-                    }
-                `,
-                wireframe: false,
-                side: THREE.DoubleSide
+                vertexShader: `varying float vElevation; varying vec2 vUv; varying vec3 vNormal; void main() { vElevation = position.y; vUv = uv; vNormal = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `varying float vElevation; varying vec2 vUv; varying vec3 vNormal; uniform float uTime; void main() { vec3 baseColor = vec3(0.01, 0.0, 0.05); vec3 peakColor = vec3(1.0, 0.2, 0.8); vec3 gridColor = vec3(0.0, 1.0, 1.0); float h = clamp(vElevation / 30.0, 0.0, 1.0); vec3 color = mix(baseColor, peakColor, h); vec2 grid = abs(fract(vUv * 100.0 - 0.5) - 0.5) / fwidth(vUv * 100.0); float line = min(grid.x, grid.y); float gridAlpha = 1.0 - min(line, 1.0); float pulse = sin(vElevation * 2.0 - uTime * 5.0) * 0.5 + 0.5; color += gridColor * gridAlpha * pulse * h * 2.0; float fresnel = dot(vec3(0.0, 0.0, 1.0), vNormal); fresnel = clamp(1.0 - fresnel, 0.0, 1.0); color += vec3(0.5, 0.0, 1.0) * pow(fresnel, 3.0); gl_FragColor = vec4(color, 1.0); }`,
+                wireframe: false, side: THREE.DoubleSide
             });
 
             proceduralTerrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-            proceduralTerrainMesh.position.y = -1.6; // Debajo del mandala
-            terrainGroup.add(proceduralTerrainMesh);
-            universeGroup.add(terrainGroup);
+            proceduralTerrainMesh.position.y = -1.6; terrainGroup.add(proceduralTerrainMesh); universeGroup.add(terrainGroup);
         }
 
-        // Función matemática auxiliar
-        function smoothstep(edge0, edge1, x) {
-            const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-            return t * t * (3 - 2 * t);
-        }
+        function smoothstep(edge0, edge1, x) { const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0))); return t * t * (3 - 2 * t); }
 
-        // 6.2 Generador Fractal de Árboles de la Vida Mágicos
         function crearArbolesFractalesDeLaVida() {
-            const treeMat = new THREE.MeshStandardMaterial({ 
-                color: 0x220033, emissive: 0x110022, roughness: 0.8, metalness: 0.2
-            });
-            const leafMat = new THREE.MeshBasicMaterial({ 
-                color: 0x00ffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
-            });
+            const treeMat = new THREE.MeshStandardMaterial({ color: 0x220033, emissive: 0x110022, roughness: 0.8, metalness: 0.2 });
+            const leafMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
 
-            // Función recursiva para construir geometría del árbol
             function buildBranch(startPoint, dir, length, radius, depth, maxDepth, group) {
                 if(depth >= maxDepth) {
-                    // Añadir hoja luminosa en la punta
-                    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), leafMat);
-                    leaf.position.copy(startPoint);
-                    leaf.lookAt(startPoint.clone().add(dir));
-                    group.add(leaf);
-                    return;
+                    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), leafMat); leaf.position.copy(startPoint); leaf.lookAt(startPoint.clone().add(dir)); group.add(leaf); return;
                 }
-
                 const endPoint = startPoint.clone().add(dir.clone().multiplyScalar(length));
-                
-                // Cilindro para la rama
-                const branchGeo = new THREE.CylinderGeometry(radius * 0.7, radius, length, 8);
-                // Mover pivote a la base
-                branchGeo.translate(0, length/2, 0); 
-                
-                const branch = new THREE.Mesh(branchGeo, treeMat);
-                branch.position.copy(startPoint);
-                
-                // Orientación de la rama
-                const axis = new THREE.Vector3(0, 1, 0);
-                branch.quaternion.setFromUnitVectors(axis, dir.clone().normalize());
-                group.add(branch);
+                const branchGeo = new THREE.CylinderGeometry(radius * 0.7, radius, length, 8); branchGeo.translate(0, length/2, 0); 
+                const branch = new THREE.Mesh(branchGeo, treeMat); branch.position.copy(startPoint);
+                const axis = new THREE.Vector3(0, 1, 0); branch.quaternion.setFromUnitVectors(axis, dir.clone().normalize()); group.add(branch);
 
-                // Ramificar (2 o 3 ramas)
                 const numBranches = depth === 0 ? 3 : 2;
                 for(let i=0; i<numBranches; i++) {
-                    const spread = 0.5 + Math.random() * 0.5; // Ángulo de apertura
-                    const angle = (i / numBranches) * Math.PI * 2 + (Math.random() * 0.5);
-                    
-                    // Calcular nueva dirección con perturbación esférica
-                    const newDir = dir.clone().normalize();
-                    const perp1 = new THREE.Vector3(1,0,0).cross(newDir).normalize();
+                    const spread = 0.5 + Math.random() * 0.5; const angle = (i / numBranches) * Math.PI * 2 + (Math.random() * 0.5);
+                    const newDir = dir.clone().normalize(); const perp1 = new THREE.Vector3(1,0,0).cross(newDir).normalize();
                     if(perp1.lengthSq() < 0.1) perp1.set(0,0,1).cross(newDir).normalize();
                     const perp2 = perp1.clone().cross(newDir).normalize();
-                    
-                    newDir.multiplyScalar(Math.cos(spread));
-                    newDir.add(perp1.multiplyScalar(Math.sin(spread) * Math.cos(angle)));
-                    newDir.add(perp2.multiplyScalar(Math.sin(spread) * Math.sin(angle)));
-                    
+                    newDir.multiplyScalar(Math.cos(spread)); newDir.add(perp1.multiplyScalar(Math.sin(spread) * Math.cos(angle))); newDir.add(perp2.multiplyScalar(Math.sin(spread) * Math.sin(angle)));
                     buildBranch(endPoint, newDir.normalize(), length * 0.75, radius * 0.6, depth + 1, maxDepth, group);
                 }
             }
 
-            // Distribuir 8 Árboles Colosales en el horizonte
             for(let i=0; i<8; i++) {
-                const treeGroup = new THREE.Group();
-                const angle = (i / 8) * Math.PI * 2;
-                const distance = 25 + Math.random() * 5; // A 25 metros
-                
+                const treeGroup = new THREE.Group(); const angle = (i / 8) * Math.PI * 2; const distance = 25 + Math.random() * 5; 
                 treeGroup.position.set(Math.cos(angle)*distance, -1.5, Math.sin(angle)*distance);
-                
-                // Raíz orientada hacia arriba con ligera inclinación al centro
-                const rootDir = new THREE.Vector3(
-                    -Math.cos(angle) * 0.2, // Apunta un poco al centro
-                    1.0, 
-                    -Math.sin(angle) * 0.2
-                ).normalize();
-                
-                buildBranch(new THREE.Vector3(0,0,0), rootDir, 6.0, 0.8, 0, 5, treeGroup); // 5 niveles de recursión
-                
-                universeGroup.add(treeGroup);
-                fractalTrees.push(treeGroup);
+                const rootDir = new THREE.Vector3(-Math.cos(angle) * 0.2, 1.0, -Math.sin(angle) * 0.2).normalize();
+                buildBranch(new THREE.Vector3(0,0,0), rootDir, 6.0, 0.8, 0, 5, treeGroup); 
+                universeGroup.add(treeGroup); fractalTrees.push(treeGroup);
             }
         }
 
-        // 6.3 Textos Esféricos Masivos (El Códice)
         function crearTextosEsfericos100() {
-            // Renderizado hiper-optimizado usando Sprites
             frasesAmor.forEach((texto, index) => {
-                const canvas = document.createElement('canvas'); 
-                const ctx = canvas.getContext('2d'); 
-                canvas.width = 2048; canvas.height = 256; 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.font = "italic 900 80px Georgia"; 
-                ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                
-                // Efecto Multi-Shadow Neón
-                ctx.shadowColor = "#ff1493"; ctx.shadowBlur = 40; 
-                ctx.fillStyle = "#ffffff"; 
-                ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
-                ctx.shadowBlur = 15; ctx.shadowColor = "#00ffff";
-                ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
-
-                const texture = new THREE.CanvasTexture(canvas);
-                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 2048; canvas.height = 256; 
+                ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.font = "italic 900 80px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ff1493"; ctx.shadowBlur = 40; ctx.fillStyle = "#ffffff"; ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+                ctx.shadowBlur = 15; ctx.shadowColor = "#00ffff"; ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+                const texture = new THREE.CanvasTexture(canvas); texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
                 const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.AdditiveBlending });
-                const sprite = new THREE.Sprite(spriteMaterial);
-                sprite.scale.set(10, 1.25, 1); // Más grandes
-                
-                // Matemáticas Esféricas Perfectas (Distribución de Fibonacci adaptada)
-                const phi = Math.acos(1 - 2 * (index + 0.5) / frasesAmor.length);
-                const theta = Math.PI * (1 + Math.sqrt(5)) * index; // Golden angle
-                
-                const radius = 8.0 + (index % 5); // Profundidades intercaladas
-                
-                sprite.userData = { 
-                    theta: theta,
-                    phi: phi,
-                    radius: radius, 
-                    speed: 0.02 + Math.random() * 0.05,
-                    verticalSway: Math.random() * Math.PI * 2,
-                    originY: radius * Math.cos(phi) // Guardar Y original
-                };
-                
-                // Evitar que colisionen con el suelo
-                if(sprite.userData.originY < 1.0) {
-                    sprite.userData.originY = 1.0 + Math.random() * 5.0;
-                }
-
-                universeGroup.add(sprite); 
-                floatingTexts.push(sprite);
+                const sprite = new THREE.Sprite(spriteMaterial); sprite.scale.set(10, 1.25, 1); 
+                const phi = Math.acos(1 - 2 * (index + 0.5) / frasesAmor.length); const theta = Math.PI * (1 + Math.sqrt(5)) * index; 
+                const radius = 8.0 + (index % 5); 
+                sprite.userData = { theta: theta, phi: phi, radius: radius, speed: 0.02 + Math.random() * 0.05, verticalSway: Math.random() * Math.PI * 2, originY: radius * Math.cos(phi) };
+                if(sprite.userData.originY < 1.0) sprite.userData.originY = 1.0 + Math.random() * 5.0;
+                universeGroup.add(sprite); floatingTexts.push(sprite);
             });
         }
 
-        // --- SISTEMAS CENTRALES DEL CORAZÓN ---
-
         function crearCorazonTetradimensional() {
             universeGroup.add(mainHeartGroup);
-            
-            // Extrusión Compleja
             const heartShape = new THREE.Shape(); const x = 0, y = 0;
             heartShape.moveTo( x + 5, y + 5 ); heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y ); heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7, x - 6, y + 7 ); heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 ); heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 ); heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y ); heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
             const extrudeSettings = { depth: 4.0, bevelEnabled: true, bevelSegments: 32, steps: 16, bevelSize: 3.0, bevelThickness: 3.0 };
-            const geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings ); 
-            geometry.computeBoundingBox(); geometry.translate( -5, -10, -2.0 ); geometry.scale(0.03, 0.03, 0.03); geometry.rotateZ(Math.PI); 
+            const geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings ); geometry.computeBoundingBox(); geometry.translate( -5, -10, -2.0 ); geometry.scale(0.03, 0.03, 0.03); geometry.rotateZ(Math.PI); 
             geometry.computeBoundingBox(); const center = new THREE.Vector3(); geometry.boundingBox.getCenter(center); geometry.translate(-center.x, -center.y, -center.z);
 
-            // Shaders de Refracción Cuántica (Avanzados)
             heartUniforms = { uTime: { value: 0.0 } };
             const outerMat = new THREE.ShaderMaterial({
                 uniforms: heartUniforms,
-                vertexShader: `
-                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime; 
-                    void main() { 
-                        vUv = uv; vNormal = normalize(normalMatrix * normal); vec3 pos = position; 
-                        // Micro-vibraciones paramétricas
-                        float wave = sin(pos.x * 25.0 + uTime * 4.0) * 0.008 + cos(pos.y * 25.0 + uTime * 3.0) * 0.008; 
-                        pos += normal * wave; 
-                        vPosition = (modelMatrix * vec4(pos, 1.0)).xyz; 
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; 
-                    void main() { 
-                        vec3 color1 = vec3(1.0, 0.0, 0.3); // Carmesí 
-                        vec3 color2 = vec3(0.4, 0.0, 1.0); // Violeta 
-                        float mixValue = sin(vPosition.y * 15.0 + uTime * 2.5) * 0.5 + 0.5; 
-                        vec3 color = mix(color1, color2, mixValue); 
-                        vec3 viewDir = normalize(cameraPosition - vPosition); 
-                        float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0); 
-                        float fresnelPow = pow(fresnel, 2.0); 
-                        float pulse = pow(abs(sin(uTime * 1.5)), 10.0) + pow(abs(sin(uTime * 1.5 + 0.35)), 10.0) * 0.6; 
-                        color += vec3(1.0, 0.8, 1.0) * fresnelPow * 2.5; 
-                        color += vec3(1.0, 0.2, 0.6) * pulse * 2.0; 
-                        
-                        // Rayos internos de luz (Volumetric Fake)
-                        float rays = pow(fract(sin(dot(vNormal.xy+uTime*0.1, vec2(12.98,78.23))) * 43758.54), 10.0);
-                        color += vec3(1.0) * rays * pulse;
-
-                        gl_FragColor = vec4(color, 0.8 + fresnelPow * 0.2); 
-                    }
-                `,
+                vertexShader: `varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime; void main() { vUv = uv; vNormal = normalize(normalMatrix * normal); vec3 pos = position; float wave = sin(pos.x * 25.0 + uTime * 4.0) * 0.008 + cos(pos.y * 25.0 + uTime * 3.0) * 0.008; pos += normal * wave; vPosition = (modelMatrix * vec4(pos, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; void main() { vec3 color1 = vec3(1.0, 0.0, 0.3); vec3 color2 = vec3(0.4, 0.0, 1.0); float mixValue = sin(vPosition.y * 15.0 + uTime * 2.5) * 0.5 + 0.5; vec3 color = mix(color1, color2, mixValue); vec3 viewDir = normalize(cameraPosition - vPosition); float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0); float fresnelPow = pow(fresnel, 2.0); float pulse = pow(abs(sin(uTime * 1.5)), 10.0) + pow(abs(sin(uTime * 1.5 + 0.35)), 10.0) * 0.6; color += vec3(1.0, 0.8, 1.0) * fresnelPow * 2.5; color += vec3(1.0, 0.2, 0.6) * pulse * 2.0; float rays = pow(fract(sin(dot(vNormal.xy+uTime*0.1, vec2(12.98,78.23))) * 43758.54), 10.0); color += vec3(1.0) * rays * pulse; gl_FragColor = vec4(color, 0.8 + fresnelPow * 0.2); }`,
                 transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
             });
             const outerMesh = new THREE.Mesh(geometry, outerMat); mainHeartGroup.add(outerMesh);
 
             const innerGeo = geometry.clone(); innerGeo.scale(0.8, 0.8, 0.8); innerCoreUniforms = { uTime: { value: 0 } };
-            const innerMat = new THREE.ShaderMaterial({ 
-                uniforms: innerCoreUniforms, 
-                vertexShader: `varying vec3 vPos; void main() { vPos=position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, 
-                fragmentShader: `uniform float uTime; varying vec3 vPos; void main() { float pulse = sin(vPos.y * 40.0 - uTime * 12.0) * 0.5 + 0.5; vec3 coreColor = mix(vec3(1.0, 0.9, 0.0), vec3(1.0, 0.0, 0.0), pulse); gl_FragColor = vec4(coreColor, 1.0); }` 
-            });
+            const innerMat = new THREE.ShaderMaterial({ uniforms: innerCoreUniforms, vertexShader: `varying vec3 vPos; void main() { vPos=position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; varying vec3 vPos; void main() { float pulse = sin(vPos.y * 40.0 - uTime * 12.0) * 0.5 + 0.5; vec3 coreColor = mix(vec3(1.0, 0.9, 0.0), vec3(1.0, 0.0, 0.0), pulse); gl_FragColor = vec4(coreColor, 1.0); }` });
             const innerMesh = new THREE.Mesh(innerGeo, innerMat); mainHeartGroup.add(innerMesh);
 
             const wireGeo = geometry.clone(); wireGeo.scale(1.08, 1.08, 1.08); wireframeUniforms = { uTime: { value: 0 } };
@@ -957,106 +727,59 @@
             const wireMesh = new THREE.Mesh(wireGeo, wireMat); mainHeartGroup.add(wireMesh);
         }
 
-        // HALOS SAGRADOS (DIBUJADOS A MANO EN CANVAS 2D)
         function crearHalosSagradosProcedurales() {
             sacredHalosGroup = new THREE.Group();
-            
             function generarTexturaHalo(radi, colorPrincipal, incluirRunas, grosor) {
                 const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 2048; const ctx = canvas.getContext('2d');
-                const cx = 1024, cy = 1024; 
-                ctx.strokeStyle = colorPrincipal; ctx.lineWidth = grosor; ctx.shadowColor = colorPrincipal; ctx.shadowBlur = 30;
-                
-                // Anillo exterior triple
-                ctx.beginPath(); ctx.arc(cx, cy, radi, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(cx, cy, radi - 15, 0, Math.PI * 2); ctx.lineWidth = 1; ctx.stroke();
-                ctx.beginPath(); ctx.arc(cx, cy, radi + 15, 0, Math.PI * 2); ctx.stroke();
-
-                // Geometría compleja interna (Estrella de múltiples puntas)
-                ctx.lineWidth = grosor * 0.5;
-                const puntas = 48;
-                for(let i=0; i<puntas; i++) {
-                    const angle1 = (i/puntas) * Math.PI * 2;
-                    const angle2 = ((i+3)%puntas/puntas) * Math.PI * 2;
-                    ctx.beginPath(); 
-                    ctx.moveTo(cx + Math.cos(angle1)*radi*0.95, cy + Math.sin(angle1)*radi*0.95); 
-                    ctx.lineTo(cx + Math.cos(angle2)*radi*0.85, cy + Math.sin(angle2)*radi*0.85); 
-                    ctx.stroke();
-                }
-
+                const cx = 1024, cy = 1024; ctx.strokeStyle = colorPrincipal; ctx.lineWidth = grosor; ctx.shadowColor = colorPrincipal; ctx.shadowBlur = 30;
+                ctx.beginPath(); ctx.arc(cx, cy, radi, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(cx, cy, radi - 15, 0, Math.PI * 2); ctx.lineWidth = 1; ctx.stroke(); ctx.beginPath(); ctx.arc(cx, cy, radi + 15, 0, Math.PI * 2); ctx.stroke();
+                ctx.lineWidth = grosor * 0.5; const puntas = 48;
+                for(let i=0; i<puntas; i++) { const angle1 = (i/puntas) * Math.PI * 2; const angle2 = ((i+3)%puntas/puntas) * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(angle1)*radi*0.95, cy + Math.sin(angle1)*radi*0.95); ctx.lineTo(cx + Math.cos(angle2)*radi*0.85, cy + Math.sin(angle2)*radi*0.85); ctx.stroke(); }
                 if(incluirRunas) {
                     ctx.font = "bold 35px Arial"; ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     const mantras = "∞ AMOR ∞ VERDAD ∞ LUZ ∞ VIDA ∞ PAZ ∞ ALMA ∞ ETERNIDAD ∞ DESTINO ".repeat(3).split(" ");
-                    for(let i=0; i<mantras.length; i++) {
-                        const angle = (i/mantras.length) * Math.PI * 2; 
-                        const px = cx + Math.cos(angle) * (radi * 0.75); 
-                        const py = cy + Math.sin(angle) * (radi * 0.75);
-                        ctx.save(); ctx.translate(px, py); ctx.rotate(angle + Math.PI/2); ctx.fillText(mantras[i], 0, 0); ctx.restore();
-                    }
+                    for(let i=0; i<mantras.length; i++) { const angle = (i/mantras.length) * Math.PI * 2; const px = cx + Math.cos(angle) * (radi * 0.75); const py = cy + Math.sin(angle) * (radi * 0.75); ctx.save(); ctx.translate(px, py); ctx.rotate(angle + Math.PI/2); ctx.fillText(mantras[i], 0, 0); ctx.restore(); }
                 }
                 return new THREE.CanvasTexture(canvas);
             }
-
             const mat1 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(900, '#ff1493', true, 6), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
             const mat2 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(800, '#00ffff', false, 4), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
             const mat3 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(950, '#ffd700', true, 8), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-            
             const planeGeo = new THREE.PlaneGeometry(4, 4);
             const halo1 = new THREE.Mesh(planeGeo, mat1); const halo2 = new THREE.Mesh(planeGeo, mat2); const halo3 = new THREE.Mesh(planeGeo, mat3);
-            
             halo1.rotation.x = Math.PI / 2; halo2.rotation.y = Math.PI / 2; halo3.rotation.x = Math.PI / 4; halo3.rotation.y = Math.PI / 4;
             sacredHalosGroup.add(halo1, halo2, halo3); mainHeartGroup.add(sacredHalosGroup); 
         }
 
-        // ESFERA ARMILAR 360 GIGANTE (Envolviendo al jugador)
         function crearEsferaArmilarCelestial() {
             armillarySphereGroup = new THREE.Group();
             function generarTexturaRuna(color) {
                 const canvas = document.createElement('canvas'); canvas.width = 4096; canvas.height = 128; const ctx = canvas.getContext('2d');
                 ctx.fillStyle = color; ctx.font = "bold 70px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.shadowColor = color; ctx.shadowBlur = 30;
-                const texto = "✦ CONEXIÓN ✦ CÓSMICA ✦ ALMAS ✦ GEMELAS ✦ ".repeat(8);
-                ctx.fillText(texto, 2048, 64);
-                // Borde brillante
+                const texto = "✦ CONEXIÓN ✦ CÓSMICA ✦ ALMAS ✦ GEMELAS ✦ ".repeat(8); ctx.fillText(texto, 2048, 64);
                 ctx.strokeStyle = "#ffffff"; ctx.lineWidth=2; ctx.strokeRect(0, 10, 4096, 108);
-                const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(8, 1);
-                return tex;
+                const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(8, 1); return tex;
             }
-
-            const rad = 35; // 35 Metros de radio
+            const rad = 35; 
             const matOr = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#ffd700'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
             const matCian = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#00ffff'), transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
             const matMagenta = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#ff1493'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-
-            const r1 = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1.5, 128, 1, true), matOr);
-            const r2 = new THREE.Mesh(new THREE.CylinderGeometry(rad+1, rad+1, 0.8, 128, 1, true), matCian);
-            const r3 = new THREE.Mesh(new THREE.CylinderGeometry(rad-1, rad-1, 2.0, 128, 1, true), matMagenta);
-
+            const r1 = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1.5, 128, 1, true), matOr); const r2 = new THREE.Mesh(new THREE.CylinderGeometry(rad+1, rad+1, 0.8, 128, 1, true), matCian); const r3 = new THREE.Mesh(new THREE.CylinderGeometry(rad-1, rad-1, 2.0, 128, 1, true), matMagenta);
             r1.rotation.x = Math.PI / 2; r2.rotation.y = Math.PI / 4; r2.rotation.x = Math.PI / 4; r3.rotation.y = -Math.PI / 4; r3.rotation.x = Math.PI / 3;
             armillarySphereGroup.add(r1, r2, r3); universeGroup.add(armillarySphereGroup); 
         }
 
-        // LOTO DE CRISTAL
         function crearLotoDeCristall() {
             crystalLotusGroup = new THREE.Group();
             const glassMat = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0.0 } },
                 vertexShader: `varying vec3 vNormal; varying vec3 vViewPosition; void main() { vNormal = normalize(normalMatrix * normal); vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); vViewPosition = -mvPosition.xyz; gl_Position = projectionMatrix * mvPosition; }`,
-                fragmentShader: `
-                    uniform float uTime; varying vec3 vNormal; varying vec3 vViewPosition;
-                    void main() {
-                        vec3 normal = normalize(vNormal); vec3 viewDir = normalize(vViewPosition);
-                        float fresnel = dot(viewDir, normal); fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
-                        vec3 color = vec3(0.0);
-                        color.r = sin(fresnel * 12.0 + uTime*1.2) * 0.5 + 0.5; color.g = sin(fresnel * 18.0 + uTime * 1.8) * 0.5 + 0.5; color.b = sin(fresnel * 24.0 + uTime * 2.4) * 0.5 + 0.5;
-                        color *= pow(fresnel, 1.5) * 2.5; color += vec3(1.0, 1.0, 1.0) * pow(fresnel, 6.0) * 2.0; 
-                        gl_FragColor = vec4(color, fresnel * 0.9);
-                    }
-                `,
+                fragmentShader: `uniform float uTime; varying vec3 vNormal; varying vec3 vViewPosition; void main() { vec3 normal = normalize(vNormal); vec3 viewDir = normalize(vViewPosition); float fresnel = dot(viewDir, normal); fresnel = clamp(1.0 - fresnel, 0.0, 1.0); vec3 color = vec3(0.0); color.r = sin(fresnel * 12.0 + uTime*1.2) * 0.5 + 0.5; color.g = sin(fresnel * 18.0 + uTime * 1.8) * 0.5 + 0.5; color.b = sin(fresnel * 24.0 + uTime * 2.4) * 0.5 + 0.5; color *= pow(fresnel, 1.5) * 2.5; color += vec3(1.0, 1.0, 1.0) * pow(fresnel, 6.0) * 2.0; gl_FragColor = vec4(color, fresnel * 0.9); }`,
                 transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
             });
-
-            for(let i=0; i<16; i++) { // 16 Pétalos base
+            for(let i=0; i<16; i++) { 
                 const petalGeo = new THREE.PlaneGeometry(1.0, 2.0, 16, 16); const pos = petalGeo.attributes.position;
-                for(let j=0; j<pos.count; j++) { const x = pos.getX(j); const y = pos.getY(j); pos.setZ(j, (x*x + y*y) * -0.6); } // Más curvos
+                for(let j=0; j<pos.count; j++) { const x = pos.getX(j); const y = pos.getY(j); pos.setZ(j, (x*x + y*y) * -0.6); } 
                 petalGeo.computeVertexNormals(); petalGeo.translate(0, 1.0, 0); 
                 const petal = new THREE.Mesh(petalGeo, glassMat); petal.rotation.y = (i / 16) * Math.PI * 2; petal.rotation.x = Math.PI / 3; 
                 petal.userData = { phase: i }; crystalLotusGroup.add(petal);
@@ -1064,47 +787,24 @@
             crystalLotusGroup.position.y = -0.8; mainHeartGroup.add(crystalLotusGroup);
         }
 
-        // ALES DE LUZ
         function crearAlesCelestialsMagnificas() {
             const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 2048; const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,2048,2048); ctx.globalCompositeOperation = "lighter";
-            for(let i=0; i<150; i++) { 
-                ctx.beginPath(); ctx.moveTo(0, 1024); 
-                const cp1x = 500 + Math.random() * 500; const cp1y = 200 + Math.random() * 800; 
-                const cp2x = 1000 + Math.random() * 600; const cp2y = Math.random() * 1600; 
-                const endX = 1500 + Math.random() * 548; const endY = Math.random() * 2048; 
-                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY); 
-                const r = 200 + Math.random() * 55; const g = 100 + Math.random() * 155; const b = 255; 
-                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 + Math.random()*0.3})`; ctx.lineWidth = 2 + Math.random() * 12; ctx.shadowColor = `rgba(255, 255, 255, 1.0)`; ctx.shadowBlur = 15; ctx.stroke(); 
-            }
+            for(let i=0; i<150; i++) { ctx.beginPath(); ctx.moveTo(0, 1024); const cp1x = 500 + Math.random() * 500; const cp1y = 200 + Math.random() * 800; const cp2x = 1000 + Math.random() * 600; const cp2y = Math.random() * 1600; const endX = 1500 + Math.random() * 548; const endY = Math.random() * 2048; ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY); const r = 200 + Math.random() * 55; const g = 100 + Math.random() * 155; const b = 255; ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 + Math.random()*0.3})`; ctx.lineWidth = 2 + Math.random() * 12; ctx.shadowColor = `rgba(255, 255, 255, 1.0)`; ctx.shadowBlur = 15; ctx.stroke(); }
             const wingTex = new THREE.CanvasTexture(canvas); const wingMat = new THREE.MeshBasicMaterial({ map: wingTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
             wingL = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), wingMat); wingL.geometry.translate(3, 0, 0); wingL.position.set(0, 0, -0.4); wingR = new THREE.Mesh(wingL.geometry, wingMat); wingR.rotation.y = Math.PI; wingR.position.set(0, 0, -0.4); mainHeartGroup.add(wingL); mainHeartGroup.add(wingR);
         }
 
-        // EL HILO ROJO MATEMÁTICO
         function crearHiloRojoCuantico() {
             redThreadCurve = new THREE.QuadraticBezierCurve3( new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) );
             const numPoints = 150; const threadGeo = new THREE.BufferGeometry(); const positions = new Float32Array(numPoints * 3); threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            
-            // Shader para el hilo brillante pulsante
-            const threadMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: {value: 0} },
-                vertexShader: `varying float vRatio; void main() { vRatio = float(gl_VertexID) / 150.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `uniform float uTime; varying float vRatio; void main() { float glow = sin(vRatio * 50.0 - uTime * 10.0) * 0.5 + 0.5; vec3 col = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 0.5, 0.5), glow); gl_FragColor = vec4(col, 0.8 + glow*0.2); }`,
-                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
-            });
-            
+            const threadMat = new THREE.ShaderMaterial({ uniforms: { uTime: {value: 0} }, vertexShader: `varying float vRatio; void main() { vRatio = float(gl_VertexID) / 150.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; varying float vRatio; void main() { float glow = sin(vRatio * 50.0 - uTime * 10.0) * 0.5 + 0.5; vec3 col = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 0.5, 0.5), glow); gl_FragColor = vec4(col, 0.8 + glow*0.2); }`, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
             redThreadLine = new THREE.Line(threadGeo, threadMat); universeGroup.add(redThreadLine);
-
-            const pulseGeo = new THREE.SphereGeometry(0.12, 32, 32); const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
-            threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
-            const auraGeo = new THREE.SphereGeometry(0.3, 32, 32); const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
-            threadPulse.add(new THREE.Mesh(auraGeo, auraMat)); universeGroup.add(threadPulse);
+            const pulseGeo = new THREE.SphereGeometry(0.12, 32, 32); const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
+            const auraGeo = new THREE.SphereGeometry(0.3, 32, 32); const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }); threadPulse.add(new THREE.Mesh(auraGeo, auraMat)); universeGroup.add(threadPulse);
         }
 
-        // --- SISTEMAS DE 360 GRADOS (EL MUNDO) ---
-
         function crearSolMandalaLoto() {
-            const floorGeo = new THREE.PlaneGeometry(150, 150, 128, 128); // Masivo
+            const floorGeo = new THREE.PlaneGeometry(150, 150, 128, 128); 
             lotusUniforms = { uTime: { value: 0.0 } };
             const floorMat = new THREE.ShaderMaterial({
                 uniforms: lotusUniforms,
@@ -1137,7 +837,6 @@
                 transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
             });
 
-            // Tres anillos masivos
             const rings = [ {count: 12, rad: 18}, {count: 24, rad: 35}, {count: 36, rad: 60} ];
             rings.forEach(ring => {
                 for(let i = 0; i < ring.count; i++) {
@@ -1148,97 +847,37 @@
             universeGroup.add(pillarsGroup);
         }
 
-        // --- SISTEMAS DE PARTÍCULAS Y DINÁMICOS ---
-
         function crearTornadoDePetalosMasivo() {
             const petalGeo = new THREE.PlaneGeometry(0.1, 0.15, 6, 6);
             const pos = petalGeo.attributes.position.array;
-            for(let i=0; i<pos.length; i+=3) {
-                const x = pos[i]; const y = pos[i+1];
-                pos[i+2] = Math.sin(x*10)*0.03 + Math.cos(y*10)*0.02; // Pliegue orgánico
-            }
+            for(let i=0; i<pos.length; i+=3) { const x = pos[i]; const y = pos[i+1]; pos[i+2] = Math.sin(x*10)*0.03 + Math.cos(y*10)*0.02; }
             petalGeo.computeVertexNormals();
-            
             const petalMat = new THREE.MeshStandardMaterial({ color: 0xff1493, emissive: 0x550022, side: THREE.DoubleSide, transparent: true, opacity: 0.9, roughness: 0.4 });
 
-            for(let i=0; i<1500; i++) { // MASIVO
+            for(let i=0; i<1500; i++) { 
                 const petal = new THREE.Mesh(petalGeo, petalMat);
-                petal.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radiusOffset: Math.random() * 5.0,
-                    baseRadius: 1.0 + Math.random() * 25.0, // Envuelve toda el área visible
-                    height: -2 + Math.random() * 30,
-                    rotSpeed: 0.01 + Math.random() * 0.04, 
-                    riseSpeed: 0.015 + Math.random() * 0.05,
-                    tumbleX: Math.random() * 0.1,
-                    tumbleY: Math.random() * 0.1,
-                    tumbleZ: Math.random() * 0.1
-                };
+                petal.userData = { angle: Math.random() * Math.PI * 2, radiusOffset: Math.random() * 5.0, baseRadius: 1.0 + Math.random() * 25.0, height: -2 + Math.random() * 30, rotSpeed: 0.01 + Math.random() * 0.04, riseSpeed: 0.015 + Math.random() * 0.05, tumbleX: Math.random() * 0.1, tumbleY: Math.random() * 0.1, tumbleZ: Math.random() * 0.1 };
                 universeGroup.add(petal); petals.push(petal);
             }
         }
 
         function crearGalaxiaParticulas10K() {
-            const particleCount = 15000; // SUPER MASIVO
-            const posArray = new Float32Array(particleCount * 3);
-            const colorsArray = new Float32Array(particleCount * 3);
-            const sizesArray = new Float32Array(particleCount);
-
+            const particleCount = 15000; 
+            const posArray = new Float32Array(particleCount * 3); const colorsArray = new Float32Array(particleCount * 3); const sizesArray = new Float32Array(particleCount);
             for(let i = 0; i < particleCount; i++) {
-                const radius = 3 + Math.random() * 80; 
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos((Math.random() * 2) - 1);
-                
-                posArray[i*3] = radius * Math.sin(phi) * Math.cos(theta); 
-                posArray[i*3+1] = radius * Math.sin(phi) * Math.sin(theta); 
-                posArray[i*3+2] = radius * Math.cos(phi);
-                
-                const rand = Math.random();
-                let r=1, g=0.2, b=0.8; 
-                if(rand>0.4){r=0; g=0.9; b=1;} 
-                if(rand>0.7){r=1; g=0.9; b=0;} 
-                if(rand>0.9){r=1; g=1; b=1;} 
-                colorsArray[i*3]=r; colorsArray[i*3+1]=g; colorsArray[i*3+2]=b;
-                
-                sizesArray[i] = Math.random() * 2.0 + 0.5; // Variedad en tamaños
+                const radius = 3 + Math.random() * 80; const theta = Math.random() * Math.PI * 2; const phi = Math.acos((Math.random() * 2) - 1);
+                posArray[i*3] = radius * Math.sin(phi) * Math.cos(theta); posArray[i*3+1] = radius * Math.sin(phi) * Math.sin(theta); posArray[i*3+2] = radius * Math.cos(phi);
+                const rand = Math.random(); let r=1, g=0.2, b=0.8; if(rand>0.4){r=0; g=0.9; b=1;} if(rand>0.7){r=1; g=0.9; b=0;} if(rand>0.9){r=1; g=1; b=1;} 
+                colorsArray[i*3]=r; colorsArray[i*3+1]=g; colorsArray[i*3+2]=b; sizesArray[i] = Math.random() * 2.0 + 0.5; 
             }
-            
-            const geo = new THREE.BufferGeometry(); 
-            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); 
-            geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
-            geo.setAttribute('size', new THREE.BufferAttribute(sizesArray, 1));
-            
-            // Custom Shader Material para tener tamaños individuales por partícula
+            const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3)); geo.setAttribute('size', new THREE.BufferAttribute(sizesArray, 1));
             const mat = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0 } },
-                vertexShader: `
-                    attribute float size; varying vec3 vColor; varying vec2 vUv; uniform float uTime;
-                    void main() {
-                        vColor = color; vUv = uv;
-                        vec3 pos = position;
-                        // Pequeño temblor
-                        pos.x += sin(uTime * 2.0 + pos.y) * 0.05;
-                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                        gl_PointSize = size * (300.0 / -mvPosition.z);
-                        gl_Position = projectionMatrix * mvPosition;
-                    }
-                `,
-                fragmentShader: `
-                    varying vec3 vColor;
-                    void main() {
-                        // Circulo suave
-                        vec2 xy = gl_PointCoord.xy - vec2(0.5);
-                        float ll = length(xy);
-                        if(ll > 0.5) discard;
-                        float alpha = (0.5 - ll) * 2.0;
-                        gl_FragColor = vec4(vColor, alpha * 0.8);
-                    }
-                `,
+                vertexShader: `attribute float size; varying vec3 vColor; varying vec2 vUv; uniform float uTime; void main() { vColor = color; vUv = uv; vec3 pos = position; pos.x += sin(uTime * 2.0 + pos.y) * 0.05; vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0); gl_PointSize = size * (300.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition; }`,
+                fragmentShader: `varying vec3 vColor; void main() { vec2 xy = gl_PointCoord.xy - vec2(0.5); float ll = length(xy); if(ll > 0.5) discard; float alpha = (0.5 - ll) * 2.0; gl_FragColor = vec4(vColor, alpha * 0.8); }`,
                 transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true
             });
-            
-            particleSystem = new THREE.Points(geo, mat); 
-            universeGroup.add(particleSystem);
+            particleSystem = new THREE.Points(geo, mat); universeGroup.add(particleSystem);
         }
 
         function crearSistemaBoidsIA() {
@@ -1246,20 +885,14 @@
             const boidMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
             const wingGeo = new THREE.PlaneGeometry(0.2, 0.1); const wingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
             
-            const numBoids = 300; // Incremento masivo para el enjambre
+            const numBoids = 300; 
             for (let i = 0; i < numBoids; i++) {
                 const boidGroup = new THREE.Group(); const body = new THREE.Mesh(boidGeo, boidMat);
                 const w1 = new THREE.Mesh(wingGeo, wingMat); w1.position.set(0.1, 0, 0); w1.geometry.translate(0.1, 0, 0);
                 const w2 = new THREE.Mesh(wingGeo, wingMat); w2.position.set(-0.1, 0, 0); w2.geometry.translate(-0.1, 0, 0);
                 boidGroup.add(body, w1, w2);
-                
-                // Colorización aleatoria del boid
                 if(Math.random() > 0.5) w1.material = w2.material = new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
-
-                boidGroup.userData = { 
-                    velocity: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(0.08), 
-                    acceleration: new THREE.Vector3(), maxSpeed: 0.06 + Math.random() * 0.04, maxForce: 0.003, wings: [w1, w2], wingPhase: Math.random() * Math.PI * 2, wingSpeed: 18 + Math.random() * 12 
-                };
+                boidGroup.userData = { velocity: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(0.08), acceleration: new THREE.Vector3(), maxSpeed: 0.06 + Math.random() * 0.04, maxForce: 0.003, wings: [w1, w2], wingPhase: Math.random() * Math.PI * 2, wingSpeed: 18 + Math.random() * 12 };
                 boidGroup.position.set((Math.random()-0.5)*40, 2 + Math.random()*20, (Math.random()-0.5)*40);
                 boids.push(boidGroup); universeGroup.add(boidGroup);
             }
@@ -1267,41 +900,28 @@
 
         function actualitzarBoids(delta, time) {
             const targetPos = mainHeartGroup.position.clone(); 
-            // Optimización: No calcular N^2 si no están cerca (Spatial Hash simplificado mentalmente: solo chequeamos un sub-sample aleatorio por frame para 300 entidades)
             for (let i = 0; i < boids.length; i++) {
                 const boid = boids[i]; const data = boid.userData;
                 let sep = new THREE.Vector3(), ali = new THREE.Vector3(), coh = new THREE.Vector3(); let count = 0;
-                
-                // Chequear solo 20 boids aleatorios por frame para rendimiento
                 for (let k = 0; k < 20; k++) {
                     const j = Math.floor(Math.random() * boids.length);
                     if (i === j) continue; const other = boids[j]; const dist = boid.position.distanceTo(other.position);
-                    if (dist > 0 && dist < 2.0) { 
-                        sep.add(boid.position.clone().sub(other.position).normalize().divideScalar(dist));
-                        ali.add(other.userData.velocity); coh.add(other.position); count++;
-                    }
+                    if (dist > 0 && dist < 2.0) { sep.add(boid.position.clone().sub(other.position).normalize().divideScalar(dist)); ali.add(other.userData.velocity); coh.add(other.position); count++; }
                 }
-                
                 if (count > 0) {
                     sep.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 1.5);
                     ali.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
                     coh.divideScalar(count).sub(boid.position).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
                 }
-                
                 const attractor = targetPos.clone().sub(boid.position); const distToTarget = attractor.length();
                 attractor.normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 2.0);
                 const vortex = new THREE.Vector3(boid.position.z - targetPos.z, 0, -(boid.position.x - targetPos.x)).normalize().multiplyScalar(data.maxForce * 3.0);
-                
                 sep.multiplyScalar(2.5); ali.multiplyScalar(1.0); coh.multiplyScalar(1.0); attractor.multiplyScalar(0.8);
                 data.acceleration.add(sep).add(ali).add(coh).add(attractor).add(vortex);
-                
-                // Muros invisibles
                 if(boid.position.y < 0.0) data.acceleration.y += 0.02;
                 if(distToTarget > 35) data.acceleration.add(targetPos.clone().sub(boid.position).normalize().multiplyScalar(0.02));
-
                 data.velocity.add(data.acceleration); data.velocity.clampLength(0, data.maxSpeed); boid.position.add(data.velocity); data.acceleration.set(0,0,0); 
                 if(data.velocity.lengthSq() > 0.0001) { const lookTarget = boid.position.clone().add(data.velocity); boid.lookAt(lookTarget); }
-                
                 data.wingPhase += data.wingSpeed * delta; const flap = Math.sin(data.wingPhase);
                 data.wings[0].rotation.z = flap; data.wings[1].rotation.z = -flap;
             }
@@ -1311,7 +931,6 @@
             const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, linewidth: 3, blending: THREE.AdditiveBlending });
             const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
             const starGeo = new THREE.SphereGeometry(0.15, 16, 16);
-
             function dibuixarForma(puntsMathFunc, numPunts, radi, offsetX, offsetY, offsetZ) {
                 const punts = []; const estels = new THREE.Group();
                 for(let i=0; i<numPunts; i++) {
@@ -1323,31 +942,20 @@
                 const liniaGeo = new THREE.BufferGeometry().setFromPoints(punts); const linia = new THREE.Line(liniaGeo, lineMaterial);
                 const grupTotal = new THREE.Group(); grupTotal.add(linia, estels); universeGroup.add(grupTotal); constellationLines.push({ group: grupTotal, phase: Math.random()*Math.PI*2 });
             }
-
-            // Múltiples constelaciones rodeando en 360
             dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); return new THREE.Vector3(x, y, 0); }, 80, 25, -30, 40, -50);
             dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = 16 * Math.pow(Math.sin(angle), 3); const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle); return new THREE.Vector3(x/16, y/16, 0); }, 100, 30, 40, 35, -60);
-            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = 16 * Math.pow(Math.sin(angle), 3); const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle); return new THREE.Vector3(x/16, y/16, 0); }, 100, 35, 0, 50, 60); // Detrás
-            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); return new THREE.Vector3(x, y, 0); }, 80, 20, -50, 20, 20); // Izquierda
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = 16 * Math.pow(Math.sin(angle), 3); const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle); return new THREE.Vector3(x/16, y/16, 0); }, 100, 35, 0, 50, 60); 
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); return new THREE.Vector3(x, y, 0); }, 80, 20, -50, 20, 20); 
         }
 
         function crearLlanternasRomanticas360() {
             const lanternGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 16);
             const lanternMat = new THREE.MeshStandardMaterial({ color: 0xffa500, emissive: 0xff4500, emissiveIntensity: 0.6, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
             const glowGeo = new THREE.SphereGeometry(0.15, 16, 16); const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            
-            for(let i=0; i<250; i++) { // MASIVO
+            for(let i=0; i<250; i++) { 
                 const lanternGroup = new THREE.Group(); lanternGroup.add(new THREE.Mesh(lanternGeo, lanternMat)); lanternGroup.add(new THREE.Mesh(glowGeo, glowMat));
                 const stringGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.3); stringGeo.translate(0, -0.45, 0); lanternGroup.add(new THREE.Mesh(stringGeo, new THREE.MeshBasicMaterial({color: 0x555555})));
-                
-                lanternGroup.userData = { 
-                    angle: Math.random() * Math.PI * 2, 
-                    radius: 3.0 + Math.random() * 40, 
-                    speed: 0.01 + Math.random() * 0.04, 
-                    swaySpeed: 0.5 + Math.random() * 1.5, 
-                    swayOffset: Math.random() * Math.PI * 2, 
-                    yOffset: -5 + Math.random() * 50 
-                };
+                lanternGroup.userData = { angle: Math.random() * Math.PI * 2, radius: 3.0 + Math.random() * 40, speed: 0.01 + Math.random() * 0.04, swaySpeed: 0.5 + Math.random() * 1.5, swayOffset: Math.random() * Math.PI * 2, yOffset: -5 + Math.random() * 50 };
                 universeGroup.add(lanternGroup); lanterns.push(lanternGroup);
             }
         }
@@ -1363,7 +971,7 @@
         }
 
         function crearSistemaCometesEstelas() {
-            const cometCount = 30; // MASIVO
+            const cometCount = 30; 
             const cometGeo = new THREE.SphereGeometry(0.1, 16, 16); const cometMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             for(let i=0; i<cometCount; i++) {
                 const cometGroup = new THREE.Group(); const head = new THREE.Mesh(cometGeo, cometMat); cometGroup.add(head);
@@ -1403,7 +1011,7 @@
             const ring1 = new THREE.Mesh(ringGeo, ringMat); ring1.rotation.x = Math.PI / 2; goldenRingsGroup.add(ring1);
             const ring2 = new THREE.Mesh(ringGeo, ringMat); ring2.rotation.y = Math.PI / 3; ring2.rotation.x = Math.PI / 4; goldenRingsGroup.add(ring2);
             const ring3 = new THREE.Mesh(ringGeo, ringMat); ring3.rotation.y = -Math.PI / 3; ring3.rotation.x = -Math.PI / 4; goldenRingsGroup.add(ring3);
-            const ring4 = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.02, 64, 200), ringMat); ring4.rotation.x = Math.PI/2; goldenRingsGroup.add(ring4); // Aro exterior
+            const ring4 = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.02, 64, 200), ringMat); ring4.rotation.x = Math.PI/2; goldenRingsGroup.add(ring4); 
             
             mainHeartGroup.add(goldenRingsGroup); 
         }
@@ -1415,7 +1023,7 @@
         }
 
         function crearJardiDeRosesParametriques() {
-            const numRoses = 200; // MUCHAS ROSAS
+            const numRoses = 200; 
             const roseMaterial = new THREE.MeshStandardMaterial({ color: 0xff0040, emissive: 0x330011, roughness: 0.3, metalness: 0.2, side: THREE.DoubleSide });
             for(let r=0; r<numRoses; r++) {
                 const roseGroup = new THREE.Group(); const petalsCount = 18 + Math.floor(Math.random() * 12); const scale = 0.06 + Math.random() * 0.05;
