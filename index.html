@@ -247,7 +247,7 @@
         <h2 class="text-glow instruction-text">
             ✨ Atraviesa el Portal de Luz ✨<br>
             <span style="font-size:1.2rem; color:#b0e0e6; font-weight:normal; letter-spacing:2px; display:block; margin-top:15px;">
-                (Camina hacia adelante en AR o toca la pantalla para sumergirte en el cosmos 360º)
+                (Camina hacia adelante o TOCA LA PANTALLA para entrar al instante)
             </span>
         </h2>
     </div>
@@ -461,10 +461,11 @@
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x010008, 0.015); 
 
+            // ¡CORRECCIÓN VITAL!: La cámara inicia estrictamente en el origen para que el cálculo de distancia funcione.
             camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.01, 1000); 
             cameraGroup.add(camera);
             scene.add(cameraGroup);
-            cameraGroup.position.set(0, 0, 3); 
+            cameraGroup.position.set(0, 0, 0); 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -579,6 +580,7 @@
         // ============================================================================
         function construirMonPortalEntrada() {
             rootGroup.add(portalGroup);
+            // Lo acercamos más para que sea fácil entrar caminando
             portalGroup.position.set(0, 0, -2.5);
             
             const ringGeo = new THREE.TorusGeometry(1.5, 0.08, 64, 200);
