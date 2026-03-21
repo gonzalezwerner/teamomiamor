@@ -122,7 +122,7 @@
         let scene, camera, renderer;
         let portalGroup, pathGroup, universeGroup;
         let mainHeartGroup, particleSystem;
-        let heartUniforms, portalUniforms, auroraUniforms, floorUniforms;
+        let heartUniforms, portalUniforms, lotusUniforms;
         
         let clock = new THREE.Clock();
         let isStarted = false;
@@ -139,13 +139,15 @@
         let geometricFlower;
         let flashSphere, shockwaveRing;
         let isFlashing = false;
-        let butterflies = [];
-        let auroraBorealis, magicFloor;
         let goldenRingsGroup;
-        let lightPillarsGroup;
         let nebulaDome;
         let lanterns = [];
         
+        // LAS NUEVAS ADICIONES MAJESTUOSAS
+        let wingL, wingR;
+        let redThreadCurve, redThreadLine, threadPulse;
+        let lotusMandalaFloor;
+
         const frases = [
             "Eres mi destino",
             "Mi alma te reconoce",
@@ -179,34 +181,28 @@
             pointLight.position.set(0, 0, 0);
             scene.add(pointLight);
 
-            // 1. Crear el grupo del Universo (Romance), ESTRICTAMENTE OCULTO al inicio
             universeGroup = new THREE.Group();
             universeGroup.visible = false;
             universeGroup.scale.set(0.001, 0.001, 0.001); 
             scene.add(universeGroup);
 
-            // 2. Construir Elementos
+            // ELEMENTOS DEL MUNDO
             createPortal();
             createPath();
             createMagicalHeart();
+            createCelestialWings(); // NUEVO
             createGalaxyParticles();
             createFloatingWords();
             createFireflies();
-
-            // --- INICIALIZAR NUEVOS EFECTOS WOW ---
-            createPetals();
+            createPetalTornado(); // MEJORADO A TORNADO
             createShootingStars();
             createGeometricFlower();
             createFlashAndShockwave();
-            createButterflies();
-            createAuroraBorealis();
-            createMagicFloor();
+            createLotusMandalaFloor(); // NUEVO: Suelo majestuoso
             createGoldenRings();
-            createLightPillars();
-            
-            // Reemplazo de la Luna por Cúpula de Nebulosa y Linternas Románticas
             createNebulaSky();
             createRomanticLanterns();
+            createRedThreadOfFate(); // NUEVO: Hilo Rojo del Destino
 
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
@@ -227,7 +223,7 @@
             });
         }
 
-        // --- LA PUERTA (PORTAL MÁGICO) ---
+        // --- LA PUERTA Y EL CAMINO ---
         function createPortal() {
             portalGroup = new THREE.Group();
             portalGroup.position.set(0, 0, -2.5);
@@ -239,20 +235,13 @@
 
             const veilGeo = new THREE.PlaneGeometry(2.35, 2.35);
             portalUniforms = { uTime: { value: 0 } };
-            
             const veilMat = new THREE.ShaderMaterial({
                 uniforms: portalUniforms,
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-                `,
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
                 fragmentShader: `
-                    uniform float uTime;
-                    varying vec2 vUv;
+                    uniform float uTime; varying vec2 vUv;
                     void main() {
-                        vec2 uv = vUv - 0.5;
-                        float dist = length(uv);
-                        float angle = atan(uv.y, uv.x);
+                        vec2 uv = vUv - 0.5; float dist = length(uv); float angle = atan(uv.y, uv.x);
                         float spiral = sin(dist * 20.0 - uTime * 3.0 + angle * 2.0);
                         float alpha = smoothstep(0.5, 0.2, dist) * (0.6 + 0.4 * spiral);
                         vec3 color = mix(vec3(0.1, 0.0, 0.4), vec3(1.0, 0.4, 0.8), spiral * 0.5 + 0.5);
@@ -260,43 +249,27 @@
                         gl_FragColor = vec4(color, alpha * 0.9);
                     }
                 `,
-                transparent: true,
-                side: THREE.DoubleSide,
-                depthWrite: false
+                transparent: true, side: THREE.DoubleSide, depthWrite: false
             });
-            const veil = new THREE.Mesh(veilGeo, veilMat);
-            portalGroup.add(veil);
-            
+            portalGroup.add(new THREE.Mesh(veilGeo, veilMat));
             scene.add(portalGroup);
         }
 
-        // --- EL CAMINO HACIA EL PORTAL ---
         function createPath() {
             pathGroup = new THREE.Group();
             const pathGeo = new THREE.PlaneGeometry(1.5, 3);
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 512;
+            const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 512;
             const ctx = canvas.getContext('2d');
             const grad = ctx.createLinearGradient(0, 512, 0, 0); 
-            grad.addColorStop(0, "rgba(255, 105, 180, 0)"); 
-            grad.addColorStop(1, "rgba(255, 20, 147, 0.6)"); 
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 256, 512);
-            const tex = new THREE.CanvasTexture(canvas);
-
-            const pathMat = new THREE.MeshBasicMaterial({ 
-                map: tex, transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending 
-            });
+            grad.addColorStop(0, "rgba(255, 105, 180, 0)"); grad.addColorStop(1, "rgba(255, 20, 147, 0.6)"); 
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 512);
+            const pathMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
             const path = new THREE.Mesh(pathGeo, pathMat);
-            path.rotation.x = -Math.PI / 2; 
-            path.position.set(0, -1.2, -1.25); 
-            pathGroup.add(path);
-            
-            scene.add(pathGroup);
+            path.rotation.x = -Math.PI / 2; path.position.set(0, -1.2, -1.25); 
+            pathGroup.add(path); scene.add(pathGroup);
         }
 
-        // --- GEOMETRÍA COMPLEJA: EL CORAZÓN ---
+        // --- CORAZÓN CENTRAL ---
         function createMagicalHeart() {
             mainHeartGroup = new THREE.Group();
             universeGroup.add(mainHeartGroup);
@@ -313,29 +286,19 @@
 
             const extrudeSettings = { depth: 3, bevelEnabled: true, bevelSegments: 8, steps: 4, bevelSize: 2, bevelThickness: 2 };
             const geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings );
-            
-            geometry.computeBoundingBox();
-            geometry.translate( -5, -10, -1.5 );
-            geometry.scale(0.02, 0.02, 0.02);
-            geometry.rotateZ(Math.PI); 
+            geometry.computeBoundingBox(); geometry.translate( -5, -10, -1.5 );
+            geometry.scale(0.02, 0.02, 0.02); geometry.rotateZ(Math.PI); 
 
-            heartUniforms = {
-                uTime: { value: 0.0 },
-                uColorA: { value: new THREE.Color(0xff1493) }, 
-                uColorB: { value: new THREE.Color(0x8a2be2) }  
-            };
-
+            heartUniforms = { uTime: { value: 0.0 }, uColorA: { value: new THREE.Color(0xff1493) }, uColorB: { value: new THREE.Color(0x8a2be2) } };
             const material = new THREE.ShaderMaterial({
                 uniforms: heartUniforms,
                 vertexShader: `
-                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition;
-                    uniform float uTime;
+                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime;
                     void main() {
                         vUv = uv; vNormal = normalize(normalMatrix * normal);
                         vec3 pos = position;
                         float wave = sin(pos.x * 20.0 + uTime * 3.0) * 0.005 + cos(pos.y * 20.0 + uTime * 2.0) * 0.005;
-                        pos += normal * wave;
-                        vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
+                        pos += normal * wave; vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
                     }
                 `,
@@ -345,453 +308,287 @@
                     void main() {
                         float mixValue = sin(vPosition.y * 5.0 + uTime) * 0.5 + 0.5;
                         vec3 color = mix(uColorA, uColorB, mixValue);
-                        vec3 viewDirection = normalize(cameraPosition - vPosition);
-                        float fresnel = clamp(1.0 - dot(viewDirection, vNormal), 0.0, 1.0);
-                        fresnel = pow(fresnel, 3.0);
-                        float pulse = abs(sin(uTime * 2.0)) * 0.5 + 0.5;
-                        color += vec3(1.0, 0.8, 0.9) * fresnel * pulse * 1.5;
+                        float fresnel = pow(clamp(1.0 - dot(normalize(cameraPosition - vPosition), vNormal), 0.0, 1.0), 3.0);
+                        color += vec3(1.0, 0.8, 0.9) * fresnel * (abs(sin(uTime * 2.0)) * 0.5 + 0.5) * 1.5;
                         gl_FragColor = vec4(color, 0.85); 
                     }
                 `,
                 transparent: true, side: THREE.DoubleSide
             });
-
-            const heartMesh = new THREE.Mesh(geometry, material);
-            mainHeartGroup.add(heartMesh);
-
-            const auraGeo = new THREE.PlaneGeometry(1.5, 1.5);
-            const auraMat = new THREE.MeshBasicMaterial({
-                color: 0xff1493, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false,
-                map: (()=>{
-                    const c = document.createElement('canvas'); c.width = 128; c.height = 128;
-                    const ctx = c.getContext('2d');
-                    const g = ctx.createRadialGradient(64,64,0,64,64,64);
-                    g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.2,'rgba(255,105,180,0.8)'); g.addColorStop(1,'rgba(0,0,0,0)');
-                    ctx.fillStyle=g; ctx.fillRect(0,0,128,128); return new THREE.CanvasTexture(c);
-                })()
-            });
-            mainHeartGroup.add(new THREE.Mesh(auraGeo, auraMat));
+            mainHeartGroup.add(new THREE.Mesh(geometry, material));
         }
 
-        // --- SISTEMA DE PARTÍCULAS ---
-        function createGalaxyParticles() {
-            const particleCount = 3000;
-            const posArray = new Float32Array(particleCount * 3);
-            const colorsArray = new Float32Array(particleCount * 3);
-            const color1 = new THREE.Color(0xff69b4); const color2 = new THREE.Color(0xffd700); const color3 = new THREE.Color(0xffffff);
+        // --- EFECTOS WOW MAJESTUOSOS ---
 
-            for(let i = 0; i < particleCount * 3; i+=3) {
-                const radius = 1 + Math.random() * 8; 
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos((Math.random() * 2) - 1);
-
-                posArray[i] = radius * Math.sin(phi) * Math.cos(theta);
-                posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta);
-                posArray[i+2] = radius * Math.cos(phi);
-
-                const rand = Math.random();
-                let c = color1; if(rand > 0.6) c = color2; if(rand > 0.9) c = color3;
-                colorsArray[i] = c.r; colorsArray[i+1] = c.g; colorsArray[i+2] = c.b;
-            }
-
-            const geo = new THREE.BufferGeometry();
-            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
-
-            const mat = new THREE.PointsMaterial({
-                size: 0.04, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false,
-                map: (()=>{
-                    const c = document.createElement('canvas'); c.width = 32; c.height = 32;
-                    const ctx = c.getContext('2d');
-                    const g = ctx.createRadialGradient(16,16,0,16,16,16);
-                    g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.3,'rgba(255,182,193,0.8)'); g.addColorStop(1,'rgba(0,0,0,0)');
-                    ctx.fillStyle=g; ctx.fillRect(0,0,32,32); return new THREE.CanvasTexture(c);
-                })()
-            });
-
-            particleSystem = new THREE.Points(geo, mat);
-            universeGroup.add(particleSystem);
-        }
-
-        function createFireflies() {
-            const fireflyGeo = new THREE.SphereGeometry(0.015, 8, 8);
-            const fireflyMat = new THREE.MeshBasicMaterial({ color: 0xfffafa, transparent: true, opacity: 0.9 });
+        // 1. ALAS CELESTIALES DE LUZ (NUEVO)
+        function createCelestialWings() {
+            // Generar una textura etérea procedural con hilos de luz
+            const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,512,512);
+            ctx.globalCompositeOperation = "lighter";
             
-            for(let i=0; i<60; i++) {
-                const fly = new THREE.Mesh(fireflyGeo, fireflyMat);
-                fly.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radius: 0.5 + Math.random() * 3,
-                    speed: 0.2 + Math.random() * 0.8,
-                    yOffset: -1.5 + Math.random() * 3,
-                    phase: Math.random() * Math.PI * 2
-                };
-                fireflies.push(fly);
-                universeGroup.add(fly);
-            }
-        }
-
-        // --- LOS NUEVOS EFECTOS SÚPER WOW Y ROMÁNTICOS ---
-
-        function createNebulaSky() {
-            // Cúpula masiva de nebulosa que encierra toda la escena
-            const domeGeo = new THREE.SphereGeometry(30, 32, 32);
-            domeGeo.scale(-1, 1, 1); // Dar vuelta la esfera para ver desde adentro
-
-            const domeMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: { value: 0 } },
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-                `,
-                fragmentShader: `
-                    uniform float uTime;
-                    varying vec2 vUv;
-                    void main() {
-                        vec2 uv = vUv * 3.0;
-                        // Ruido cósmico para crear las formas de gas
-                        float n1 = sin(uv.x * 2.0 + uTime * 0.1) * cos(uv.y * 2.0 + uTime * 0.15);
-                        float n2 = sin(uv.y * 3.0 - uTime * 0.2) * 0.5;
-                        float nebula = n1 + n2;
-
-                        // Colores vibrantes de amor: Púrpura cósmico, Rosa y Oro
-                        vec3 color1 = vec3(0.1, 0.0, 0.3); // Púrpura oscuro
-                        vec3 color2 = vec3(0.8, 0.1, 0.5); // Rosa magenta
-                        vec3 color3 = vec3(1.0, 0.8, 0.2); // Toques dorados brillantes
-
-                        vec3 finalColor = mix(color1, color2, nebula + 0.5);
-                        finalColor = mix(finalColor, color3, (n2 + 0.5) * 0.4);
-
-                        // Opacidad suave para mezclar con tu habitación en AR
-                        float alpha = clamp(nebula * 0.6 + 0.2, 0.0, 0.8);
-                        
-                        // Añadir destellos de pequeñas estrellas tejidas en el cielo
-                        float star = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
-                        if(star > 0.99) {
-                            finalColor += vec3(1.0); // Estrellas blancas super brillantes
-                            alpha += 0.5;
-                        }
-
-                        gl_FragColor = vec4(finalColor, alpha);
-                    }
-                `,
-                transparent: true,
-                blending: THREE.AdditiveBlending, // Mezcla mágica con la cámara AR
-                side: THREE.BackSide,
-                depthWrite: false
-            });
-
-            nebulaDome = new THREE.Mesh(domeGeo, domeMat);
-            universeGroup.add(nebulaDome);
-        }
-
-        function createRomanticLanterns() {
-            // Lluvia invertida de linternas de papel mágicas (como en Enredados)
-            const lanternGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.35, 16);
-            const lanternMat = new THREE.MeshBasicMaterial({
-                color: 0xffb700, // Luz dorada cálida perfecta
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-
-            const glowGeo = new THREE.SphereGeometry(0.08, 16, 16);
-            const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-            for(let i=0; i<60; i++) {
-                const lanternGroup = new THREE.Group();
-                const body = new THREE.Mesh(lanternGeo, lanternMat);
-                const glow = new THREE.Mesh(glowGeo, glowMat);
-                lanternGroup.add(body);
-                lanternGroup.add(glow); // Un núcleo blanco brillante dentro de la linterna
-
-                lanternGroup.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radius: 1.5 + Math.random() * 8, // Rodean al usuario de cerca y de lejos
-                    speed: 0.01 + Math.random() * 0.02, // Flotan hacia arriba suavemente
-                    swaySpeed: 0.5 + Math.random() * 1.0,
-                    swayOffset: Math.random() * Math.PI * 2,
-                    yOffset: -5 + Math.random() * 15 // Algunas están abajo, otras ya flotando arriba
-                };
-
-                universeGroup.add(lanternGroup);
-                lanterns.push(lanternGroup);
-            }
-        }
-
-        function createGoldenRings() {
-            // Anillos entrelazados orbitando el corazón
-            goldenRingsGroup = new THREE.Group();
-            const ringGeo = new THREE.TorusGeometry(1.2, 0.02, 32, 100);
-            const ringMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffdf00, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, side: THREE.DoubleSide 
-            });
-
-            const ring1 = new THREE.Mesh(ringGeo, ringMat);
-            ring1.rotation.x = Math.PI / 3;
-            goldenRingsGroup.add(ring1);
-
-            const ring2 = new THREE.Mesh(ringGeo, ringMat);
-            ring2.rotation.y = Math.PI / 3;
-            ring2.rotation.x = -Math.PI / 4;
-            goldenRingsGroup.add(ring2);
-
-            mainHeartGroup.add(goldenRingsGroup); // Siguen al corazón principal
-        }
-
-        function createLightPillars() {
-            // Un templo sagrado de luz que rodea al usuario
-            lightPillarsGroup = new THREE.Group();
-            const pillarGeo = new THREE.CylinderGeometry(0.3, 0.8, 20, 32, 1, true);
-            pillarGeo.translate(0, 10, 0); // Anclar en la base
-
-            const pillarMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: { value: 0 } },
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-                `,
-                fragmentShader: `
-                    uniform float uTime;
-                    varying vec2 vUv;
-                    void main() {
-                        float alpha = (1.0 - vUv.y); // Se desvanece hacia arriba
-                        float pulse = sin(vUv.y * 10.0 - uTime * 2.0) * 0.5 + 0.5;
-                        vec3 color = mix(vec3(1.0, 0.4, 0.8), vec3(0.0, 1.0, 1.0), pulse);
-                        gl_FragColor = vec4(color, alpha * pulse * 0.5); // Etéreo y suave
-                    }
-                `,
-                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
-            });
-
-            // Crear 8 pilares en círculo
-            for(let i = 0; i < 8; i++) {
-                const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-                const angle = (i / 8) * Math.PI * 2;
-                const radius = 6; // 6 metros alrededor del usuario
-                pillar.position.set(Math.cos(angle) * radius, -2, Math.sin(angle) * radius);
-                lightPillarsGroup.add(pillar);
-            }
-            universeGroup.add(lightPillarsGroup);
-        }
-        
-        function createButterflies() {
-            const wingGeo = new THREE.PlaneGeometry(0.06, 0.1);
-            wingGeo.translate(0.03, 0, 0); 
-            const wingMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
-            });
-
-            for(let i=0; i<25; i++) {
-                const butterfly = new THREE.Group();
-                const wing1 = new THREE.Mesh(wingGeo, wingMat);
-                const wing2 = new THREE.Mesh(wingGeo, wingMat);
-                wing2.rotation.y = Math.PI; 
+            // Dibujar plumas de luz que se expanden desde la izquierda (la base)
+            for(let i=0; i<40; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 256); // Base del ala
+                const controlX = 256 + Math.random() * 150;
+                const controlY = Math.random() * 512;
+                const endX = 512;
+                const endY = Math.random() * 512;
+                ctx.quadraticCurveTo(controlX, controlY, endX, endY);
                 
-                butterfly.add(wing1, wing2);
-                
-                butterfly.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radius: 0.5 + Math.random() * 2.5,
-                    heightOffset: -1 + Math.random() * 2,
-                    speed: 0.5 + Math.random() * 1.5,
-                    flapSpeed: 15 + Math.random() * 10,
-                    wing1: wing1,
-                    wing2: wing2
-                };
-                
-                universeGroup.add(butterfly);
-                butterflies.push(butterfly);
+                const g = 150 + Math.random() * 105;
+                const b = 200 + Math.random() * 55;
+                ctx.strokeStyle = `rgba(255, ${g}, ${b}, 0.2)`;
+                ctx.lineWidth = 2 + Math.random() * 6;
+                ctx.shadowColor = `rgba(255, 105, 180, 0.8)`;
+                ctx.shadowBlur = 15;
+                ctx.stroke();
             }
-        }
+            const wingTex = new THREE.CanvasTexture(c);
+            const wingMat = new THREE.MeshBasicMaterial({ 
+                map: wingTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false 
+            });
 
-        function createAuroraBorealis() {
-            const auroraGeo = new THREE.CylinderGeometry(8, 8, 15, 64, 1, true);
-            auroraUniforms = { uTime: { value: 0.0 } };
+            // Ala Izquierda
+            wingL = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), wingMat);
+            wingL.geometry.translate(1.5, 0, 0); // Mover el punto de pivote a la izquierda
+            wingL.position.set(0, 0, -0.1); 
             
-            const auroraMat = new THREE.ShaderMaterial({
-                uniforms: auroraUniforms,
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-                `,
-                fragmentShader: `
-                    uniform float uTime;
-                    varying vec2 vUv;
-                    void main() {
-                        vec2 uv = vUv;
-                        float wave1 = sin(uv.x * 15.0 + uTime * 0.5) * 0.5 + 0.5;
-                        float wave2 = sin(uv.x * 25.0 - uTime * 0.8) * 0.5 + 0.5;
-                        float alpha = sin(uv.y * 3.1415) * (wave1 * wave2); 
-                        vec3 color = mix(vec3(0.0, 1.0, 0.8), vec3(0.8, 0.0, 1.0), uv.y + wave1*0.3); 
-                        gl_FragColor = vec4(color, alpha * 0.35); 
-                    }
-                `,
-                transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+            // Ala Derecha (Espejada)
+            wingR = new THREE.Mesh(wingL.geometry, wingMat);
+            wingR.rotation.y = Math.PI; 
+            wingR.position.set(0, 0, -0.1);
+
+            mainHeartGroup.add(wingL);
+            mainHeartGroup.add(wingR);
+        }
+
+        // 2. EL HILO ROJO DEL DESTINO (NUEVO)
+        function createRedThreadOfFate() {
+            redThreadCurve = new THREE.QuadraticBezierCurve3(
+                new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)
+            );
+            
+            const numPoints = 50;
+            const threadGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(numPoints * 3);
+            threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const threadMat = new THREE.LineBasicMaterial({ 
+                color: 0xff0033, linewidth: 3, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending 
             });
             
-            auroraBorealis = new THREE.Mesh(auroraGeo, auroraMat);
-            universeGroup.add(auroraBorealis);
+            redThreadLine = new THREE.Line(threadGeo, threadMat);
+            universeGroup.add(redThreadLine);
+
+            // Una luz/pulso que viaja por el hilo
+            const pulseGeo = new THREE.SphereGeometry(0.04, 16, 16);
+            const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
+            
+            // Aura del pulso
+            const auraGeo = new THREE.SphereGeometry(0.1, 16, 16);
+            const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+            threadPulse.add(new THREE.Mesh(auraGeo, auraMat));
+            
+            universeGroup.add(threadPulse);
         }
 
-        function createMagicFloor() {
-            const floorGeo = new THREE.PlaneGeometry(20, 20, 32, 32);
-            floorUniforms = { uTime: { value: 0.0 } };
+        // 3. SUELO DE LOTO MANDALA GIGANTE (NUEVO)
+        function createLotusMandalaFloor() {
+            const floorGeo = new THREE.PlaneGeometry(25, 25, 32, 32);
+            lotusUniforms = { uTime: { value: 0.0 } };
             
             const floorMat = new THREE.ShaderMaterial({
-                uniforms: floorUniforms,
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-                `,
+                uniforms: lotusUniforms,
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
                 fragmentShader: `
                     uniform float uTime;
                     varying vec2 vUv;
                     void main() {
-                        vec2 uv = vUv - 0.5;
-                        float dist = length(uv);
-                        float ripple = sin(dist * 40.0 - uTime * 5.0) * 0.5 + 0.5;
-                        float alpha = smoothstep(0.5, 0.0, dist) * ripple;
-                        vec3 color = vec3(0.2, 0.8, 1.0); 
-                        gl_FragColor = vec4(color, alpha * 0.4);
+                        vec2 uv = vUv * 2.0 - 1.0;
+                        float r = length(uv);
+                        float a = atan(uv.y, uv.x);
+                        
+                        // Generar la flor de Loto de 12 pétalos
+                        float f = cos(a * 12.0);
+                        float pulse = sin(uTime * 2.0) * 0.05 + 0.95;
+                        float shape = smoothstep(0.5 * pulse, 0.52 * pulse, r + f * 0.1) - smoothstep(0.52 * pulse, 0.55 * pulse, r + f * 0.1);
+                        
+                        // Anillos interiores de energía
+                        float ring = smoothstep(0.3, 0.32, r) - smoothstep(0.32, 0.35, r);
+                        float ripple = sin(r * 40.0 - uTime * 4.0) * 0.5 + 0.5;
+                        
+                        // Colores divinos: Magenta, Oro y Azul Cósmico
+                        vec3 color = vec3(1.0, 0.1, 0.5) * shape * 2.5 + vec3(1.0, 0.8, 0.0) * ring * ripple * 3.0;
+                        color += vec3(0.1, 0.0, 0.3) * smoothstep(1.0, 0.0, r); // Base brillante
+                        
+                        float alpha = clamp((shape + ring * ripple + (1.0 - r)*0.4) * smoothstep(1.0, 0.7, r), 0.0, 1.0);
+                        gl_FragColor = vec4(color, alpha * 0.6);
                     }
                 `,
                 transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
             });
             
-            magicFloor = new THREE.Mesh(floorGeo, floorMat);
-            magicFloor.rotation.x = -Math.PI / 2;
-            magicFloor.position.y = -1.5; 
-            universeGroup.add(magicFloor);
+            lotusMandalaFloor = new THREE.Mesh(floorGeo, floorMat);
+            lotusMandalaFloor.rotation.x = -Math.PI / 2;
+            lotusMandalaFloor.position.y = -1.5; // Justo bajo tus pies
+            universeGroup.add(lotusMandalaFloor);
         }
 
-        function createFlashAndShockwave() {
-            const geo = new THREE.SphereGeometry(0.1, 32, 32);
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
-            });
-            flashSphere = new THREE.Mesh(geo, mat);
-            scene.add(flashSphere);
-
-            const ringGeo = new THREE.TorusGeometry(0.5, 0.05, 16, 100);
-            const ringMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
-            });
-            shockwaveRing = new THREE.Mesh(ringGeo, ringMat);
-            shockwaveRing.rotation.x = Math.PI / 2; 
-            scene.add(shockwaveRing);
-        }
-
-        function createPetals() {
-            const petalGeo = new THREE.PlaneGeometry(0.04, 0.06, 2, 2);
+        // 4. TORNADO DE PÉTALOS MAGNÉTICO (MEJORADO)
+        function createPetalTornado() {
+            const petalGeo = new THREE.PlaneGeometry(0.05, 0.08, 2, 2);
             const pos = petalGeo.attributes.position.array;
-            for(let i=0; i<pos.length; i+=3) pos[i+2] = Math.sin(pos[i]*20) * 0.01; 
+            for(let i=0; i<pos.length; i+=3) pos[i+2] = Math.sin(pos[i]*20) * 0.015; 
             
-            const petalMat = new THREE.MeshBasicMaterial({ 
-                color: 0xff1493, side: THREE.DoubleSide, transparent: true, opacity: 0.85 
-            });
+            const petalMat = new THREE.MeshBasicMaterial({ color: 0xff1493, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
 
-            for(let i=0; i<150; i++) {
+            for(let i=0; i<250; i++) { // Aumentamos la cantidad para el tornado
                 const petal = new THREE.Mesh(petalGeo, petalMat);
-                petal.position.set((Math.random()-0.5)*8, Math.random()*8, (Math.random()-0.5)*8);
                 petal.userData = {
-                    speed: 0.01 + Math.random()*0.02,
-                    sway: Math.random() * Math.PI * 2,
-                    swaySpeed: 0.01 + Math.random()*0.03,
-                    rotSpeedX: Math.random()*0.05,
-                    rotSpeedY: Math.random()*0.05
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 0.5 + Math.random() * 4.0, // Radio del tornado
+                    height: -2 + Math.random() * 10,
+                    rotSpeed: 0.02 + Math.random() * 0.03, // Rotación alrededor tuyo
+                    riseSpeed: 0.01 + Math.random() * 0.02, // Subida
+                    tumbleX: Math.random() * 0.05,
+                    tumbleY: Math.random() * 0.05
                 };
                 universeGroup.add(petal);
                 petals.push(petal);
             }
         }
 
+        // --- DEMÁS EFECTOS HEREDADOS Y OPTIMIZADOS ---
+        function createGalaxyParticles() {
+            const particleCount = 2000;
+            const posArray = new Float32Array(particleCount * 3);
+            const colorsArray = new Float32Array(particleCount * 3);
+            for(let i = 0; i < particleCount * 3; i+=3) {
+                const radius = 1 + Math.random() * 15; 
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                posArray[i] = radius * Math.sin(phi) * Math.cos(theta); posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta); posArray[i+2] = radius * Math.cos(phi);
+                const rand = Math.random();
+                let r=1, g=0.4, b=0.7; if(rand>0.6){r=1; g=0.8; b=0;} if(rand>0.9){r=1; g=1; b=1;}
+                colorsArray[i]=r; colorsArray[i+1]=g; colorsArray[i+2]=b;
+            }
+            const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+            
+            const canvas = document.createElement('canvas'); canvas.width=16; canvas.height=16; const ctx=canvas.getContext('2d');
+            const gr = ctx.createRadialGradient(8,8,0,8,8,8); gr.addColorStop(0,'white'); gr.addColorStop(1,'transparent'); ctx.fillStyle=gr; ctx.fillRect(0,0,16,16);
+            const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, map: new THREE.CanvasTexture(canvas) });
+            particleSystem = new THREE.Points(geo, mat); universeGroup.add(particleSystem);
+        }
+
+        function createFireflies() {
+            const fireflyGeo = new THREE.SphereGeometry(0.015, 8, 8); const fireflyMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            for(let i=0; i<40; i++) {
+                const fly = new THREE.Mesh(fireflyGeo, fireflyMat);
+                fly.userData = { angle: Math.random() * Math.PI * 2, radius: 0.5 + Math.random() * 3, speed: 0.2 + Math.random() * 0.8, yOffset: -1.5 + Math.random() * 3, phase: Math.random() * Math.PI * 2 };
+                fireflies.push(fly); universeGroup.add(fly);
+            }
+        }
+
+        function createNebulaSky() {
+            const domeGeo = new THREE.SphereGeometry(40, 32, 32); domeGeo.scale(-1, 1, 1);
+            const domeMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `
+                    uniform float uTime; varying vec2 vUv;
+                    void main() {
+                        vec2 uv = vUv * 3.0;
+                        float n1 = sin(uv.x * 2.0 + uTime * 0.05) * cos(uv.y * 2.0 + uTime * 0.08);
+                        float n2 = sin(uv.y * 3.0 - uTime * 0.1) * 0.5;
+                        float nebula = n1 + n2;
+                        vec3 finalColor = mix(vec3(0.05, 0.0, 0.2), vec3(0.8, 0.1, 0.5), nebula + 0.5);
+                        finalColor = mix(finalColor, vec3(1.0, 0.6, 0.0), (n2 + 0.5) * 0.4);
+                        float alpha = clamp(nebula * 0.5 + 0.3, 0.0, 0.7);
+                        float star = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
+                        if(star > 0.995) { finalColor += vec3(1.0); alpha += 0.5; }
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false
+            });
+            nebulaDome = new THREE.Mesh(domeGeo, domeMat); universeGroup.add(nebulaDome);
+        }
+
+        function createRomanticLanterns() {
+            const lanternGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.35, 16);
+            const lanternMat = new THREE.MeshBasicMaterial({ color: 0xffb700, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            const glowGeo = new THREE.SphereGeometry(0.08, 16, 16); const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            for(let i=0; i<40; i++) {
+                const lanternGroup = new THREE.Group();
+                lanternGroup.add(new THREE.Mesh(lanternGeo, lanternMat)); lanternGroup.add(new THREE.Mesh(glowGeo, glowMat));
+                lanternGroup.userData = { angle: Math.random() * Math.PI * 2, radius: 2.0 + Math.random() * 10, speed: 0.01 + Math.random() * 0.02, swaySpeed: 0.5 + Math.random() * 1.0, swayOffset: Math.random() * Math.PI * 2, yOffset: -2 + Math.random() * 15 };
+                universeGroup.add(lanternGroup); lanterns.push(lanternGroup);
+            }
+        }
+
+        function createGoldenRings() {
+            goldenRingsGroup = new THREE.Group();
+            const ringGeo = new THREE.TorusGeometry(1.2, 0.02, 32, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffdf00, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+            const ring1 = new THREE.Mesh(ringGeo, ringMat); ring1.rotation.x = Math.PI / 3; goldenRingsGroup.add(ring1);
+            const ring2 = new THREE.Mesh(ringGeo, ringMat); ring2.rotation.y = Math.PI / 3; ring2.rotation.x = -Math.PI / 4; goldenRingsGroup.add(ring2);
+            mainHeartGroup.add(goldenRingsGroup); 
+        }
+
+        function createFlashAndShockwave() {
+            flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); scene.add(flashSphere);
+            shockwaveRing = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 16, 100), new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+            shockwaveRing.rotation.x = Math.PI / 2; scene.add(shockwaveRing);
+        }
+
         function createShootingStars() {
-            for(let i=0; i<8; i++) {
-                const starGeo = new THREE.CylinderGeometry(0.002, 0.01, 1, 4);
-                starGeo.rotateX(Math.PI / 2); 
-                const starMat = new THREE.MeshBasicMaterial({ 
-                    color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending 
-                });
-                const star = new THREE.Mesh(starGeo, starMat);
-                
-                star.userData = { startPos: new THREE.Vector3(), target: new THREE.Vector3() };
-                resetShootingStar(star);
-                
-                universeGroup.add(star);
-                shootingStars.push(star);
+            for(let i=0; i<10; i++) {
+                const star = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.02, 1, 4).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending }));
+                star.userData = { startPos: new THREE.Vector3(), target: new THREE.Vector3() }; resetShootingStar(star);
+                universeGroup.add(star); shootingStars.push(star);
             }
         }
 
         function resetShootingStar(star) {
-            const startX = (Math.random() - 0.5) * 20;
-            const startY = 5 + Math.random() * 5;
-            const startZ = (Math.random() - 0.5) * 20;
-            star.userData.startPos.set(startX, startY, startZ);
-            star.position.copy(star.userData.startPos);
-            star.userData.target.set(startX + (Math.random() - 0.5) * 15, startY - 10 - Math.random() * 5, startZ + (Math.random() - 0.5) * 15);
-            star.userData.speed = 0.015 + Math.random() * 0.04;
-            star.userData.progress = 0;
-            star.lookAt(star.userData.target);
-            star.scale.set(1, 1, 3 + Math.random() * 8); 
+            const startX = (Math.random() - 0.5) * 40; const startZ = (Math.random() - 0.5) * 40;
+            star.userData.startPos.set(startX, 15 + Math.random() * 10, startZ); star.position.copy(star.userData.startPos);
+            star.userData.target.set(startX + (Math.random() - 0.5) * 30, -5, startZ + (Math.random() - 0.5) * 30);
+            star.userData.speed = 0.02 + Math.random() * 0.05; star.userData.progress = 0;
+            star.lookAt(star.userData.target); star.scale.set(1, 1, 5 + Math.random() * 15); 
         }
 
         function createGeometricFlower() {
             geometricFlower = new THREE.Group();
             const outerMat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
             const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-
-            const numPetalsOut = 12;
-            const petalGeoOut = new THREE.TorusGeometry(0.9, 0.012, 16, 100);
-            petalGeoOut.scale(1, 0.3, 1); 
-            for(let i = 0; i < numPetalsOut; i++) {
-                const petal = new THREE.Mesh(petalGeoOut, outerMat);
-                petal.rotation.z = (i / numPetalsOut) * Math.PI;
-                petal.rotation.x = (i % 2 === 0) ? 0.15 : -0.15; 
-                petal.userData = { phase: i, isInner: false };
-                geometricFlower.add(petal);
-            }
-
-            const numPetalsIn = 8;
-            const petalGeoIn = new THREE.TorusGeometry(0.5, 0.015, 16, 100);
-            petalGeoIn.scale(1, 0.35, 1);
-            for(let i = 0; i < numPetalsIn; i++) {
-                const petal = new THREE.Mesh(petalGeoIn, innerMat);
-                petal.rotation.z = (i / numPetalsIn) * Math.PI;
-                petal.rotation.x = Math.PI / 6; 
-                petal.userData = { phase: i, isInner: true };
-                geometricFlower.add(petal);
-            }
+            const pOutGeo = new THREE.TorusGeometry(0.9, 0.012, 16, 100); pOutGeo.scale(1, 0.3, 1); 
+            for(let i = 0; i < 12; i++) { const p = new THREE.Mesh(pOutGeo, outerMat); p.rotation.z = (i / 12) * Math.PI; p.rotation.x = (i % 2 === 0) ? 0.15 : -0.15; p.userData = { phase: i, isInner: false }; geometricFlower.add(p); }
+            const pInGeo = new THREE.TorusGeometry(0.5, 0.015, 16, 100); pInGeo.scale(1, 0.35, 1);
+            for(let i = 0; i < 8; i++) { const p = new THREE.Mesh(pInGeo, innerMat); p.rotation.z = (i / 8) * Math.PI; p.rotation.x = Math.PI / 6; p.userData = { phase: i, isInner: true }; geometricFlower.add(p); }
             mainHeartGroup.add(geometricFlower); 
         }
 
         function createFloatingWords() {
             frases.forEach((texto, index) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = 1024; canvas.height = 128; 
-                
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 1024; canvas.height = 128; 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.font = "bold 60px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                ctx.shadowColor = "#ff1493"; ctx.shadowBlur = 20; ctx.fillStyle = "#ffffff";
-                ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
-
-                const texture = new THREE.CanvasTexture(canvas);
-                const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.AdditiveBlending });
-                
-                const sprite = new THREE.Sprite(spriteMaterial);
-                sprite.scale.set(3, 0.375, 1);
-                sprite.userData = { angle: (index / frases.length) * Math.PI * 2, radius: 1.5 + Math.random() * 1.0, speed: 0.3 + Math.random() * 0.4, yOffset: -0.5 + Math.random() * 1.5 };
-                universeGroup.add(sprite);
-                floatingTexts.push(sprite);
+                ctx.font = "bold 65px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.shadowColor = "#ff1493"; ctx.shadowBlur = 25; ctx.fillStyle = "#ffffff"; ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, blending: THREE.AdditiveBlending }));
+                sprite.scale.set(4, 0.5, 1);
+                sprite.userData = { angle: (index / frases.length) * Math.PI * 2, radius: 2.0 + Math.random() * 1.5, speed: 0.2 + Math.random() * 0.3, yOffset: -0.5 + Math.random() * 2.0 };
+                universeGroup.add(sprite); floatingTexts.push(sprite);
             });
         }
 
-        // --- FUNCIÓN CENTRALIZADA PARA CRUZAR EL PORTAL ---
+        // --- COLISIONES Y TRANSICIONES MAESTRAS ---
         function triggerPortalCrossing(currentCamPos) {
             if (hasCrossedPortal) return; 
             hasCrossedPortal = true;
-            
             isFlashing = true; 
             
             universeGroup.visible = true;
@@ -799,231 +596,181 @@
             universeGroup.position.copy(userCenter);
 
             if(flashSphere && shockwaveRing) {
-                flashSphere.position.copy(currentCamPos);
-                flashSphere.scale.setScalar(1);
-                flashSphere.material.opacity = 1; 
-                flashSphere.visible = true;
-
-                shockwaveRing.position.copy(currentCamPos);
-                shockwaveRing.scale.setScalar(1);
-                shockwaveRing.material.opacity = 1;
-                shockwaveRing.visible = true;
+                flashSphere.position.copy(currentCamPos); flashSphere.scale.setScalar(1); flashSphere.material.opacity = 1; flashSphere.visible = true;
+                shockwaveRing.position.copy(currentCamPos); shockwaveRing.scale.setScalar(1); shockwaveRing.material.opacity = 1; shockwaveRing.visible = true;
             }
 
-            portalGroup.visible = false;
-            pathGroup.visible = false;
-
+            portalGroup.visible = false; pathGroup.visible = false;
             document.getElementById('instruction-layer').style.opacity = '0';
             setTimeout(()=> document.getElementById('instruction-layer').style.display = 'none', 2000);
         }
 
-        // --- INTERACCIONES ---
         function setupInteraction() {
-            const raycaster = new THREE.Raycaster();
-            const mouse = new THREE.Vector2();
-
+            const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
             function onTouch(event) {
                 if(!isStarted) return;
-                
                 if(!hasCrossedPortal) {
                     if (renderer.xr.isPresenting) {
-                        const tempCamPos = new THREE.Vector3();
-                        camera.getWorldPosition(tempCamPos);
-                        triggerPortalCrossing(tempCamPos);
-                    } else {
-                        isAutoWalking = true;
-                    }
+                        const tempCamPos = new THREE.Vector3(); camera.getWorldPosition(tempCamPos); triggerPortalCrossing(tempCamPos);
+                    } else { isAutoWalking = true; }
                     return;
                 }
-
                 let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0);
                 let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
                 mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects(mainHeartGroup.children);
                 if (intersects.length > 0) {
-                    const ring = new THREE.Mesh(
-                        new THREE.RingGeometry(0.1, 0.2, 32),
-                        new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true })
-                    );
-                    ring.position.set(0, 0, 0.1); 
-                    mainHeartGroup.add(ring);
-
+                    const ring = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.2, 32), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true }));
+                    ring.position.set(0, 0, 0.1); mainHeartGroup.add(ring);
                     let scale = 1;
                     function animateRing() {
                         scale += 0.2; ring.scale.set(scale, scale, scale); ring.material.opacity -= 0.05;
-                        if (ring.material.opacity > 0) requestAnimationFrame(animateRing);
-                        else { mainHeartGroup.remove(ring); ring.geometry.dispose(); ring.material.dispose(); }
+                        if (ring.material.opacity > 0) requestAnimationFrame(animateRing); else { mainHeartGroup.remove(ring); ring.geometry.dispose(); ring.material.dispose(); }
                     }
                     animateRing();
                 }
             }
-            window.addEventListener('click', onTouch);
-            window.addEventListener('touchstart', onTouch);
+            window.addEventListener('click', onTouch); window.addEventListener('touchstart', onTouch);
         }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 
-        // --- BUCLE DE ANIMACIÓN PRINCIPAL ---
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
+        function animate() { renderer.setAnimationLoop(render); }
 
         function render() {
             if(!isStarted) { renderer.render(scene, camera); return; }
 
             const elapsedTime = clock.getElapsedTime();
             const delta = clock.getDelta(); 
-            
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
 
-            // 1. FASE DE PORTAL
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1;
 
                 if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 4.0; 
+                    camera.position.z -= delta * 5.0; // Un poco más veloz para más impacto
                     camera.getWorldPosition(camPos); 
                 }
-
                 if (camPos.distanceTo(portalGroup.position) < 1.8 || camPos.z <= portalGroup.position.z + 0.5) {
                     triggerPortalCrossing(camPos);
                 }
             } 
-            
-            // 2. FASE DE UNIVERSO INMERSIVO
             else {
                 universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
-
                 userCenter.lerp(camPos, 0.05);
                 universeGroup.position.copy(userCenter); 
                 particleSystem.position.set(0,0,0); 
 
-                auroraUniforms.uTime.value = elapsedTime;
-                floorUniforms.uTime.value = elapsedTime;
+                lotusUniforms.uTime.value = elapsedTime;
 
-                const forwardVec = new THREE.Vector3(0, 0, -1.5);
+                // --- POSICIONAR EL CORAZÓN ---
+                const forwardVec = new THREE.Vector3(0, 0, -2.0); // Flotando 2 metros al frente
                 forwardVec.applyQuaternion(camera.quaternion); 
                 const targetPosLocal = forwardVec.clone(); 
                 
                 mainHeartGroup.position.lerp(targetPosLocal, 0.05);
                 mainHeartGroup.lookAt(camPos.clone().sub(userCenter)); 
 
+                // --- ACTUALIZAR HILO ROJO DEL DESTINO ---
+                if (redThreadLine) {
+                    // El hilo sale de tu pecho (ligeramente abajo de los ojos)
+                    const chestPosLocal = new THREE.Vector3(0, -0.4, -0.1).applyQuaternion(camera.quaternion);
+                    // Como el hilo está dentro de universeGroup, sus puntos deben ser locales al userCenter
+                    const startLocal = chestPosLocal.clone(); 
+                    const endLocal = mainHeartGroup.position.clone();
+                    const dist = startLocal.distanceTo(endLocal);
+                    
+                    const midLocal = startLocal.clone().lerp(endLocal, 0.5);
+                    midLocal.y -= dist * 0.3; // Curva de gravedad suave
+                    
+                    redThreadCurve.v0.copy(startLocal);
+                    redThreadCurve.v1.copy(midLocal);
+                    redThreadCurve.v2.copy(endLocal);
+                    
+                    const pts = redThreadCurve.getPoints(49);
+                    const posAttr = redThreadLine.geometry.attributes.position;
+                    for(let i=0; i<50; i++) {
+                        posAttr.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
+                    }
+                    posAttr.needsUpdate = true;
+
+                    // Viaje del pulso de amor
+                    const t = (elapsedTime * 0.6) % 1.0;
+                    threadPulse.position.copy(redThreadCurve.getPoint(t));
+                }
+
+                // --- LATIDOS Y ALAS CELESTIALES ---
                 heartUniforms.uTime.value = elapsedTime;
                 const t = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(t), 10.0);
                 const beat2 = Math.pow(Math.sin(t + 0.4), 10.0) * 0.5; 
                 const scaleOffset = 1.0 + (beat1 + beat2) * 0.15;
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
-                
-                // ANIMACIONES SÚPER ROMÁNTICAS NUEVAS
-                if (goldenRingsGroup) {
-                    goldenRingsGroup.rotation.y += 0.01;
-                    goldenRingsGroup.rotation.z += 0.005;
-                    goldenRingsGroup.children[0].rotation.x += 0.005;
-                    goldenRingsGroup.children[1].rotation.y -= 0.008;
-                }
 
-                if (lightPillarsGroup) {
-                    lightPillarsGroup.children.forEach(pillar => {
-                        pillar.material.uniforms.uTime.value = elapsedTime;
-                    });
-                    lightPillarsGroup.rotation.y -= 0.002;
+                if (wingL && wingR) {
+                    // Majestuoso aleteo sincronizado
+                    const flap = Math.sin(elapsedTime * 2.0) * 0.4;
+                    wingL.rotation.y = flap + 0.2;
+                    wingR.rotation.y = -flap - 0.2;
                 }
                 
-                // --- NUEVAS: CÚPULA MÁGICA Y LINTERNAS ---
+                if (goldenRingsGroup) {
+                    goldenRingsGroup.rotation.y += 0.01; goldenRingsGroup.rotation.z += 0.005;
+                    goldenRingsGroup.children[0].rotation.x += 0.005; goldenRingsGroup.children[1].rotation.y -= 0.008;
+                }
+                
                 if (nebulaDome) {
                     nebulaDome.material.uniforms.uTime.value = elapsedTime;
-                    nebulaDome.rotation.y += 0.0005; 
-                    nebulaDome.rotation.z += 0.0002;
+                    nebulaDome.rotation.y += 0.0005; nebulaDome.rotation.z += 0.0002;
                 }
 
                 lanterns.forEach((lantern) => {
-                    const data = lantern.userData;
-                    data.yOffset += data.speed; 
-                    
+                    const data = lantern.userData; data.yOffset += data.speed; 
                     lantern.position.y = userCenter.y + data.yOffset;
                     lantern.position.x = userCenter.x + Math.cos(data.angle) * data.radius + Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.5;
                     lantern.position.z = userCenter.z + Math.sin(data.angle) * data.radius + Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.5;
-                    
-                    // Si suben mucho, reaparecen abajo suavemente
-                    if(data.yOffset > 15) {
-                        data.yOffset = -5;
-                        data.angle = Math.random() * Math.PI * 2;
-                        data.radius = 1.5 + Math.random() * 8;
-                    }
-                    
-                    // Balanceo visual del farolillo
+                    if(data.yOffset > 20) { data.yOffset = -5; data.angle = Math.random() * Math.PI * 2; data.radius = 1.5 + Math.random() * 8; }
                     lantern.rotation.z = Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.1;
                     lantern.rotation.x = Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.1;
                 });
 
                 floatingTexts.forEach((sprite) => {
-                    const data = sprite.userData;
-                    data.angle += 0.003 * data.speed; 
-                    sprite.position.x = Math.cos(data.angle) * data.radius;
-                    sprite.position.z = Math.sin(data.angle) * data.radius;
+                    const data = sprite.userData; data.angle += 0.003 * data.speed; 
+                    sprite.position.x = Math.cos(data.angle) * data.radius; sprite.position.z = Math.sin(data.angle) * data.radius;
                     sprite.position.y = data.yOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.2;
                     sprite.lookAt(camPos.clone().sub(userCenter));
                 });
 
-                butterflies.forEach((butterfly) => {
-                    const data = butterfly.userData;
-                    data.angle += 0.008 * data.speed;
-                    
-                    butterfly.position.x = Math.cos(data.angle) * data.radius;
-                    butterfly.position.z = Math.sin(data.angle) * data.radius;
-                    butterfly.position.y = data.heightOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.5;
-                    
-                    const flap = Math.sin(elapsedTime * data.flapSpeed);
-                    data.wing1.rotation.y = flap * 0.8;
-                    data.wing2.rotation.y = Math.PI - (flap * 0.8);
-
-                    butterfly.rotation.y = -data.angle;
-                });
-
                 fireflies.forEach((fly) => {
-                    const data = fly.userData;
-                    data.angle += 0.01 * data.speed;
-                    fly.position.x = Math.cos(data.angle) * data.radius;
-                    fly.position.z = Math.sin(data.angle) * data.radius;
+                    const data = fly.userData; data.angle += 0.01 * data.speed;
+                    fly.position.x = Math.cos(data.angle) * data.radius; fly.position.z = Math.sin(data.angle) * data.radius;
                     fly.position.y = data.yOffset + Math.sin(elapsedTime * 3.0 + data.phase) * 0.5;
                 });
 
                 particleSystem.rotation.y = elapsedTime * 0.05;
 
                 if(geometricFlower) {
-                    geometricFlower.rotation.z -= 0.005; 
-                    geometricFlower.rotation.y = Math.sin(elapsedTime * 0.5) * 0.2; 
-                    geometricFlower.rotation.x = Math.cos(elapsedTime * 0.5) * 0.1;
-                    const fScale = 1.0 + Math.sin(elapsedTime * 3.0) * 0.05;
-                    geometricFlower.scale.set(fScale, fScale, fScale);
-
-                    geometricFlower.children.forEach(petal => {
-                        const speed = petal.userData.isInner ? 4.0 : 2.0;
-                        const breath = Math.sin(elapsedTime * speed + petal.userData.phase) * 0.05;
-                        petal.scale.setScalar(1.0 + breath);
-                    });
+                    geometricFlower.rotation.z -= 0.005; geometricFlower.rotation.y = Math.sin(elapsedTime * 0.5) * 0.2; geometricFlower.rotation.x = Math.cos(elapsedTime * 0.5) * 0.1;
+                    const fScale = 1.0 + Math.sin(elapsedTime * 3.0) * 0.05; geometricFlower.scale.set(fScale, fScale, fScale);
+                    geometricFlower.children.forEach(petal => { const breath = Math.sin(elapsedTime * (petal.userData.isInner ? 4.0 : 2.0) + petal.userData.phase) * 0.05; petal.scale.setScalar(1.0 + breath); });
                 }
 
+                // TORNADO DE PÉTALOS
                 petals.forEach(petal => {
-                    petal.position.y -= petal.userData.speed;
-                    petal.position.x += Math.sin(elapsedTime * petal.userData.swaySpeed + petal.userData.sway) * 0.015;
-                    petal.rotation.x += petal.userData.rotSpeedX;
-                    petal.rotation.y += petal.userData.rotSpeedY;
+                    const data = petal.userData;
+                    data.angle += data.rotSpeed; 
+                    data.height += data.riseSpeed; 
                     
-                    if (petal.position.y < -3) {
-                        petal.position.y = 4 + Math.random() * 2;
-                        petal.position.x = (Math.random() - 0.5) * 8;
-                        petal.position.z = (Math.random() - 0.5) * 8;
-                    }
+                    petal.position.x = Math.cos(data.angle) * data.radius;
+                    petal.position.z = Math.sin(data.angle) * data.radius;
+                    petal.position.y = data.height;
+                    
+                    petal.rotation.x += data.tumbleX; petal.rotation.y += data.tumbleY;
+                    
+                    if (data.height > 8) { data.height = -2; data.radius = 0.5 + Math.random() * 4.0; } // Renacer abajo
                 });
 
                 shootingStars.forEach(star => {
@@ -1033,22 +780,11 @@
                 });
             }
 
-            // --- EFECTO DE TRANSICIÓN ONDA DE CHOQUE ---
+            // ONDA DE CHOQUE EXPLOSIVA Y MASIVA
             if (isFlashing) {
-                if(flashSphere) {
-                    flashSphere.scale.addScalar(0.4); 
-                    flashSphere.material.opacity -= 0.015; 
-                }
-                if(shockwaveRing) {
-                    shockwaveRing.scale.addScalar(0.6); 
-                    shockwaveRing.material.opacity -= 0.02;
-                }
-                
-                if (flashSphere && flashSphere.material.opacity <= 0) {
-                    isFlashing = false;
-                    flashSphere.visible = false;
-                    shockwaveRing.visible = false;
-                }
+                if(flashSphere) { flashSphere.scale.addScalar(0.8); flashSphere.material.opacity -= 0.02; }
+                if(shockwaveRing) { shockwaveRing.scale.addScalar(1.2); shockwaveRing.material.opacity -= 0.015; }
+                if (flashSphere && flashSphere.material.opacity <= 0) { isFlashing = false; flashSphere.visible = false; shockwaveRing.visible = false; }
             }
 
             renderer.render(scene, camera);
