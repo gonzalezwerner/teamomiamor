@@ -141,9 +141,10 @@
         let isFlashing = false;
         let butterflies = [];
         let auroraBorealis, magicFloor;
-        let etherealMoon;
         let goldenRingsGroup;
         let lightPillarsGroup;
+        let nebulaDome;
+        let lanterns = [];
         
         const frases = [
             "Eres mi destino",
@@ -200,9 +201,12 @@
             createButterflies();
             createAuroraBorealis();
             createMagicFloor();
-            createEtherealMoon();
             createGoldenRings();
             createLightPillars();
+            
+            // Reemplazo de la Luna por Cúpula de Nebulosa y Linternas Románticas
+            createNebulaSky();
+            createRomanticLanterns();
 
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
@@ -428,31 +432,91 @@
         }
 
         // --- LOS NUEVOS EFECTOS SÚPER WOW Y ROMÁNTICOS ---
-        
-        function createEtherealMoon() {
-            // Una luna gigante y mágica en la distancia
-            const moonGeo = new THREE.SphereGeometry(15, 64, 64);
-            const moonMat = new THREE.MeshBasicMaterial({
-                color: 0xffebf0, 
-                transparent: true, 
-                opacity: 0.85,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                map: (()=>{
-                    const c = document.createElement('canvas'); c.width = 512; c.height = 512;
-                    const ctx = c.getContext('2d');
-                    const g = ctx.createRadialGradient(256,256,0,256,256,256);
-                    g.addColorStop(0,'rgba(255, 255, 255, 1)');
-                    g.addColorStop(0.4,'rgba(255, 182, 193, 0.9)');
-                    g.addColorStop(0.8,'rgba(138, 43, 226, 0.5)');
-                    g.addColorStop(1,'rgba(0, 0, 0, 0)');
-                    ctx.fillStyle=g; ctx.fillRect(0,0,512,512); 
-                    return new THREE.CanvasTexture(c);
-                })()
+
+        function createNebulaSky() {
+            // Cúpula masiva de nebulosa que encierra toda la escena
+            const domeGeo = new THREE.SphereGeometry(30, 32, 32);
+            domeGeo.scale(-1, 1, 1); // Dar vuelta la esfera para ver desde adentro
+
+            const domeMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    void main() {
+                        vec2 uv = vUv * 3.0;
+                        // Ruido cósmico para crear las formas de gas
+                        float n1 = sin(uv.x * 2.0 + uTime * 0.1) * cos(uv.y * 2.0 + uTime * 0.15);
+                        float n2 = sin(uv.y * 3.0 - uTime * 0.2) * 0.5;
+                        float nebula = n1 + n2;
+
+                        // Colores vibrantes de amor: Púrpura cósmico, Rosa y Oro
+                        vec3 color1 = vec3(0.1, 0.0, 0.3); // Púrpura oscuro
+                        vec3 color2 = vec3(0.8, 0.1, 0.5); // Rosa magenta
+                        vec3 color3 = vec3(1.0, 0.8, 0.2); // Toques dorados brillantes
+
+                        vec3 finalColor = mix(color1, color2, nebula + 0.5);
+                        finalColor = mix(finalColor, color3, (n2 + 0.5) * 0.4);
+
+                        // Opacidad suave para mezclar con tu habitación en AR
+                        float alpha = clamp(nebula * 0.6 + 0.2, 0.0, 0.8);
+                        
+                        // Añadir destellos de pequeñas estrellas tejidas en el cielo
+                        float star = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
+                        if(star > 0.99) {
+                            finalColor += vec3(1.0); // Estrellas blancas super brillantes
+                            alpha += 0.5;
+                        }
+
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending, // Mezcla mágica con la cámara AR
+                side: THREE.BackSide,
+                depthWrite: false
             });
-            etherealMoon = new THREE.Mesh(moonGeo, moonMat);
-            etherealMoon.position.set(0, 20, -60); // Lejos y en lo alto
-            universeGroup.add(etherealMoon);
+
+            nebulaDome = new THREE.Mesh(domeGeo, domeMat);
+            universeGroup.add(nebulaDome);
+        }
+
+        function createRomanticLanterns() {
+            // Lluvia invertida de linternas de papel mágicas (como en Enredados)
+            const lanternGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.35, 16);
+            const lanternMat = new THREE.MeshBasicMaterial({
+                color: 0xffb700, // Luz dorada cálida perfecta
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending
+            });
+
+            const glowGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            for(let i=0; i<60; i++) {
+                const lanternGroup = new THREE.Group();
+                const body = new THREE.Mesh(lanternGeo, lanternMat);
+                const glow = new THREE.Mesh(glowGeo, glowMat);
+                lanternGroup.add(body);
+                lanternGroup.add(glow); // Un núcleo blanco brillante dentro de la linterna
+
+                lanternGroup.userData = {
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 1.5 + Math.random() * 8, // Rodean al usuario de cerca y de lejos
+                    speed: 0.01 + Math.random() * 0.02, // Flotan hacia arriba suavemente
+                    swaySpeed: 0.5 + Math.random() * 1.0,
+                    swayOffset: Math.random() * Math.PI * 2,
+                    yOffset: -5 + Math.random() * 15 // Algunas están abajo, otras ya flotando arriba
+                };
+
+                universeGroup.add(lanternGroup);
+                lanterns.push(lanternGroup);
+            }
         }
 
         function createGoldenRings() {
@@ -867,21 +931,39 @@
                     goldenRingsGroup.children[1].rotation.y -= 0.008;
                 }
 
-                if (etherealMoon) {
-                    etherealMoon.rotation.z += 0.001;
-                    etherealMoon.scale.setScalar(1.0 + Math.sin(elapsedTime * 0.5) * 0.02);
-                    // La luna orbita gigante en la lejanía
-                    etherealMoon.position.x = Math.cos(elapsedTime * 0.05) * 60;
-                    etherealMoon.position.z = Math.sin(elapsedTime * 0.05) * 60;
-                }
-
                 if (lightPillarsGroup) {
                     lightPillarsGroup.children.forEach(pillar => {
                         pillar.material.uniforms.uTime.value = elapsedTime;
                     });
-                    // Los pilares giran suavemente rodeándote
                     lightPillarsGroup.rotation.y -= 0.002;
                 }
+                
+                // --- NUEVAS: CÚPULA MÁGICA Y LINTERNAS ---
+                if (nebulaDome) {
+                    nebulaDome.material.uniforms.uTime.value = elapsedTime;
+                    nebulaDome.rotation.y += 0.0005; 
+                    nebulaDome.rotation.z += 0.0002;
+                }
+
+                lanterns.forEach((lantern) => {
+                    const data = lantern.userData;
+                    data.yOffset += data.speed; 
+                    
+                    lantern.position.y = userCenter.y + data.yOffset;
+                    lantern.position.x = userCenter.x + Math.cos(data.angle) * data.radius + Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.5;
+                    lantern.position.z = userCenter.z + Math.sin(data.angle) * data.radius + Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.5;
+                    
+                    // Si suben mucho, reaparecen abajo suavemente
+                    if(data.yOffset > 15) {
+                        data.yOffset = -5;
+                        data.angle = Math.random() * Math.PI * 2;
+                        data.radius = 1.5 + Math.random() * 8;
+                    }
+                    
+                    // Balanceo visual del farolillo
+                    lantern.rotation.z = Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.1;
+                    lantern.rotation.x = Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.1;
+                });
 
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData;
