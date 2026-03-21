@@ -171,13 +171,13 @@
             }
         </script>
         
-        <h1 class="text-glow">El Santuari del Nostre Amor</h1>
-        <p class="text-glow">Una constel·lació forjada a la mesura de la teva ànima...</p>
-        <button id="start-btn">Despertar l'Eternitat</button>
+        <h1 class="text-glow">El Santuario de Nuestro Amor</h1>
+        <p class="text-glow">Una constelación forjada a la medida de tu alma...</p>
+        <button id="start-btn">Despertar la Eternidad</button>
     </div>
 
     <div id="instruction-layer">
-        <h2 class="text-glow instruction-text">✨ Toca la pantalla o camina per creuar el llindar màgic ✨<br><span style="font-size:1rem; color:#aaa; font-weight:normal; letter-spacing:1px; display:block; margin-top:10px;">(El destí ens crida...)</span></h2>
+        <h2 class="text-glow instruction-text">✨ Toca la pantalla o camina para cruzar el umbral mágico ✨<br><span style="font-size:1rem; color:#aaa; font-weight:normal; letter-spacing:1px; display:block; margin-top:10px;">(El destino nos llama...)</span></h2>
     </div>
 
     <div id="canvas-container"></div>
@@ -197,7 +197,7 @@
         
         // Grups Principals
         let portalGroup = new THREE.Group();
-        let pathGroup; // Corregit el ReferenceError afegint-ho globalment
+        let pathGroup; 
         let universeGroup = new THREE.Group();
         let mainHeartGroup = new THREE.Group();
         let particleSystem;
@@ -209,11 +209,12 @@
         let floatingTexts = [];
         let fireflies = [];
         let petals = [];
-        let shootingStars = [];
+        let comets = []; // Abans shootingStars, ara amb esteles reals
         let lanterns = [];
-        let parametricRoses = []; // Llista de roses matemàtiques
-        let constellationLines = []; // Línies de les estrelles
-        let boids = []; // Ocells de llum
+        let parametricRoses = []; 
+        let constellationLines = []; 
+        let boids = []; 
+        let floatingDiamonds = []; // NOVA: Diamants
         
         // Materials i Uniforms de Shaders
         let heartUniforms, portalUniforms, lotusUniforms, auroraUniforms, nebulaUniforms;
@@ -222,13 +223,17 @@
         // Elements Unics
         let flashSphere, shockwaveRing, shockwaveDisk;
         let isFlashing = false;
+        let sacredHalosGroup; // NOVA: Geometria Sagrada
         let goldenRingsGroup;
         let nebulaDome;
         let wingL, wingR;
         let redThreadCurve, redThreadLine, threadPulse;
         let lotusMandalaFloor;
+        let crystalLotusGroup; // NOVA: Loto de Cristall
 
-        // Frases Ultra-Romàntiques
+        // ============================================================================
+        // FRASES ULTRA-ROMÁNTICAS (NIVEL DIOS)
+        // ============================================================================
         const frasesAmor = [
             "Ets el meu destí escrit a les estrelles",
             "La meva ànima et reconeix des de sempre",
@@ -237,9 +242,35 @@
             "T'estimaria en cadascun dels multiversos",
             "Amb tu, el temps i l'espai perden el sentit",
             "Per sempre i per a tota l'eternitat",
-            "Ets la llum que il·lumina les meves ombres",
-            "Fins a l'últim sospir de l'univers",
-            "El fil vermell ens va unir abans de néixer"
+            "El fil vermell ens va unir abans de néixer",
+            "En el vasto cosmos, mis ojos solo te buscan a ti",
+            "Eres la anomalía más hermosa de mi universo",
+            "Si el tiempo se detuviera, me quedaría a vivir en tu sonrisa",
+            "Ni mil galaxias brillan como tu mirada",
+            "Mi corazón late en la frecuencia de tu voz",
+            "Atravesaría el abismo del espacio solo para rozar tu mano",
+            "Eres la gravedad que me mantiene anclado a la felicidad",
+            "Incluso en la oscuridad absoluta, tú eres mi faro",
+            "Eres el eco eterno de mi propia alma",
+            "Amar es poco para describir lo que haces en mí",
+            "Contigo descubrí que la magia es real",
+            "Mis latidos son tuyos, hoy y mil vidas más",
+            "Eres el milagro que nunca supe que necesitaba",
+            "Hasta que las estrellas se apaguen, estaré contigo",
+            "En ti encontré el hogar que mi espíritu buscaba",
+            "Te amé antes de conocerte, te amaré después de dejar de existir",
+            "Eres mi comienzo, mi viaje y mi final",
+            "No hay ecuación matemática que explique nuestro amor",
+            "Haces que mi universo se expanda y colapse al mismo tiempo",
+            "Respiro porque sé que habitas en este mismo mundo",
+            "Mi poesía nace y muere en la comisura de tus labios",
+            "Eres el amanecer de mis días más oscuros",
+            "Si fueras un sueño, elegiría no despertar jamás",
+            "Eres la sinfonía más perfecta del universo",
+            "Tu amor es el big bang de mi existencia",
+            "Me haces creer que todo lo imposible es probable",
+            "Tus ojos son el mapa donde encuentro mi tesoro",
+            "Cada partícula de mi ser te pertenece"
         ];
 
         // ============================================================================
@@ -248,45 +279,34 @@
         function init() {
             const container = document.getElementById('canvas-container');
 
-            // Escena i Boira
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010005, 0.03); // Boira còsmica densa
+            scene.fog = new THREE.FogExp2(0x010005, 0.03); 
 
-            // Càmera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 200);
             camera.position.set(0, 0, 3); 
 
-            // Renderitzador
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimització
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.xr.enabled = true; 
             
-            // Efectes post-processament nadius (ToneMapping)
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.2;
             container.appendChild(renderer.domElement);
 
-            // Il·luminació Màgica
             setupLighting();
 
-            // Configurar els mons
             universeGroup.visible = false;
             universeGroup.scale.set(0.0001, 0.0001, 0.0001); 
             scene.add(universeGroup);
 
-            // CONSTRUCCIÓ DE L'ESPAI
             construirMónPrePortal();
             construirMónPostPortal();
 
-            // Interacció
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
 
-            // Configuració WebXR (AR)
             setupAR();
-            
-            // Gestió d'Interfície
             configurarBotoInici();
         }
 
@@ -331,7 +351,6 @@
             scene.add(portalGroup);
             portalGroup.position.set(0, 0, -2.8);
             
-            // L'Anell Exterior d'Or
             const ringGeo = new THREE.TorusGeometry(1.4, 0.06, 32, 150);
             const ringMat = new THREE.MeshStandardMaterial({ 
                 color: 0xffd700, metalness: 1.0, roughness: 0.1, emissive: 0xffa500, emissiveIntensity: 0.5 
@@ -339,12 +358,10 @@
             const ring = new THREE.Mesh(ringGeo, ringMat);
             portalGroup.add(ring);
 
-            // Anell Interior d'Energia
             const innerRingGeo = new THREE.TorusGeometry(1.3, 0.02, 16, 100);
             const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
             portalGroup.add(new THREE.Mesh(innerRingGeo, innerRingMat));
 
-            // El Vòrtex Còsmic (Shader Complex)
             const veilGeo = new THREE.PlaneGeometry(2.7, 2.7, 64, 64);
             portalUniforms = { uTime: { value: 0 } };
             const veilMat = new THREE.ShaderMaterial({
@@ -355,7 +372,6 @@
                     void main() { 
                         vUv = uv; 
                         vec3 pos = position;
-                        // Deformació lleugera 3D
                         float dist = distance(uv, vec2(0.5));
                         pos.z += sin(dist * 10.0 - uTime * 2.0) * 0.1;
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
@@ -364,7 +380,6 @@
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
                     
-                    // Funció de soroll procedural per a més realisme
                     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
                     float noise(vec2 p) {
                         vec2 i = floor(p); vec2 f = fract(p);
@@ -378,7 +393,6 @@
                         float dist = length(uv); 
                         float angle = atan(uv.y, uv.x);
                         
-                        // Doble espiral contra-rotativa
                         float spiral1 = sin(dist * 25.0 - uTime * 4.0 + angle * 3.0);
                         float spiral2 = cos(dist * 15.0 + uTime * 2.0 - angle * 2.0);
                         float vortex = (spiral1 + spiral2) * 0.5;
@@ -388,14 +402,13 @@
                         
                         float alpha = smoothstep(0.5, 0.1, dist) * (0.5 + 0.5 * vortex);
                         
-                        vec3 color1 = vec3(0.05, 0.0, 0.2); // Fons obscur
-                        vec3 color2 = vec3(1.0, 0.2, 0.6); // Magenta pur
-                        vec3 color3 = vec3(0.0, 1.0, 1.0); // Cian màgic al centre
+                        vec3 color1 = vec3(0.05, 0.0, 0.2); 
+                        vec3 color2 = vec3(1.0, 0.2, 0.6); 
+                        vec3 color3 = vec3(0.0, 1.0, 1.0); 
                         
                         vec3 color = mix(color1, color2, vortex + 0.5);
                         color = mix(color, color3, smoothstep(0.2, 0.0, dist));
                         
-                        // Nucli hiper-brillant
                         color += vec3(1.0, 1.0, 1.0) * pow(smoothstep(0.15, 0.0, dist), 3.0) * 3.0;
                         
                         gl_FragColor = vec4(color, alpha);
@@ -405,7 +418,6 @@
             });
             portalGroup.add(new THREE.Mesh(veilGeo, veilMat));
 
-            // El Camí de Llum
             crearCamiLluminos();
         }
 
@@ -413,18 +425,14 @@
             pathGroup = new THREE.Group();
             const pathGeo = new THREE.PlaneGeometry(1.8, 4, 32, 32);
             
-            // Shader per al camí, simulant un flux d'energia cap al portal
             const pathMat = new THREE.ShaderMaterial({
                 uniforms: { uTime: portalUniforms.uTime },
                 vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
                     void main() {
-                        // Flux vertical
                         float flow = sin(vUv.y * 20.0 + uTime * 5.0) * 0.5 + 0.5;
-                        // Bordes suaus
                         float edge = sin(vUv.x * 3.1415);
-                        // Desvaniment cap al jugador
                         float fade = smoothstep(0.0, 1.0, vUv.y);
                         
                         vec3 color = vec3(1.0, 0.1, 0.6) * flow;
@@ -444,24 +452,257 @@
         }
 
         // ============================================================================
-        // 4. CONSTRUCCIÓ DEL POST-PORTAL (El Santuari)
+        // 4. CONSTRUCCIÓ DEL POST-PORTAL (El Santuari Còsmic Ultra Romàntic)
         // ============================================================================
         function construirMónPostPortal() {
             crearCorUltraComplex();
+            crearLotoDeCristall(); // NOU: Loto de cristall base
+            crearHalosSagrats(); // NOU: Halos de geometría
             crearAlesCelestials();
             crearTornatDePetals();
-            crearSistemaBoids(); // Ocells IA
+            crearSistemaBoids(); 
             crearSòlMandalaLoto();
             crearVoltaNebulosa();
             crearConstel·lacionsDesti();
             crearLlanternesRomanitques();
             crearFilVermellDesti();
             crearPilarsDeLlum();
-            crearAnellsDaurats();
+            crearDiamantsLevitants(); // NOU: Diamants brillants
+            crearSistemaCometes(); // NOU: Meteoritos con estela
             crearParticulesGalaxia();
             crearTextosFlotants();
             crearOnaDeXoc();
-            crearJardiDeRosesParametriques(); // Roserar Matemàtic
+            crearJardiDeRosesParametriques(); 
+        }
+
+        // --- NOU SISTEMA: HALOS DE GEOMETRÍA SAGRADA PROCEDURALS ---
+        function crearHalosSagrats() {
+            sacredHalosGroup = new THREE.Group();
+            
+            // Funció per dibuixar mandales ultra-complexos al Canvas
+            function generarTexturaHalo(radi, color, runes) {
+                const canvas = document.createElement('canvas'); 
+                canvas.width = 1024; canvas.height = 1024;
+                const ctx = canvas.getContext('2d');
+                const cx = 512, cy = 512;
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15;
+                
+                // Anell base
+                ctx.beginPath();
+                ctx.arc(cx, cy, radi, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Línies geomètriques internes
+                for(let i=0; i<36; i++) {
+                    const angle = (i/36) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(angle)*radi*0.9, cy + Math.sin(angle)*radi*0.9);
+                    ctx.lineTo(cx + Math.cos(angle)*radi*0.95, cy + Math.sin(angle)*radi*0.95);
+                    ctx.stroke();
+                }
+
+                // Símbols o Runes de l'amor
+                if(runes) {
+                    ctx.font = "24px Arial";
+                    ctx.fillStyle = color;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    const chars = "AMOR ETERN DESTI INFINIT LÍMIT ÀNIMA FOC BATEC LÍMIT".split(" ");
+                    for(let i=0; i<12; i++) {
+                        const angle = (i/12) * Math.PI * 2;
+                        const px = cx + Math.cos(angle) * (radi * 0.85);
+                        const py = cy + Math.sin(angle) * (radi * 0.85);
+                        
+                        ctx.save();
+                        ctx.translate(px, py);
+                        ctx.rotate(angle + Math.PI/2);
+                        ctx.fillText(chars[i%chars.length], 0, 0);
+                        ctx.restore();
+                    }
+                }
+                
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            const mat1 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(450, '#ff1493', true), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const mat2 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(400, '#00ffff', false), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const mat3 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(480, '#ffd700', true), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+
+            const planeGeo = new THREE.PlaneGeometry(3, 3);
+            
+            const halo1 = new THREE.Mesh(planeGeo, mat1);
+            const halo2 = new THREE.Mesh(planeGeo, mat2);
+            const halo3 = new THREE.Mesh(planeGeo, mat3);
+
+            halo1.rotation.x = Math.PI / 2;
+            halo2.rotation.y = Math.PI / 2;
+            halo3.rotation.x = Math.PI / 4;
+            halo3.rotation.y = Math.PI / 4;
+
+            sacredHalosGroup.add(halo1, halo2, halo3);
+            mainHeartGroup.add(sacredHalosGroup); // Posa l'halo dins del cor
+        }
+
+        // --- NOU SISTEMA: LOTO DE CRISTALL DE BASE ---
+        function crearLotoDeCristall() {
+            crystalLotusGroup = new THREE.Group();
+            
+            // Material de cristall refractant (Simulat amb Shader)
+            const glassMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0.0 } },
+                vertexShader: `
+                    varying vec3 vNormal; varying vec3 vViewPosition;
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vViewPosition = -mvPosition.xyz;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vNormal; varying vec3 vViewPosition;
+                    void main() {
+                        vec3 normal = normalize(vNormal);
+                        vec3 viewDir = normalize(vViewPosition);
+                        
+                        // Iridescència hologràfica
+                        float fresnel = dot(viewDir, normal);
+                        fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+                        
+                        vec3 color = vec3(0.0);
+                        color.r = sin(fresnel * 10.0 + uTime) * 0.5 + 0.5;
+                        color.g = sin(fresnel * 15.0 + uTime * 1.5) * 0.5 + 0.5;
+                        color.b = sin(fresnel * 20.0 + uTime * 2.0) * 0.5 + 0.5;
+                        
+                        color *= fresnel * 2.0;
+                        color += vec3(1.0, 0.8, 0.9) * pow(fresnel, 5.0); // Borde blanc brillant
+                        
+                        gl_FragColor = vec4(color, fresnel * 0.8);
+                    }
+                `,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
+            });
+
+            // Construir els pètals del Loto de Cristall
+            for(let i=0; i<12; i++) {
+                const petalGeo = new THREE.PlaneGeometry(0.8, 1.5, 8, 8);
+                const pos = petalGeo.attributes.position;
+                for(let j=0; j<pos.count; j++) {
+                    const x = pos.getX(j); const y = pos.getY(j);
+                    pos.setZ(j, (x*x + y*y) * -0.5); // Curvar
+                }
+                petalGeo.computeVertexNormals();
+                petalGeo.translate(0, 0.75, 0); // Moure pivot a la base
+
+                const petal = new THREE.Mesh(petalGeo, glassMat);
+                petal.rotation.y = (i / 12) * Math.PI * 2;
+                petal.rotation.x = Math.PI / 4; // Obrir
+                
+                // Animar individualment
+                petal.userData = { phase: i };
+                crystalLotusGroup.add(petal);
+            }
+            
+            crystalLotusGroup.position.y = -0.5; // Sota el cor
+            mainHeartGroup.add(crystalLotusGroup);
+        }
+
+        // --- NOU SISTEMA: DIAMANTS FLOTANTS ---
+        function crearDiamantsLevitants() {
+            const diamondGeo = new THREE.OctahedronGeometry(0.1, 0);
+            const diamondMat = new THREE.MeshStandardMaterial({
+                color: 0x00ffff, metalness: 0.9, roughness: 0.1, emissive: 0x0055ff, emissiveIntensity: 0.5,
+                transparent: true, opacity: 0.9
+            });
+
+            for(let i=0; i<30; i++) {
+                const diamond = new THREE.Mesh(diamondGeo, diamondMat);
+                diamond.userData = {
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 2 + Math.random() * 8,
+                    yOffset: -2 + Math.random() * 10,
+                    speed: 0.05 + Math.random() * 0.1,
+                    spinX: Math.random() * 0.05,
+                    spinY: Math.random() * 0.05
+                };
+                universeGroup.add(diamond);
+                floatingDiamonds.push(diamond);
+            }
+        }
+
+        // --- NOU SISTEMA: COMETES AMB ESTELA ---
+        function crearSistemaCometes() {
+            const cometCount = 12;
+            const cometGeo = new THREE.SphereGeometry(0.05, 8, 8);
+            const cometMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            for(let i=0; i<cometCount; i++) {
+                const cometGroup = new THREE.Group();
+                const head = new THREE.Mesh(cometGeo, cometMat);
+                cometGroup.add(head);
+
+                // Estela (Trail) usant BufferGeometry dinàmica
+                const tailPoints = 20;
+                const tailGeo = new THREE.BufferGeometry();
+                const tailPos = new Float32Array(tailPoints * 3);
+                tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
+                
+                const tailMat = new THREE.LineBasicMaterial({ 
+                    color: 0xff1493, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending 
+                });
+                const tail = new THREE.Line(tailGeo, tailMat);
+                cometGroup.add(tail);
+
+                cometGroup.userData = {
+                    start: new THREE.Vector3(),
+                    end: new THREE.Vector3(),
+                    progress: 0,
+                    speed: 0.01 + Math.random() * 0.02,
+                    history: Array(tailPoints).fill(new THREE.Vector3()),
+                    tailGeo: tailGeo
+                };
+                
+                resetComet(cometGroup);
+                universeGroup.add(cometGroup);
+                comets.push(cometGroup);
+            }
+        }
+
+        function resetComet(comet) {
+            const startX = (Math.random() - 0.5) * 60; const startZ = (Math.random() - 0.5) * 60;
+            comet.userData.start.set(startX, 20 + Math.random() * 10, startZ);
+            comet.userData.end.set(startX + (Math.random() - 0.5) * 40, -10, startZ + (Math.random() - 0.5) * 40);
+            comet.userData.progress = 0;
+            comet.userData.history = Array(20).fill(comet.userData.start.clone());
+        }
+
+        function updateComets() {
+            comets.forEach(comet => {
+                const data = comet.userData;
+                data.progress += data.speed;
+                
+                // Posició actual del cap
+                const currentPos = new THREE.Vector3().lerpVectors(data.start, data.end, data.progress);
+                comet.children[0].position.copy(currentPos); // Moure el cap
+                
+                // Actualitzar l'historial per a l'estela
+                data.history.unshift(currentPos.clone());
+                data.history.pop();
+                
+                // Dibuixar l'estela
+                const posAttr = data.tailGeo.attributes.position;
+                for(let i=0; i<20; i++) {
+                    posAttr.setXYZ(i, data.history[i].x, data.history[i].y, data.history[i].z);
+                }
+                posAttr.needsUpdate = true;
+
+                if(data.progress >= 1.0) resetComet(comet);
+            });
         }
 
         // --- SISTEMA 1: EL COR MULTI-CAPA ---
@@ -606,81 +847,62 @@
             mainHeartGroup.add(wingR);
         }
 
-        // --- SISTEMA 3: JARDÍ DE ROSES PARAMÈTRIQUES (La Gran Addició) ---
+        // --- SISTEMA 3: JARDÍ DE ROSES PARAMÈTRIQUES ---
         function crearJardiDeRosesParametriques() {
-            // Aquesta funció crea roses completament mitjançant fórmules matemàtiques
-            // i les dispersa per terra. Això és el cor de la complexitat estructural.
-            
-            const numRoses = 100; // Un camp enorme de roses
+            const numRoses = 100; 
             const roseMaterial = new THREE.MeshStandardMaterial({ 
                 color: 0xff0040, emissive: 0x330011, roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide
             });
 
             for(let r=0; r<numRoses; r++) {
                 const roseGroup = new THREE.Group();
-                
-                // Paràmetres aleatoris per fer cada rosa única
                 const petalsCount = 15 + Math.floor(Math.random() * 10);
                 const scale = 0.05 + Math.random() * 0.04;
                 
-                // Construir els pètals matemàticament
                 for(let p=0; p<petalsCount; p++) {
-                    const t = p / petalsCount; // Fracció de creixement
-                    const angle = t * Math.PI * 10.0; // Espiral aurea
+                    const t = p / petalsCount; 
+                    const angle = t * Math.PI * 10.0; 
                     
-                    // Geometria paramètrica manual (un plànol deformat)
                     const petalGeo = new THREE.PlaneGeometry(1, 1, 4, 4);
                     const pos = petalGeo.attributes.position;
                     
-                    // Deformar el plànol pla per crear un pètal còncau
                     for(let i=0; i<pos.count; i++) {
                         const x = pos.getX(i);
                         const y = pos.getY(i);
-                        // Fórmules de curvatura de pètal
                         const z = (x*x + y*y) * -0.5 + Math.sin(y*3.0)*0.2; 
                         pos.setZ(i, z);
                     }
                     petalGeo.computeVertexNormals();
-                    
                     const petalMesh = new THREE.Mesh(petalGeo, roseMaterial);
-                    
-                    // Posicionar en l'espiral
                     const radius = t * 0.8;
                     petalMesh.position.set(Math.cos(angle)*radius, t*0.5, Math.sin(angle)*radius);
-                    
-                    // Rotar cap amunt i al voltant del centre
                     petalMesh.rotation.y = -angle + Math.PI/2;
-                    petalMesh.rotation.x = Math.PI/4 + (1.0-t)*Math.PI/4; // S'obren cap a fora
+                    petalMesh.rotation.x = Math.PI/4 + (1.0-t)*Math.PI/4; 
                     
                     roseGroup.add(petalMesh);
                 }
                 
                 roseGroup.scale.set(scale, scale, scale);
-                
-                // Posició al jardí
                 const gardenRadius = 1.5 + Math.random() * 15;
                 const gardenAngle = Math.random() * Math.PI * 2;
                 
                 roseGroup.position.set(
                     Math.cos(gardenAngle) * gardenRadius,
-                    -1.45, // Arràn de terra
+                    -1.45, 
                     Math.sin(gardenAngle) * gardenRadius
                 );
                 
-                // Rotació aleatòria
                 roseGroup.rotation.y = Math.random() * Math.PI * 2;
                 roseGroup.rotation.z = (Math.random() - 0.5) * 0.2;
                 roseGroup.rotation.x = (Math.random() - 0.5) * 0.2;
                 
-                // Guardar dades per animar el creixement
                 roseGroup.userData = {
                     targetScale: scale,
                     currentScale: 0.001,
                     growthSpeed: 0.02 + Math.random() * 0.03,
-                    delay: Math.random() * 3.0 // Temps abans de començar a créixer
+                    delay: Math.random() * 3.0 
                 };
                 
-                // Iniciar oculta
                 roseGroup.scale.set(0.001, 0.001, 0.001);
                 
                 parametricRoses.push(roseGroup);
@@ -690,15 +912,12 @@
 
         // --- SISTEMA 4: INTEL·LIGÈNCIA ARTIFICIAL DE BOIDS (Ocells de Llum) ---
         function crearSistemaBoids() {
-            // Simulem una bandada de coloms màgics usant l'algorisme de Craig Reynolds
             const boidGeo = new THREE.ConeGeometry(0.02, 0.1, 3);
-            boidGeo.rotateX(Math.PI / 2); // Orientar cap endavant
-            
+            boidGeo.rotateX(Math.PI / 2); 
             const boidMat = new THREE.MeshBasicMaterial({ 
                 color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending 
             });
 
-            // Afegir aletes (ales)
             const wingGeo = new THREE.PlaneGeometry(0.1, 0.04);
             const wingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
 
@@ -715,7 +934,6 @@
                 
                 boidGroup.add(body, w1, w2);
                 
-                // Variables físiques del Boid
                 boidGroup.userData = {
                     velocity: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(0.05),
                     acceleration: new THREE.Vector3(),
@@ -726,7 +944,6 @@
                     wingSpeed: 15 + Math.random() * 10
                 };
                 
-                // Posició inicial aleatòria al voltant del portal
                 boidGroup.position.set((Math.random()-0.5)*10, Math.random()*10, (Math.random()-0.5)*10);
                 
                 boids.push(boidGroup);
@@ -735,11 +952,7 @@
         }
 
         function actualitzarBoids(delta, time) {
-            // Algorisme Flocking: Separació, Alineació, Cohesió, i atracció al Cor
-            const targetPos = mainHeartGroup.position.clone(); // Persegueixen el cor
-            
-            // Per optimitzar, en JS s'hauria d'usar estructures espacials, 
-            // però per 150 N^2 és acceptable (22,500 iteracions per frame)
+            const targetPos = mainHeartGroup.position.clone(); 
             
             for (let i = 0; i < boids.length; i++) {
                 const boid = boids[i];
@@ -750,21 +963,15 @@
                 let coh = new THREE.Vector3();
                 let count = 0;
                 
-                // Forces
                 for (let j = 0; j < boids.length; j++) {
                     if (i === j) continue;
                     const other = boids[j];
                     const dist = boid.position.distanceTo(other.position);
                     
-                    if (dist > 0 && dist < 1.0) { // Radi de percepció
-                        // Separació
+                    if (dist > 0 && dist < 1.0) { 
                         const diff = boid.position.clone().sub(other.position).normalize().divideScalar(dist);
                         sep.add(diff);
-                        
-                        // Alineació
                         ali.add(other.userData.velocity);
-                        
-                        // Cohesió
                         coh.add(other.position);
                         count++;
                     }
@@ -776,15 +983,12 @@
                     coh.divideScalar(count).sub(boid.position).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
                 }
                 
-                // Atracció al destí (El Cor, que orbita)
                 const attractor = targetPos.clone().sub(boid.position);
                 const distToTarget = attractor.length();
                 attractor.normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 1.5);
                 
-                // Crear un corrent circular al voltant del cor
                 const vortex = new THREE.Vector3(boid.position.z - targetPos.z, 0, -(boid.position.x - targetPos.x)).normalize().multiplyScalar(data.maxForce * 2.0);
                 
-                // Aplicar pesos a les forces
                 sep.multiplyScalar(2.0);
                 ali.multiplyScalar(1.0);
                 coh.multiplyScalar(1.0);
@@ -792,28 +996,19 @@
                 
                 data.acceleration.add(sep).add(ali).add(coh).add(attractor).add(vortex);
                 
-                // Evitar xocar amb el terra
-                if(boid.position.y < -1.0) {
-                    data.acceleration.y += 0.01;
-                }
-                // Evitar escapar molt lluny
-                if(distToTarget > 15) {
-                    data.acceleration.add(targetPos.clone().sub(boid.position).normalize().multiplyScalar(0.01));
-                }
+                if(boid.position.y < -1.0) data.acceleration.y += 0.01;
+                if(distToTarget > 15) data.acceleration.add(targetPos.clone().sub(boid.position).normalize().multiplyScalar(0.01));
 
-                // Física Euler
                 data.velocity.add(data.acceleration);
                 data.velocity.clampLength(0, data.maxSpeed);
                 boid.position.add(data.velocity);
-                data.acceleration.set(0,0,0); // Resetejar
+                data.acceleration.set(0,0,0); 
                 
-                // Orientació
                 if(data.velocity.lengthSq() > 0.0001) {
                     const lookTarget = boid.position.clone().add(data.velocity);
                     boid.lookAt(lookTarget);
                 }
                 
-                // Animar ales
                 data.wingPhase += data.wingSpeed * delta;
                 const flap = Math.sin(data.wingPhase);
                 data.wings[0].rotation.z = flap;
@@ -823,14 +1018,12 @@
 
         // --- SISTEMA 5: CONSTEL·LACIONS DEL DESTÍ ---
         function crearConstel·lacionsDesti() {
-            // Genera línies geomètriques gegants al cel unint estrelles en formes romàntiques
             const lineMaterial = new THREE.LineBasicMaterial({ 
                 color: 0xffffff, transparent: true, opacity: 0.3, linewidth: 2, blending: THREE.AdditiveBlending 
             });
             const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
             const starGeo = new THREE.SphereGeometry(0.1, 8, 8);
 
-            // Funció per crear una forma específica dalt del cel
             function dibuixarForma(puntsMathFunc, numPunts, radi, offsetX, offsetY, offsetZ) {
                 const punts = [];
                 const estels = new THREE.Group();
@@ -841,10 +1034,8 @@
                     coord.set(coord.x + offsetX, coord.y + offsetY, coord.z + offsetZ);
                     punts.push(coord);
                     
-                    // Afegir una estrella brillant a cada vèrtex
                     const estrella = new THREE.Mesh(starGeo, starMaterial);
                     estrella.position.copy(coord);
-                    // Lluïssor
                     const glowGeo = new THREE.SphereGeometry(0.3, 8, 8);
                     const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
                     estrella.add(new THREE.Mesh(glowGeo, glowMat));
@@ -861,24 +1052,20 @@
                 constellationLines.push({ group: grupTotal, phase: Math.random()*Math.PI*2 });
             }
 
-            // 1. Símbol de l'Infinit
             dibuixarForma((t) => {
                 const angle = t * Math.PI * 2;
-                // Lemniscata de Bernoulli
                 const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle));
                 const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle));
                 return new THREE.Vector3(x, y, 0);
             }, 50, 15, -20, 25, -40);
 
-            // 2. Cors entrellaçats
             dibuixarForma((t) => {
                 const angle = t * Math.PI * 2;
                 const x = 16 * Math.pow(Math.sin(angle), 3);
                 const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle);
-                return new THREE.Vector3(x/16, y/16, 0); // Normalitzat
+                return new THREE.Vector3(x/16, y/16, 0); 
             }, 60, 20, 25, 20, -50);
             
-            // Cors entrellaçats 2
             dibuixarForma((t) => {
                 const angle = t * Math.PI * 2;
                 const x = 16 * Math.pow(Math.sin(angle), 3);
@@ -900,7 +1087,6 @@
                     void main() { 
                         vUv = uv; 
                         vec3 pos = position;
-                        // Física de l'aigua al sòl
                         float dist = distance(uv, vec2(0.5));
                         pos.z += sin(dist * 50.0 - uTime * 5.0) * 0.05 * smoothstep(0.5, 0.0, dist);
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
@@ -913,30 +1099,25 @@
                         float r = length(uv);
                         float a = atan(uv.y, uv.x);
                         
-                        // Flor de Loto de 16 pètals
                         float f = cos(a * 16.0);
                         float pulse = sin(uTime * 2.0) * 0.02 + 0.98;
                         float shape = smoothstep(0.5 * pulse, 0.51 * pulse, r + f * 0.05) - smoothstep(0.51 * pulse, 0.54 * pulse, r + f * 0.05);
                         
-                        // Mandala Geomètric
                         float ring1 = smoothstep(0.2, 0.21, r) - smoothstep(0.21, 0.22, r);
                         float ring2 = smoothstep(0.4, 0.41, r) - smoothstep(0.41, 0.42, r);
                         float geom = ring1 + ring2;
                         
-                        // Ones d'energia radials
                         float ripple = sin(r * 60.0 - uTime * 6.0) * 0.5 + 0.5;
                         
-                        // Colors Divins
-                        vec3 colorLotus = vec3(1.0, 0.1, 0.5); // Magenta
-                        vec3 colorGeom = vec3(0.0, 1.0, 1.0); // Cian
-                        vec3 colorBase = vec3(0.02, 0.0, 0.1); // Blau marí profund
+                        vec3 colorLotus = vec3(1.0, 0.1, 0.5); 
+                        vec3 colorGeom = vec3(0.0, 1.0, 1.0); 
+                        vec3 colorBase = vec3(0.02, 0.0, 0.1); 
                         
                         vec3 color = colorBase;
                         color += colorLotus * shape * 3.0;
                         color += colorGeom * geom * 2.0;
-                        color += vec3(1.0, 0.8, 0.0) * ripple * geom * 4.0; // Or en les ones
+                        color += vec3(1.0, 0.8, 0.0) * ripple * geom * 4.0; 
                         
-                        // Desvaniment suau cap a l'infinit
                         float fade = smoothstep(1.0, 0.6, r);
                         float alpha = clamp((shape + geom + ripple*0.1) * fade, 0.0, 1.0);
                         
@@ -948,14 +1129,13 @@
             
             lotusMandalaFloor = new THREE.Mesh(floorGeo, floorMat);
             lotusMandalaFloor.rotation.x = -Math.PI / 2;
-            lotusMandalaFloor.position.y = -1.5; // Nivell del sòl
+            lotusMandalaFloor.position.y = -1.5; 
             universeGroup.add(lotusMandalaFloor);
         }
 
         function crearVoltaNebulosa() {
-            // Volta atmosfèrica colossal
             const domeGeo = new THREE.SphereGeometry(80, 64, 64); 
-            domeGeo.scale(-1, 1, 1); // Cares cap endins
+            domeGeo.scale(-1, 1, 1); 
             
             nebulaUniforms = { uTime: { value: 0 } };
             const domeMat = new THREE.ShaderMaterial({
@@ -964,7 +1144,6 @@
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
                     
-                    // FBM (Fractal Brownian Motion) per a núvols realistes
                     float random(vec2 p) { return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453123); }
                     float noise(vec2 p) {
                         vec2 i = floor(p); vec2 f = fract(p);
@@ -986,17 +1165,16 @@
                         
                         float nebula = (n + n2*0.5) * 0.8;
                         
-                        vec3 bg = vec3(0.01, 0.0, 0.05); // Espai profund
-                        vec3 col1 = vec3(0.6, 0.0, 0.8); // Violeta fosc
-                        vec3 col2 = vec3(1.0, 0.2, 0.5); // Rosa intens
-                        vec3 col3 = vec3(0.0, 0.8, 1.0); // Blau aurores
+                        vec3 bg = vec3(0.01, 0.0, 0.05); 
+                        vec3 col1 = vec3(0.6, 0.0, 0.8); 
+                        vec3 col2 = vec3(1.0, 0.2, 0.5); 
+                        vec3 col3 = vec3(0.0, 0.8, 1.0); 
                         
                         vec3 color = bg;
                         color = mix(color, col1, smoothstep(0.2, 0.8, nebula));
                         color = mix(color, col2, smoothstep(0.4, 1.0, nebula));
                         color = mix(color, col3, smoothstep(0.6, 1.2, nebula));
                         
-                        // Estrelles de fons estables
                         float star = random(vUv * 500.0);
                         if(star > 0.998) color += vec3(1.0);
                         
@@ -1011,12 +1189,11 @@
         }
 
         function crearFilVermellDesti() {
-            // Un fil vermell hiper-precís i corbat
             redThreadCurve = new THREE.QuadraticBezierCurve3(
                 new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)
             );
             
-            const numPoints = 100; // Alta resolució per suavitat
+            const numPoints = 100; 
             const threadGeo = new THREE.BufferGeometry();
             const positions = new Float32Array(numPoints * 3);
             threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -1028,7 +1205,6 @@
             redThreadLine = new THREE.Line(threadGeo, threadMat);
             universeGroup.add(redThreadLine);
 
-            // Pols de llum massiu
             const pulseGeo = new THREE.SphereGeometry(0.08, 16, 16);
             const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
             threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
@@ -1043,14 +1219,13 @@
         function crearTornatDePetals() {
             const petalGeo = new THREE.PlaneGeometry(0.06, 0.1, 4, 4);
             const pos = petalGeo.attributes.position.array;
-            // Curvatura paramètrica del pètal individual
             for(let i=0; i<pos.length; i+=3) pos[i+2] = Math.sin(pos[i]*15) * 0.02 + Math.cos(pos[i+1]*15) * 0.01; 
             
             const petalMat = new THREE.MeshStandardMaterial({ 
                 color: 0xff1493, side: THREE.DoubleSide, transparent: true, opacity: 0.85, roughness: 0.6 
             });
 
-            for(let i=0; i<350; i++) { // Quantitat massiva
+            for(let i=0; i<350; i++) { 
                 const petal = new THREE.Mesh(petalGeo, petalMat);
                 petal.userData = {
                     angle: Math.random() * Math.PI * 2,
@@ -1068,14 +1243,12 @@
         }
 
         function crearTextosFlotants() {
-            // Textos d'alta resolució renderitzats de manera individual
             frasesAmor.forEach((texto, index) => {
                 const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); 
                 canvas.width = 2048; canvas.height = 256; 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.font = "italic bold 80px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.font = "italic bold 70px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 
-                // Efecte Gown multi-capa per text llegible i màgic
                 ctx.shadowColor = "#ff00ff"; ctx.shadowBlur = 30; 
                 ctx.fillStyle = "#ffffff"; 
                 ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
@@ -1083,25 +1256,23 @@
                 ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
 
                 const texture = new THREE.CanvasTexture(canvas);
-                // Anisotropia per claredat en angles
                 texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
                 
                 const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.AdditiveBlending });
                 const sprite = new THREE.Sprite(spriteMaterial);
-                sprite.scale.set(6, 0.75, 1);
+                sprite.scale.set(7, 0.875, 1);
                 
                 sprite.userData = { 
                     angle: (index / frasesAmor.length) * Math.PI * 2, 
-                    radius: 3.0 + Math.random() * 2.0, 
-                    speed: 0.15 + Math.random() * 0.2, 
-                    yOffset: -1.0 + Math.random() * 3.0 
+                    radius: 3.5 + Math.random() * 3.0, 
+                    speed: 0.05 + Math.random() * 0.1, // Moviment lent i màgic
+                    yOffset: -1.5 + Math.random() * 4.0 
                 };
                 universeGroup.add(sprite); floatingTexts.push(sprite);
             });
         }
 
         function crearPilarsDeLlum() {
-            // Càlcul de geometria avançada per als pilars del temple
             const pillarsGroup = new THREE.Group();
             const pillarGeo = new THREE.CylinderGeometry(0.5, 1.2, 30, 32, 1, true);
             pillarGeo.translate(0, 15, 0); 
@@ -1112,9 +1283,9 @@
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
                     void main() {
-                        float alpha = pow(1.0 - vUv.y, 2.0); // Esvaïment exponencial cap dalt
+                        float alpha = pow(1.0 - vUv.y, 2.0); 
                         float pulse = sin(vUv.y * 15.0 - uTime * 3.0) * 0.5 + 0.5;
-                        float ray = sin(vUv.x * 30.0 + uTime) * 0.5 + 0.5; // Raigs verticals
+                        float ray = sin(vUv.x * 30.0 + uTime) * 0.5 + 0.5; 
                         
                         vec3 color = mix(vec3(1.0, 0.2, 0.8), vec3(0.0, 0.8, 1.0), pulse * ray);
                         gl_FragColor = vec4(color, alpha * (pulse * 0.5 + 0.5) * 0.4); 
@@ -1123,11 +1294,10 @@
                 transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
             });
 
-            // Dotze pilars celestials
             for(let i = 0; i < 12; i++) {
                 const pillar = new THREE.Mesh(pillarGeo, pillarMat);
                 const angle = (i / 12) * Math.PI * 2;
-                const radius = 9; // Gran radi al voltant de l'usuari
+                const radius = 9; 
                 pillar.position.set(Math.cos(angle) * radius, -2, Math.sin(angle) * radius);
                 pillarsGroup.add(pillar);
             }
@@ -1148,7 +1318,6 @@
                 lanternGroup.add(new THREE.Mesh(lanternGeo, lanternMat)); 
                 lanternGroup.add(new THREE.Mesh(glowGeo, glowMat));
                 
-                // Un fil petit penjant de cada llanterna (nivell de detall alt)
                 const stringGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.2);
                 stringGeo.translate(0, -0.3, 0);
                 const stringMat = new THREE.MeshBasicMaterial({color: 0x555555});
@@ -1173,7 +1342,6 @@
                 color: 0xffdf00, metalness: 1.0, roughness: 0.2, emissive: 0xffcc00, emissiveIntensity: 0.4, side: THREE.DoubleSide 
             });
             
-            // Tres anells interconnectats tipus Giroscopi
             const ring1 = new THREE.Mesh(ringGeo, ringMat); ring1.rotation.x = Math.PI / 2; goldenRingsGroup.add(ring1);
             const ring2 = new THREE.Mesh(ringGeo, ringMat); ring2.rotation.y = Math.PI / 3; ring2.rotation.x = Math.PI / 4; goldenRingsGroup.add(ring2);
             const ring3 = new THREE.Mesh(ringGeo, ringMat); ring3.rotation.y = -Math.PI / 3; ring3.rotation.x = -Math.PI / 4; goldenRingsGroup.add(ring3);
@@ -1192,10 +1360,10 @@
                 posArray[i] = radius * Math.sin(phi) * Math.cos(theta); posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta); posArray[i+2] = radius * Math.cos(phi);
                 
                 const rand = Math.random();
-                let r=1, g=0.2, b=0.8; // Magenta pur
-                if(rand>0.5){r=0; g=0.8; b=1;} // Cian
-                if(rand>0.8){r=1; g=0.9; b=0;} // Or
-                if(rand>0.95){r=1; g=1; b=1;} // Blanc
+                let r=1, g=0.2, b=0.8; 
+                if(rand>0.5){r=0; g=0.8; b=1;} 
+                if(rand>0.8){r=1; g=0.9; b=0;} 
+                if(rand>0.95){r=1; g=1; b=1;} 
                 colorsArray[i]=r; colorsArray[i+1]=g; colorsArray[i+2]=b;
             }
             const geo = new THREE.BufferGeometry(); 
@@ -1214,7 +1382,6 @@
         }
 
         function crearOnaDeXoc() {
-            // L'ona expansiva colosal per al moment de creuar
             flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); 
             scene.add(flashSphere);
             
@@ -1222,7 +1389,6 @@
             shockwaveRing.rotation.x = Math.PI / 2; 
             scene.add(shockwaveRing);
 
-            // Disc d'energia planari
             shockwaveDisk = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.5, 64), new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false}));
             shockwaveDisk.rotation.x = Math.PI / 2;
             scene.add(shockwaveDisk);
@@ -1237,12 +1403,10 @@
             hasCrossedPortal = true;
             isFlashing = true; 
             
-            // Re-organitzar mons
             universeGroup.visible = true;
             userCenter.copy(currentCamPos);
             universeGroup.position.copy(userCenter);
 
-            // Posicionar Ona de Xoc EXACTAMENT a l'ull de l'usuari
             if(flashSphere && shockwaveRing && shockwaveDisk) {
                 flashSphere.position.copy(currentCamPos); flashSphere.scale.setScalar(1); flashSphere.material.opacity = 1; flashSphere.visible = true;
                 shockwaveRing.position.copy(currentCamPos); shockwaveRing.scale.setScalar(1); shockwaveRing.material.opacity = 1; shockwaveRing.visible = true;
@@ -1260,7 +1424,6 @@
             function onTouch(event) {
                 if(!isStarted) return;
                 
-                // Comportament Pre-Portal (Caminar o forçar)
                 if(!hasCrossedPortal) {
                     if (renderer.xr.isPresenting) {
                         const tempCamPos = new THREE.Vector3(); camera.getWorldPosition(tempCamPos); triggerPortalCrossing(tempCamPos);
@@ -1268,7 +1431,6 @@
                     return;
                 }
                 
-                // Comportament Post-Portal (Ona Expansiva Interactiva a Terra)
                 let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0);
                 let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
                 mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
@@ -1276,17 +1438,17 @@
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects([lotusMandalaFloor, mainHeartGroup.children[0]]);
                 
+                // Explosiò d'estrelles interactive en qualsevol lloc
+                crearMicroEstrellasTouch(raycaster.ray.origin, raycaster.ray.direction);
+
                 if (intersects.length > 0) {
                     const hit = intersects[0];
-                    // Si toca el cor
                     if(hit.object.parent === mainHeartGroup) {
                         crearExplosioAmor(mainHeartGroup.position);
-                        // Accelerar els ocells cap enfora per l'ensurt
                         boids.forEach(b => {
                             b.userData.velocity.add(b.position.clone().sub(mainHeartGroup.position).normalize().multiplyScalar(0.2));
                         });
                     } else {
-                        // Toca el sòl, crear una ona
                         crearOnaAigua(hit.point);
                     }
                 }
@@ -1294,12 +1456,38 @@
             window.addEventListener('click', onTouch); window.addEventListener('touchstart', onTouch);
         }
 
+        function crearMicroEstrellasTouch(origin, dir) {
+            // Un efecte màgic addicional on toquis
+            const distance = 2.0; 
+            const pos = origin.clone().add(dir.multiplyScalar(distance));
+            
+            const starGeo = new THREE.SphereGeometry(0.02, 8, 8);
+            const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending });
+            
+            for(let i=0; i<15; i++) {
+                const s = new THREE.Mesh(starGeo, starMat);
+                s.position.copy(pos);
+                s.userData = {
+                    vel: new THREE.Vector3((Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05)
+                };
+                universeGroup.add(s);
+                
+                let life = 1.0;
+                function animStar() {
+                    life -= 0.02;
+                    s.position.add(s.userData.vel);
+                    s.material.opacity = life;
+                    if(life > 0) requestAnimationFrame(animStar);
+                    else { universeGroup.remove(s); s.geometry.dispose(); s.material.dispose(); }
+                }
+                animStar();
+            }
+        }
+
         function crearExplosioAmor(posicio) {
-            // Esfera d'energia
             const ring = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 2), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, blending: THREE.AdditiveBlending }));
             ring.position.copy(posicio); universeGroup.add(ring);
             
-            // Animar el creixement
             let scale = 1;
             function anim() {
                 scale += 0.3; ring.scale.set(scale, scale, scale); ring.material.opacity -= 0.04;
@@ -1310,10 +1498,9 @@
         }
 
         function crearOnaAigua(posicioLocal) {
-            // Ona de xoc al terra de loto
             const wave = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
             wave.position.copy(posicioLocal);
-            wave.position.y += 0.05; // Lleugerament amunt del sòl
+            wave.position.y += 0.05; 
             wave.rotation.x = -Math.PI/2;
             universeGroup.add(wave);
             
@@ -1341,29 +1528,23 @@
             // --- FASE 1: PRE-PORTAL ---
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
-                portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1; // Balanceig suau
+                portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1; 
 
-                // Càlcul de Caminada Automàtica (Si l'usuari ha tocat la pantalla)
                 if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 5.0; // Velocitat d'avanç
+                    camera.position.z -= delta * 5.0; 
                     camera.getWorldPosition(camPos); 
                 }
                 
-                // Comprovació de pas del llindar
                 if (camPos.distanceTo(portalGroup.position) < 1.8 || camPos.z <= portalGroup.position.z + 0.5) {
                     triggerPortalCrossing(camPos);
                 }
             } 
             // --- FASE 2: EL SANTUARI ---
             else {
-                // Expansió inicial del Món
                 universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.08);
 
-                // El món sempre està centrat a la posició d'entrada, NO segueix 100% l'usuari
-                // Això permet que l'usuari pugui CAMINAR PER DINS del jardí lliurement en AR
                 userCenter.lerp(camPos, 0.01); 
 
-                // Actualització de Shaders d'Entorn
                 lotusUniforms.uTime.value = elapsedTime;
                 if (nebulaDome) {
                     nebulaUniforms.uTime.value = elapsedTime;
@@ -1372,16 +1553,13 @@
                 }
 
                 // --- CINEMÀTICA DEL COR PRINCIPAL ---
-                // El cor flota a 2 metres de l'usuari constantment
                 const forwardVec = new THREE.Vector3(0, 0, -2.5);
                 forwardVec.applyQuaternion(camera.quaternion); 
                 
-                // Suavitzar el moviment perquè se senti viu, no robòtic
                 const targetPosGlobal = camPos.clone().add(forwardVec);
                 const targetPosLocal = universeGroup.worldToLocal(targetPosGlobal);
                 
                 mainHeartGroup.position.lerp(targetPosLocal, 0.03);
-                // Mirar sempre a la càmera de forma natural
                 const localCamPos = universeGroup.worldToLocal(camPos.clone());
                 mainHeartGroup.lookAt(localCamPos); 
 
@@ -1390,22 +1568,36 @@
                 innerCoreUniforms.uTime.value = elapsedTime;
                 wireframeUniforms.uTime.value = elapsedTime;
                 
-                // Funció de doble batec biològic (sístole i diàstole matemàtica)
                 const tHeart = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(tHeart), 12.0);
                 const beat2 = Math.pow(Math.sin(tHeart + 0.35), 12.0) * 0.4; 
                 const scaleOffset = 1.0 + (beat1 + beat2) * 0.18;
                 
-                // Aplicar escala general
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
-                // Fer que el nucli brilli i bategui encara més
                 mainHeartGroup.children[1].scale.setScalar(0.85 + beat1 * 0.1);
-                // Rotar la jaula exterior
                 mainHeartGroup.children[2].rotation.y += 0.01;
                 mainHeartGroup.children[2].rotation.z += 0.005;
 
+                // Animació d'Halos de Geometria Sagrada
+                if (sacredHalosGroup) {
+                    sacredHalosGroup.children[0].rotation.z -= 0.002;
+                    sacredHalosGroup.children[1].rotation.z += 0.003;
+                    sacredHalosGroup.children[2].rotation.z -= 0.001;
+                    
+                    const haloPulse = 1.0 + beat1 * 0.1;
+                    sacredHalosGroup.scale.set(haloPulse, haloPulse, haloPulse);
+                }
+
+                // Animació Loto de Cristall
+                if (crystalLotusGroup) {
+                    crystalLotusGroup.rotation.y += 0.005;
+                    crystalLotusGroup.children.forEach(petal => {
+                        petal.material.uniforms.uTime.value = elapsedTime;
+                        petal.rotation.x = Math.PI/4 + Math.sin(elapsedTime * 2.0 + petal.userData.phase) * 0.1;
+                    });
+                }
+
                 if (wingL && wingR) {
-                    // Aleteig poderós i sincronitzat amb el batec
                     const flap = Math.sin(elapsedTime * 2.0) * 0.5 + beat1 * 0.3;
                     wingL.rotation.y = flap + 0.2;
                     wingR.rotation.y = -flap - 0.2;
@@ -1423,24 +1615,21 @@
 
                 // --- ACTUALITZACIÓ DEL FIL VERMELL DEL DESTÍ ---
                 if (redThreadLine) {
-                    // El fil surt des del teu pit físic
                     const chestPosLocal = new THREE.Vector3(0, -0.4, -0.2);
                     chestPosLocal.applyQuaternion(camera.quaternion);
-                    chestPosLocal.add(localCamPos); // Transformar a l'espai del grup
+                    chestPosLocal.add(localCamPos); 
                     
                     const endLocal = mainHeartGroup.position.clone();
                     const dist = chestPosLocal.distanceTo(endLocal);
                     
-                    // Punt de control corbat cap amunt i a un costat (Tirabuixó)
                     const midLocal = chestPosLocal.clone().lerp(endLocal, 0.5);
-                    midLocal.y -= dist * 0.4; // Caiguda gravitacional
-                    midLocal.x += Math.sin(elapsedTime) * dist * 0.2; // Venteig
+                    midLocal.y -= dist * 0.4; 
+                    midLocal.x += Math.sin(elapsedTime) * dist * 0.2; 
                     
                     redThreadCurve.v0.copy(chestPosLocal);
                     redThreadCurve.v1.copy(midLocal);
                     redThreadCurve.v2.copy(endLocal);
                     
-                    // Re-escriure Vèrtexs
                     const pts = redThreadCurve.getPoints(99);
                     const posAttr = redThreadLine.geometry.attributes.position;
                     for(let i=0; i<100; i++) {
@@ -1448,33 +1637,26 @@
                     }
                     posAttr.needsUpdate = true;
 
-                    // Transportar la llum (Pulsió d'amor) a través de l'esplín spline
                     const tPulse = (elapsedTime * 0.5) % 1.0;
                     threadPulse.position.copy(redThreadCurve.getPoint(tPulse));
-                    // Fer bategar el pols
                     const pulseScale = 1.0 + Math.sin(elapsedTime * 20.0) * 0.5;
                     threadPulse.scale.set(pulseScale, pulseScale, pulseScale);
                 }
 
-                // --- ACTUALITZACIÓ DE BOIDS (OCELLS DE LLUM) ---
+                // --- BOIDS I ROSES ---
                 actualitzarBoids(delta, elapsedTime);
 
-                // --- ACTUALITZACIÓ DE LES ROSES PARAMÈTRIQUES ---
                 parametricRoses.forEach(rose => {
                     const data = rose.userData;
-                    if(elapsedTime > data.delay) { // Esperar per florir de cop
-                        // Creixement logarítmic suau
+                    if(elapsedTime > data.delay) { 
                         data.currentScale += (data.targetScale - data.currentScale) * data.growthSpeed;
                         rose.scale.setScalar(data.currentScale);
-                        // Balançeig pel vent
                         rose.rotation.z = Math.sin(elapsedTime * 2.0 + data.delay) * 0.05;
                     }
                 });
 
-                // --- ACTUALITZACIÓ CONSTEL·LACIONS ---
                 constellationLines.forEach(c => {
                     c.phase += delta;
-                    // Lluïssor d'estrella pulsant
                     c.group.children[1].children.forEach((star, index) => {
                         const starPulse = Math.sin(c.phase * 3.0 + index) * 0.5 + 0.5;
                         star.scale.setScalar(0.5 + starPulse);
@@ -1482,8 +1664,24 @@
                             star.children[0].material.opacity = starPulse * 0.4;
                         }
                     });
-                    // Girar lleument la constel·lació sencera
                     c.group.rotation.y = Math.sin(c.phase * 0.1) * 0.1;
+                });
+
+                // --- ACTUALITZACIÓ COMETES AMB ESTELA ---
+                updateComets();
+
+                // --- ACTUALITZACIÓ DIAMANTS FLOTANTS ---
+                floatingDiamonds.forEach(diamond => {
+                    const d = diamond.userData;
+                    d.angle += d.speed * delta;
+                    d.yOffset += Math.sin(elapsedTime * d.speed) * 0.02;
+                    diamond.position.set(
+                        userCenter.x + Math.cos(d.angle) * d.radius,
+                        userCenter.y + d.yOffset,
+                        userCenter.z + Math.sin(d.angle) * d.radius
+                    );
+                    diamond.rotation.x += d.spinX;
+                    diamond.rotation.y += d.spinY;
                 });
 
                 // --- ELEMENTS EN ÒRBITA LENTA ---
@@ -1491,85 +1689,85 @@
                     const data = lantern.userData; 
                     data.yOffset += data.speed; 
                     
-                    // Càlcul de posició orbital amb offset de l'usuari
                     lantern.position.x = Math.cos(data.angle) * data.radius + Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.8;
                     lantern.position.z = Math.sin(data.angle) * data.radius + Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.8;
                     lantern.position.y = data.yOffset;
                     
-                    // Si pugen molt, renaixen per sota del sòl de loto
                     if(data.yOffset > 25) { 
                         data.yOffset = -5; 
                         data.angle = Math.random() * Math.PI * 2; 
                         data.radius = 3.0 + Math.random() * 15; 
                     }
                     
-                    // Inclinació física
                     lantern.rotation.z = Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.15;
                     lantern.rotation.x = Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.15;
                     
-                    // Batec de la llum interna
                     if(lantern.children[1]) {
                         lantern.children[1].scale.setScalar(1.0 + Math.sin(elapsedTime * 5.0 + data.swayOffset) * 0.2);
                     }
                 });
 
+                // Textos rotatius súper lents i romàntics
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData; 
-                    data.angle += 0.002 * data.speed; 
-                    // Orbita el centre del món
+                    data.angle += 0.001 * data.speed; 
+                    
                     sprite.position.x = Math.cos(data.angle) * data.radius; 
                     sprite.position.z = Math.sin(data.angle) * data.radius;
-                    sprite.position.y = data.yOffset + Math.sin(elapsedTime * 1.5 + data.angle) * 0.3;
+                    sprite.position.y = data.yOffset + Math.sin(elapsedTime * 1.5 + data.angle) * 0.5;
                     
-                    // Que sempre es llegeixi clarament de cara a l'usuari
+                    // Efecte d'aparició i desaparició (Fade in/out) basat en la posició
+                    const viewDot = localCamPos.clone().sub(sprite.position).normalize().dot(localCamPos.clone().normalize());
+                    sprite.material.opacity = smoothstep(-0.5, 0.5, viewDot);
+
                     sprite.lookAt(localCamPos);
                 });
+                
+                // Funció de suport matemàtic per al shader
+                function smoothstep(edge0, edge1, x) {
+                    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+                    return t * t * (3 - 2 * t);
+                }
 
                 fireflies.forEach((fly) => {
                     const data = fly.userData; 
                     data.angle += 0.01 * data.speed;
-                    // Les cuques de llum orbiten l'usuari més d'a prop
                     const cx = localCamPos.x; const cz = localCamPos.z;
                     fly.position.x = cx + Math.cos(data.angle) * data.radius; 
                     fly.position.z = cz + Math.sin(data.angle) * data.radius;
                     fly.position.y = localCamPos.y + data.yOffset + Math.sin(elapsedTime * 3.0 + data.phase) * 0.5;
                 });
 
-                particleSystem.rotation.y = elapsedTime * 0.02; // Rotació galàctica
+                particleSystem.rotation.y = elapsedTime * 0.02; 
 
-                // --- TORNAT DE PÈTALS (LÒGICA MAGNÈTICA ENVOLTANT) ---
+                // --- TORNAT DE PÈTALS ---
                 petals.forEach(petal => {
                     const data = petal.userData;
                     data.angle += data.rotSpeed; 
                     data.height += data.riseSpeed; 
                     
-                    // Càlcul de Vòrtex (més ajustat cap a dalt)
                     const currentRadius = data.baseRadius + data.radiusOffset * Math.sin(data.height * 0.2);
                     
-                    // El tornat se centra en el jugador
                     petal.position.x = localCamPos.x + Math.cos(data.angle) * currentRadius;
                     petal.position.z = localCamPos.z + Math.sin(data.angle) * currentRadius;
                     petal.position.y = data.height;
                     
-                    // Rotació caòtica del pètal
                     petal.rotation.x += data.tumbleX; 
                     petal.rotation.y += data.tumbleY;
                     
                     if (data.height > 12) { 
-                        data.height = -2; // Reinici
+                        data.height = -2; 
                         data.baseRadius = 1.0 + Math.random() * 4.0; 
                     } 
                 });
             }
 
-            // --- ANIMACIÓ CRÍTICA: ONA DE XOC MASSIVA AL CREUAR ---
+            // --- ANIMACIÓ CRÍTICA: ONA DE XOC MASSIVA ---
             if (isFlashing) {
-                // Esfera encegadora
                 if(flashSphere) { 
-                    flashSphere.scale.addScalar(1.2); // Expansió brutal
+                    flashSphere.scale.addScalar(1.2); 
                     flashSphere.material.opacity -= 0.018; 
                 }
-                // Anell i Disc d'energia (Shockwave 3D)
                 if(shockwaveRing) { 
                     shockwaveRing.scale.addScalar(1.8); 
                     shockwaveRing.material.opacity -= 0.015; 
@@ -1590,7 +1788,6 @@
             renderer.render(scene, camera);
         }
 
-        // Engegar
         init();
         renderer.setAnimationLoop(render);
 
