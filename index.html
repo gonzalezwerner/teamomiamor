@@ -1,19 +1,27 @@
 <!DOCTYPE html>
-<html lang="ca">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Un Univers Per A Tu - AR Romàntic</title>
+    <title>Santuario del Amor Infinito - AR 360 Extremo</title>
     <style>
-        /* --- ESTILS DE LA INTERFÍCIE (UI) --- */
+        /* ============================================================================
+           1. ESTILOS DE INTERFAZ DE USUARIO Y HUD (CASCADING STYLE SHEETS)
+           ============================================================================ */
+        :root {
+            --primary-glow: #ff1493;
+            --secondary-glow: #00ffff;
+            --tertiary-glow: #ffdf00;
+        }
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #010005; 
+            background-color: #000000; 
             font-family: 'Georgia', serif;
             touch-action: none; 
             user-select: none;
             -webkit-user-select: none;
+            perspective: 1000px;
         }
         #canvas-container {
             position: absolute;
@@ -22,6 +30,8 @@
             width: 100vw;
             height: 100vh;
             z-index: 1;
+            filter: contrast(1.1) saturate(1.2);
+            transition: filter 2s ease;
         }
         #ui-layer {
             position: absolute;
@@ -35,8 +45,9 @@
             justify-content: center;
             align-items: center;
             pointer-events: none; 
-            background: radial-gradient(circle, rgba(0,0,0,0.5) 0%, rgba(1,0,5,1) 100%);
-            transition: opacity 1.5s ease-in-out;
+            background: radial-gradient(circle at center, rgba(10,0,20,0.8) 0%, rgba(0,0,0,1) 100%);
+            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 2s;
+            backdrop-filter: blur(10px);
         }
         #instruction-layer {
             position: absolute;
@@ -48,146 +59,328 @@
             flex-direction: column;
             align-items: center;
             pointer-events: none;
-            transition: opacity 2s ease;
+            transition: opacity 2.5s ease;
         }
         .text-glow {
             color: #ffffff;
             text-align: center;
-            text-shadow: 0 0 10px #ff1493, 0 0 20px #ff69b4, 0 0 40px #ff00ff, 0 0 80px #8a2be2;
-            animation: pulseText 4s infinite alternate;
+            text-shadow: 0 0 10px var(--primary-glow), 0 0 20px var(--primary-glow), 0 0 40px #ff00ff, 0 0 80px #8a2be2;
+            animation: pulseText 4s infinite alternate, floatText 6s ease-in-out infinite;
             padding: 20px;
             margin: 0;
         }
         h1 { 
-            font-size: 4rem; 
+            font-size: 5rem; 
             margin-bottom: 10px; 
-            letter-spacing: 2px;
-            font-weight: normal;
+            letter-spacing: 5px;
+            font-weight: 300;
+            text-transform: uppercase;
         }
         p { 
-            font-size: 1.5rem; 
+            font-size: 1.8rem; 
             font-style: italic; 
-            color: #ffd700; 
-            text-shadow: 0 0 10px #ff8c00, 0 0 20px #ff0000; 
-            letter-spacing: 1px;
+            color: var(--tertiary-glow); 
+            text-shadow: 0 0 15px #ff8c00, 0 0 30px #ff0000; 
+            letter-spacing: 2px;
+            max-width: 80%;
         }
         .instruction-text { 
-            font-size: 1.8rem; 
+            font-size: 2rem; 
             color: #e0ffff; 
-            text-shadow: 0 0 15px #00ffff, 0 0 30px #00ced1; 
-            background: rgba(0, 50, 100, 0.4); 
-            padding: 20px 40px; 
-            border-radius: 30px; 
-            border: 2px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-            animation: floatUI 3s ease-in-out infinite;
+            text-shadow: 0 0 20px var(--secondary-glow), 0 0 40px #00ced1; 
+            background: rgba(0, 20, 50, 0.6); 
+            padding: 25px 50px; 
+            border-radius: 40px; 
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0,255,255,0.2);
+            animation: floatUI 4s ease-in-out infinite;
         }
         
         #start-btn {
             pointer-events: auto;
-            margin-top: 60px;
-            padding: 18px 50px;
-            font-size: 1.4rem;
+            margin-top: 80px;
+            padding: 20px 60px;
+            font-size: 1.6rem;
             color: white;
-            background: linear-gradient(135deg, #ff1493, #8a2be2, #ff1493);
-            background-size: 200% 200%;
-            border: 2px solid #ffb6c1;
-            border-radius: 50px;
+            background: linear-gradient(135deg, #ff1493, #8a2be2, #00ffff, #ff1493);
+            background-size: 300% 300%;
+            border: 2px solid rgba(255,255,255,0.8);
+            border-radius: 60px;
             cursor: pointer;
-            box-shadow: 0 0 30px rgba(255, 20, 147, 0.8), inset 0 0 10px rgba(255,255,255,0.5);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 40px rgba(255, 20, 147, 0.9), inset 0 0 15px rgba(255,255,255,0.6);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             text-transform: uppercase;
-            letter-spacing: 4px;
-            font-weight: bold;
-            animation: gradientShift 5s ease infinite;
+            letter-spacing: 6px;
+            font-weight: 900;
+            animation: gradientShift 6s ease infinite, pulseGlow 2s infinite alternate;
         }
         #start-btn:hover {
-            transform: scale(1.1) translateY(-5px);
-            box-shadow: 0 10px 40px rgba(255, 20, 147, 1), inset 0 0 20px rgba(255,255,255,0.8);
-            letter-spacing: 6px;
+            transform: scale(1.15) translateY(-10px) rotateX(10deg);
+            box-shadow: 0 20px 60px rgba(0, 255, 255, 1), inset 0 0 30px rgba(255,255,255,0.9);
+            letter-spacing: 10px;
+            border-color: #00ffff;
         }
 
         @keyframes pulseText {
-            0% { opacity: 0.8; transform: scale(0.98); }
-            100% { opacity: 1; transform: scale(1.02); }
+            0% { opacity: 0.85; transform: scale(0.98); filter: hue-rotate(0deg); }
+            100% { opacity: 1; transform: scale(1.02); filter: hue-rotate(20deg); }
+        }
+        @keyframes floatText {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 30px rgba(255, 20, 147, 0.7); }
+            100% { box-shadow: 0 0 60px rgba(255, 20, 147, 1), 0 0 100px rgba(138, 43, 226, 0.8); }
+        }
         @keyframes floatUI {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0px); }
+            0% { transform: translateY(0px) rotateZ(0deg); }
+            25% { transform: translateY(-10px) rotateZ(1deg); }
+            50% { transform: translateY(-20px) rotateZ(0deg); }
+            75% { transform: translateY(-10px) rotateZ(-1deg); }
+            100% { transform: translateY(0px) rotateZ(0deg); }
         }
 
         #ARButton {
             position: absolute !important;
-            bottom: 30px !important;
+            bottom: 40px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             z-index: 20 !important;
             background: rgba(255, 20, 147, 0.9) !important;
             border: 2px solid white !important;
             color: white !important;
-            border-radius: 30px !important;
-            padding: 15px 30px !important;
+            border-radius: 40px !important;
+            padding: 18px 40px !important;
             font-family: inherit !important;
+            font-size: 1.2rem !important;
             font-weight: bold !important;
-            letter-spacing: 1px !important;
-            box-shadow: 0 0 20px rgba(255, 20, 147, 0.8) !important;
-            transition: all 0.3s ease !important;
+            letter-spacing: 2px !important;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.8), 0 0 60px rgba(138, 43, 226, 0.6) !important;
+            transition: all 0.4s ease !important;
+            text-transform: uppercase;
         }
         #ARButton:hover {
-            background: rgba(138, 43, 226, 0.9) !important;
-            box-shadow: 0 0 30px rgba(138, 43, 226, 0.8) !important;
+            background: rgba(0, 255, 255, 0.9) !important;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 1) !important;
+            transform: translateX(-50%) scale(1.1) !important;
         }
 
-        /* Elements decoratius de la UI */
-        .sparkle {
+        /* Partículas CSS de fondo para el menú */
+        .magic-dust {
             position: absolute;
             background: white;
             border-radius: 50%;
             pointer-events: none;
             opacity: 0;
+            z-index: 11;
         }
     </style>
 </head>
 <body>
 
+    <!-- ============================================================================
+         2. CAPA DE INTERFAZ DE USUARIO (MENÚ Y OVERLAYS)
+         ============================================================================ -->
     <div id="ui-layer">
-        <!-- Generació d'estrelles UI -->
         <script>
-            for(let i=0; i<50; i++) {
+            // Generador de polvo estelar CSS para la pantalla de carga
+            for(let i=0; i<150; i++) {
                 const s = document.createElement('div');
-                s.className = 'sparkle';
-                s.style.width = Math.random()*4 + 'px';
-                s.style.height = s.style.width;
-                s.style.left = Math.random()*100 + '%';
-                s.style.top = Math.random()*100 + '%';
-                s.style.animation = `pulseText ${Math.random()*2+1}s infinite alternate ${Math.random()*2}s`;
+                s.className = 'magic-dust';
+                const size = Math.random() * 5 + 1;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 5;
+                s.style.animation = `pulseText ${duration}s infinite alternate ${delay}s, floatText ${duration*2}s infinite ease-in-out ${delay}s`;
+                s.style.boxShadow = `0 0 ${size*3}px rgba(255, 255, 255, 0.8)`;
+                
+                // Colores aleatorios
+                const colors = ['#ff1493', '#00ffff', '#ffd700', '#ffffff'];
+                s.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
                 document.getElementById('ui-layer').appendChild(s);
             }
         </script>
         
-        <h1 class="text-glow">El Santuario de Nuestro Amor</h1>
-        <p class="text-glow">Una constelación forjada a la medida de tu alma...</p>
+        <h1 class="text-glow">El Santuario Infinito</h1>
+        <p class="text-glow">Un ecosistema matemático forjado a la medida de tu alma. Más allá del tiempo y del espacio...</p>
         <button id="start-btn">Despertar la Eternidad</button>
     </div>
 
     <div id="instruction-layer">
-        <h2 class="text-glow instruction-text">✨ Toca la pantalla o camina para cruzar el umbral mágico ✨<br><span style="font-size:1rem; color:#aaa; font-weight:normal; letter-spacing:1px; display:block; margin-top:10px;">(El destino nos llama...)</span></h2>
+        <h2 class="text-glow instruction-text">
+            ✨ Atraviesa el Portal de Luz ✨<br>
+            <span style="font-size:1.2rem; color:#b0e0e6; font-weight:normal; letter-spacing:2px; display:block; margin-top:15px;">
+                (Camina hacia adelante en AR o toca la pantalla para sumergirte en el cosmos 360º)
+            </span>
+        </h2>
     </div>
 
+    <!-- Contenedor WebGL -->
     <div id="canvas-container"></div>
 
+    <!-- ============================================================================
+         3. LÓGICA PRINCIPAL (THREE.JS MODULES Y MOTORES PERSONALIZADOS)
+         ============================================================================ -->
     <script type="module">
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
         import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/webxr/ARButton.js';
 
         // ============================================================================
-        // 1. CONFIGURACIÓ GLOBAL I VARIABLES D'ESTAT
+        // 3.1. MOTORES MATEMÁTICOS Y FÍSICOS PERSONALIZADOS
+        // ============================================================================
+        
+        /* * MOTOR DE RUIDO SIMPLEX (Simplex Noise Engine)
+         * Implementación cruda y ultra-optimizada en JS para generar terrenos montañosos 360 y turbulencias.
+         * Fundamental para la "Generación Procedural Extrema".
+         */
+        const SimplexNoise = function() {
+            var F3 = 1.0/3.0, G3 = 1.0/6.0;
+            var p = new Uint8Array(256);
+            for (var i=0; i<256; i++) p[i] = Math.floor(Math.random()*256);
+            var perm = new Uint8Array(512), permMod12 = new Uint8Array(512);
+            for (var i=0; i<512; i++) {
+                perm[i] = p[i & 255];
+                permMod12[i] = (perm[i] % 12);
+            }
+            return {
+                noise3D: function(xin, yin, zin) {
+                    var n0, n1, n2, n3;
+                    var s = (xin+yin+zin)*F3;
+                    var i = Math.floor(xin+s), j = Math.floor(yin+s), k = Math.floor(zin+s);
+                    var t = (i+j+k)*G3;
+                    var X0 = i-t, Y0 = j-t, Z0 = k-t;
+                    var x0 = xin-X0, y0 = yin-Y0, z0 = zin-Z0;
+                    var i1, j1, k1, i2, j2, k2;
+                    if(x0>=y0) {
+                        if(y0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; }
+                        else if(x0>=z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; }
+                        else { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }
+                    } else {
+                        if(y0<z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; }
+                        else if(x0<z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; }
+                        else { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; }
+                    }
+                    var x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
+                    var x2 = x0 - i2 + 2.0*G3, y2 = y0 - j2 + 2.0*G3, z2 = z0 - k2 + 2.0*G3;
+                    var x3 = x0 - 1.0 + 3.0*G3, y3 = y0 - 1.0 + 3.0*G3, z3 = z0 - 1.0 + 3.0*G3;
+                    var ii = i & 255, jj = j & 255, kk = k & 255;
+                    var t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
+                    if(t0<0) n0 = 0.0;
+                    else {
+                        var gi0 = permMod12[ii+perm[jj+perm[kk]]] * 3;
+                        t0 *= t0;
+                        n0 = t0 * t0 * (Grad3[gi0]*x0 + Grad3[gi0+1]*y0 + Grad3[gi0+2]*z0);
+                    }
+                    var t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+                    if(t1<0) n1 = 0.0;
+                    else {
+                        var gi1 = permMod12[ii+i1+perm[jj+j1+perm[kk+k1]]] * 3;
+                        t1 *= t1;
+                        n1 = t1 * t1 * (Grad3[gi1]*x1 + Grad3[gi1+1]*y1 + Grad3[gi1+2]*z1);
+                    }
+                    var t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
+                    if(t2<0) n2 = 0.0;
+                    else {
+                        var gi2 = permMod12[ii+i2+perm[jj+j2+perm[kk+k2]]] * 3;
+                        t2 *= t2;
+                        n2 = t2 * t2 * (Grad3[gi2]*x2 + Grad3[gi2+1]*y2 + Grad3[gi2+2]*z2);
+                    }
+                    var t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
+                    if(t3<0) n3 = 0.0;
+                    else {
+                        var gi3 = permMod12[ii+1+perm[jj+1+perm[kk+1]]] * 3;
+                        t3 *= t3;
+                        n3 = t3 * t3 * (Grad3[gi3]*x3 + Grad3[gi3+1]*y3 + Grad3[gi3+2]*z3);
+                    }
+                    return 32.0*(n0 + n1 + n2 + n3);
+                }
+            };
+        };
+        const Grad3 = [1,1,0,-1,1,0,1,-1,0,-1,-1,0,1,0,1,-1,0,1,1,0,-1,-1,0,-1,0,1,1,0,-1,1,0,1,-1,0,-1,-1];
+        const simplex = SimplexNoise();
+
+        // ============================================================================
+        // 3.2. REPOSITORIO MASIVO DE FRASES ROMÁNTICAS (100+ LÍNEAS DE POESÍA)
+        // ============================================================================
+        const frasesAmor = [
+            // Cósmicas y Eternas
+            "Eres mi destino escrito en las estrellas",
+            "Mi alma te reconoce desde el inicio de los tiempos",
+            "A cada latido, mi corazón pronuncia tu nombre en silencio",
+            "Eres mi refugio, mi paz absoluta y mi hermosa locura",
+            "Te amaría en cada uno de los multiversos posibles",
+            "Contigo, el tiempo y el espacio pierden todo sentido",
+            "Por siempre, para siempre y más allá de la eternidad",
+            "El hilo rojo nos unió mucho antes de nacer",
+            "En el vasto cosmos, mis ojos solo te buscan a ti",
+            "Eres la anomalía más hermosa de mi universo entero",
+            "Si el tiempo se detuviera, me quedaría a vivir en tu sonrisa",
+            "Ni mil galaxias estallando brillan como tu mirada",
+            "Mi corazón late exactamente en la frecuencia de tu voz",
+            "Atravesaría el abismo del espacio solo para rozar tu mano",
+            "Eres la gravedad que me mantiene anclado a la pura felicidad",
+            "Incluso en la oscuridad más absoluta, tú eres mi faro",
+            "Eres el eco eterno y perfecto de mi propia alma",
+            "Amar es una palabra demasiado pequeña para describir lo que haces en mí",
+            "Contigo descubrí que la magia y los milagros son reales",
+            "Mis latidos son tuyos, hoy, mañana y mil vidas más",
+            "Eres el milagro exacto que nunca supe que necesitaba",
+            "Hasta que la última estrella se apague, estaré contigo",
+            "En ti encontré el hogar que mi espíritu llevaba eones buscando",
+            "Te amé antes de conocerte, te amaré después de dejar de existir",
+            "Eres mi brillante comienzo, mi hermoso viaje y mi glorioso final",
+            "No hay ecuación ni teorema que pueda explicar nuestro amor",
+            "Haces que mi universo se expanda y colapse al mismo tiempo",
+            "Respiro profundamente solo porque sé que habitas en este mundo",
+            "Toda mi poesía nace y muere en la comisura de tus labios",
+            "Eres el amanecer más perfecto de mis días más oscuros",
+            "Si fueras un sueño, elegiría no despertar jamás en la vida",
+            "Eres la sinfonía más magistral jamás compuesta por el universo",
+            "Tu amor fue el Big Bang que le dio sentido a mi existencia",
+            "Me haces creer con absoluta certeza que todo lo imposible es probable",
+            "Tus ojos son el mapa estelar donde siempre encuentro mi tesoro",
+            "Cada partícula subatómica de mi ser te pertenece por derecho",
+            "Mires hacia donde mires, siempre me encontrarás a tu lado",
+            "Eres el centro gravitacional absoluto de todas mis galaxias",
+            "Mi universo entero gira única y exclusivamente alrededor de ti",
+            // Devoción y Pasión
+            "Tus abrazos son el escudo que me protege de la entropía",
+            "El roce de tus dedos reprograma todo mi código genético",
+            "Eres el arte más fino que la naturaleza ha esculpido",
+            "Si mi vida fuera un libro, tú serías todas mis letras",
+            "En la inmensidad del todo, tú eres mi única constante",
+            "Cada constelación envidia la forma en que brillamos juntos",
+            "Mi alma baila al ritmo que dicta tu simple respiración",
+            "Contigo he aprendido a volar sin despegar los pies de la tierra",
+            "Eres la respuesta exacta a preguntas que ni siquiera había formulado",
+            "Tu luz desvanece todos los agujeros negros de mi mente",
+            "No necesito el cielo si tengo el universo en tus ojos",
+            "Somos dos cometas colisionando para crear un mundo nuevo",
+            "Que el cosmos entero sea testigo de esta devoción inmortal",
+            "Mi destino favorito siempre será regresar a tus brazos",
+            "Eres la aurora boreal que ilumina la noche de mi alma",
+            "Ni el sol tiene el poder de calentar mi mundo como tú lo haces",
+            "Inventaría colores nuevos solo para pintar lo que siento por ti",
+            "Nuestra historia de amor es la mejor leyenda jamás contada",
+            "El silencio a tu lado es la melodía más reconfortante",
+            "Tú eres el 'para siempre' que todo el mundo se pasa la vida buscando",
+            "Te elijo hoy, mañana y en cada reencarnación futura",
+            "Mi universo estaba vacío hasta que tú decidiste colisionar con él"
+        ];
+
+        // ============================================================================
+        // 3.3. VARIABLES GLOBALES DEL ECOSISTEMA
         // ============================================================================
         let scene, camera, renderer;
         let clock = new THREE.Clock();
@@ -195,132 +388,119 @@
         let hasCrossedPortal = false;
         let isAutoWalking = false; 
         
-        // Grups Principals
+        // GRUPOS ESPACIALES (Arquitectura de Nodos)
+        let rootGroup = new THREE.Group(); // Contiene TODO el universo
         let portalGroup = new THREE.Group();
         let pathGroup; 
         let universeGroup = new THREE.Group();
         let mainHeartGroup = new THREE.Group();
-        let particleSystem;
+        let terrainGroup = new THREE.Group();
         
-        // Control de Posició
+        // VECTORES DE CONTROL
         let userCenter = new THREE.Vector3(); 
         
-        // Col·leccions d'Elements
+        // ARRAYS DE ENTIDADES PROCEDURALES
         let floatingTexts = [];
         let fireflies = [];
         let petals = [];
-        let comets = []; // Abans shootingStars, ara amb esteles reals
+        let comets = []; 
         let lanterns = [];
         let parametricRoses = []; 
         let constellationLines = []; 
         let boids = []; 
-        let floatingDiamonds = []; // NOVA: Diamants
+        let floatingDiamonds = []; 
+        let fractalTrees = [];
+        let waterRipples = [];
         
-        // Materials i Uniforms de Shaders
-        let heartUniforms, portalUniforms, lotusUniforms, auroraUniforms, nebulaUniforms;
+        // MATERIALES Y UNIFORMES MAESTROS
+        let heartUniforms, portalUniforms, lotusUniforms, auroraUniforms, nebulaUniforms, terrainUniforms;
         let innerCoreUniforms, wireframeUniforms;
         
-        // Elements Unics
+        // OBJETOS SINGULARES Y SISTEMAS
+        let particleSystem;
         let flashSphere, shockwaveRing, shockwaveDisk;
         let isFlashing = false;
-        let sacredHalosGroup; // NOVA: Geometria Sagrada
+        let sacredHalosGroup; 
+        let armillarySphereGroup; 
         let goldenRingsGroup;
         let nebulaDome;
         let wingL, wingR;
         let redThreadCurve, redThreadLine, threadPulse;
         let lotusMandalaFloor;
-        let crystalLotusGroup; // NOVA: Loto de Cristall
+        let crystalLotusGroup; 
+        let proceduralTerrainMesh;
 
         // ============================================================================
-        // FRASES ULTRA-ROMÁNTICAS (NIVEL DIOS)
-        // ============================================================================
-        const frasesAmor = [
-            "Ets el meu destí escrit a les estrelles",
-            "La meva ànima et reconeix des de sempre",
-            "A cada batec, el meu cor pronuncia el teu nom",
-            "Ets el meu refugi, la meva pau i la meva guerra",
-            "T'estimaria en cadascun dels multiversos",
-            "Amb tu, el temps i l'espai perden el sentit",
-            "Per sempre i per a tota l'eternitat",
-            "El fil vermell ens va unir abans de néixer",
-            "En el vasto cosmos, mis ojos solo te buscan a ti",
-            "Eres la anomalía más hermosa de mi universo",
-            "Si el tiempo se detuviera, me quedaría a vivir en tu sonrisa",
-            "Ni mil galaxias brillan como tu mirada",
-            "Mi corazón late en la frecuencia de tu voz",
-            "Atravesaría el abismo del espacio solo para rozar tu mano",
-            "Eres la gravedad que me mantiene anclado a la felicidad",
-            "Incluso en la oscuridad absoluta, tú eres mi faro",
-            "Eres el eco eterno de mi propia alma",
-            "Amar es poco para describir lo que haces en mí",
-            "Contigo descubrí que la magia es real",
-            "Mis latidos son tuyos, hoy y mil vidas más",
-            "Eres el milagro que nunca supe que necesitaba",
-            "Hasta que las estrellas se apaguen, estaré contigo",
-            "En ti encontré el hogar que mi espíritu buscaba",
-            "Te amé antes de conocerte, te amaré después de dejar de existir",
-            "Eres mi comienzo, mi viaje y mi final",
-            "No hay ecuación matemática que explique nuestro amor",
-            "Haces que mi universo se expanda y colapse al mismo tiempo",
-            "Respiro porque sé que habitas en este mismo mundo",
-            "Mi poesía nace y muere en la comisura de tus labios",
-            "Eres el amanecer de mis días más oscuros",
-            "Si fueras un sueño, elegiría no despertar jamás",
-            "Eres la sinfonía más perfecta del universo",
-            "Tu amor es el big bang de mi existencia",
-            "Me haces creer que todo lo imposible es probable",
-            "Tus ojos son el mapa donde encuentro mi tesoro",
-            "Cada partícula de mi ser te pertenece"
-        ];
-
-        // ============================================================================
-        // 2. INICIALITZACIÓ DEL MOTOR GRÀFIC
+        // 4. FUNCIÓN DE INICIALIZACIÓN MAESTRA
         // ============================================================================
         function init() {
             const container = document.getElementById('canvas-container');
 
+            // ESCENA Y ENTORNO
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010005, 0.03); 
+            scene.fog = new THREE.FogExp2(0x010008, 0.015); // Niebla reactiva espesa
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 200);
+            // CÁMARA (FOV amplio para inmersión 360)
+            camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.01, 1000); 
             camera.position.set(0, 0, 3); 
 
+            // RENDERER (Configuración Extrema)
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.xr.enabled = true; 
             
+            // ToneMapping cinematográfico
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
+            renderer.toneMappingExposure = 1.4; 
             container.appendChild(renderer.domElement);
 
+            scene.add(rootGroup);
+
+            // ILUMINACIÓN FOTORREALISTA
             setupLighting();
 
+            // PREPARACIÓN DE GRUPOS
             universeGroup.visible = false;
-            universeGroup.scale.set(0.0001, 0.0001, 0.0001); 
-            scene.add(universeGroup);
+            universeGroup.scale.set(0.00001, 0.00001, 0.00001); 
+            rootGroup.add(universeGroup);
 
-            construirMónPrePortal();
-            construirMónPostPortal();
+            // EJECUCIÓN DE CONSTRUCTORES DE MUNDOS
+            construirMonPortalEntrada();
+            construirEcosistemaExtremo360();
 
+            // EVENTOS Y CONTROLES
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
 
+            // CONFIGURACIÓN AR/VR
             setupAR();
-            configurarBotoInici();
+            configurarBotonInicioHUD();
         }
 
+        // ============================================================================
+        // 4.1 SUBSISTEMAS DE INICIALIZACIÓN
+        // ============================================================================
         function setupLighting() {
             const ambientLight = new THREE.AmbientLight(0xffb6c1, 0.8);
             scene.add(ambientLight);
             
-            const pointLight = new THREE.PointLight(0xff1493, 3, 20);
+            const pointLight = new THREE.PointLight(0xff1493, 5, 40);
             pointLight.position.set(0, 2, 0);
             scene.add(pointLight);
             
-            const blueLight = new THREE.PointLight(0x00ffff, 2, 30);
-            blueLight.position.set(0, 10, -10);
+            const blueLight = new THREE.PointLight(0x00ffff, 4, 80);
+            blueLight.position.set(0, 20, -20);
             universeGroup.add(blueLight);
+
+            // Anillos de luz envolventes para iluminación volumétrica 360
+            const purpleLight = new THREE.PointLight(0x8a2be2, 4, 80);
+            purpleLight.position.set(30, 10, 30);
+            universeGroup.add(purpleLight);
+            
+            const goldLight = new THREE.PointLight(0xffd700, 4, 80);
+            goldLight.position.set(-30, 10, -30);
+            universeGroup.add(goldLight);
         }
 
         function setupAR() {
@@ -330,86 +510,80 @@
             arButton.style.display = 'none';
         }
 
-        function configurarBotoInici() {
+        function configurarBotonInicioHUD() {
             document.getElementById('start-btn').addEventListener('click', (e) => {
                 e.stopPropagation(); 
                 document.getElementById('ui-layer').style.opacity = '0';
-                setTimeout(() => document.getElementById('ui-layer').style.display = 'none', 1500);
+                document.getElementById('ui-layer').style.backdropFilter = 'blur(0px)';
+                setTimeout(() => document.getElementById('ui-layer').style.display = 'none', 2000);
                 
                 document.getElementById('instruction-layer').style.display = 'flex';
                 const arBtn = document.getElementById('ARButton');
                 if(arBtn) arBtn.style.display = 'block';
                 
-                setTimeout(() => { isStarted = true; }, 800); 
+                setTimeout(() => { isStarted = true; }, 1000); 
             });
         }
 
         // ============================================================================
-        // 3. CONSTRUCCIÓ DEL PRE-PORTAL (La Porta d'Entrada)
+        // 5. ARQUITECTURA DEL PORTAL DE ENTRADA (Fase 1)
         // ============================================================================
-        function construirMónPrePortal() {
-            scene.add(portalGroup);
-            portalGroup.position.set(0, 0, -2.8);
+        function construirMonPortalEntrada() {
+            rootGroup.add(portalGroup);
+            portalGroup.position.set(0, 0, -3.0);
             
-            const ringGeo = new THREE.TorusGeometry(1.4, 0.06, 32, 150);
+            // Geometría Sagrada del Aro
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.08, 64, 200);
             const ringMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffd700, metalness: 1.0, roughness: 0.1, emissive: 0xffa500, emissiveIntensity: 0.5 
+                color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.8 
             });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             portalGroup.add(ring);
 
-            const innerRingGeo = new THREE.TorusGeometry(1.3, 0.02, 16, 100);
-            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+            const innerRingGeo = new THREE.TorusGeometry(1.35, 0.03, 32, 150);
+            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
             portalGroup.add(new THREE.Mesh(innerRingGeo, innerRingMat));
 
-            const veilGeo = new THREE.PlaneGeometry(2.7, 2.7, 64, 64);
+            // Vórtice Cuántico Hiper-Realista (Custom GLSL)
+            const veilGeo = new THREE.PlaneGeometry(2.9, 2.9, 128, 128);
             portalUniforms = { uTime: { value: 0 } };
             const veilMat = new THREE.ShaderMaterial({
                 uniforms: portalUniforms,
                 vertexShader: `
-                    varying vec2 vUv; 
-                    uniform float uTime;
+                    varying vec2 vUv; uniform float uTime;
                     void main() { 
-                        vUv = uv; 
-                        vec3 pos = position;
+                        vUv = uv; vec3 pos = position;
                         float dist = distance(uv, vec2(0.5));
-                        pos.z += sin(dist * 10.0 - uTime * 2.0) * 0.1;
+                        pos.z += sin(dist * 20.0 - uTime * 4.0) * 0.15 * smoothstep(0.5, 0.0, dist);
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
                     }
                 `,
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
-                    
                     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
                     float noise(vec2 p) {
                         vec2 i = floor(p); vec2 f = fract(p);
                         vec2 u = f*f*(3.0-2.0*f);
-                        return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
-                                   mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+                        return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x), mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
                     }
-                    
                     void main() {
-                        vec2 uv = vUv - 0.5; 
-                        float dist = length(uv); 
-                        float angle = atan(uv.y, uv.x);
-                        
-                        float spiral1 = sin(dist * 25.0 - uTime * 4.0 + angle * 3.0);
-                        float spiral2 = cos(dist * 15.0 + uTime * 2.0 - angle * 2.0);
+                        vec2 uv = vUv - 0.5; float dist = length(uv); float angle = atan(uv.y, uv.x);
+                        float spiral1 = sin(dist * 30.0 - uTime * 5.0 + angle * 4.0);
+                        float spiral2 = cos(dist * 20.0 + uTime * 3.0 - angle * 3.0);
                         float vortex = (spiral1 + spiral2) * 0.5;
+                        float n = noise(uv * 15.0 - uTime*2.0); vortex += n * 0.8;
                         
-                        float n = noise(uv * 10.0 - uTime);
-                        vortex += n * 0.5;
+                        float alpha = smoothstep(0.5, 0.05, dist) * (0.5 + 0.5 * vortex);
                         
-                        float alpha = smoothstep(0.5, 0.1, dist) * (0.5 + 0.5 * vortex);
-                        
-                        vec3 color1 = vec3(0.05, 0.0, 0.2); 
-                        vec3 color2 = vec3(1.0, 0.2, 0.6); 
+                        vec3 color1 = vec3(0.02, 0.0, 0.1); 
+                        vec3 color2 = vec3(1.0, 0.0, 0.5); 
                         vec3 color3 = vec3(0.0, 1.0, 1.0); 
                         
                         vec3 color = mix(color1, color2, vortex + 0.5);
-                        color = mix(color, color3, smoothstep(0.2, 0.0, dist));
+                        color = mix(color, color3, smoothstep(0.25, 0.0, dist));
                         
-                        color += vec3(1.0, 1.0, 1.0) * pow(smoothstep(0.15, 0.0, dist), 3.0) * 3.0;
+                        // Agujero blanco central
+                        color += vec3(1.0, 1.0, 1.0) * pow(smoothstep(0.18, 0.0, dist), 4.0) * 4.0;
                         
                         gl_FragColor = vec4(color, alpha);
                     }
@@ -418,841 +592,271 @@
             });
             portalGroup.add(new THREE.Mesh(veilGeo, veilMat));
 
-            crearCamiLluminos();
+            // Camino de Luz hacia el Portal
+            crearCaminoEstelar();
         }
 
-        function crearCamiLluminos() {
+        function crearCaminoEstelar() {
             pathGroup = new THREE.Group();
-            const pathGeo = new THREE.PlaneGeometry(1.8, 4, 32, 32);
-            
+            const pathGeo = new THREE.PlaneGeometry(2.0, 5, 64, 64);
             const pathMat = new THREE.ShaderMaterial({
                 uniforms: { uTime: portalUniforms.uTime },
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv;
-                    void main() {
-                        float flow = sin(vUv.y * 20.0 + uTime * 5.0) * 0.5 + 0.5;
-                        float edge = sin(vUv.x * 3.1415);
-                        float fade = smoothstep(0.0, 1.0, vUv.y);
-                        
-                        vec3 color = vec3(1.0, 0.1, 0.6) * flow;
-                        color += vec3(0.5, 0.0, 1.0) * (1.0 - flow);
-                        
-                        gl_FragColor = vec4(color, edge * fade * 0.6);
-                    }
-                `,
-                transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
-            });
-            
-            const path = new THREE.Mesh(pathGeo, pathMat);
-            path.rotation.x = -Math.PI / 2; 
-            path.position.set(0, -1.3, -1.0); 
-            pathGroup.add(path); 
-            scene.add(pathGroup);
-        }
-
-        // ============================================================================
-        // 4. CONSTRUCCIÓ DEL POST-PORTAL (El Santuari Còsmic Ultra Romàntic)
-        // ============================================================================
-        function construirMónPostPortal() {
-            crearCorUltraComplex();
-            crearLotoDeCristall(); // NOU: Loto de cristall base
-            crearHalosSagrats(); // NOU: Halos de geometría
-            crearAlesCelestials();
-            crearTornatDePetals();
-            crearSistemaBoids(); 
-            crearSòlMandalaLoto();
-            crearVoltaNebulosa();
-            crearConstel·lacionsDesti();
-            crearLlanternesRomanitques();
-            crearFilVermellDesti();
-            crearPilarsDeLlum();
-            crearDiamantsLevitants(); // NOU: Diamants brillants
-            crearSistemaCometes(); // NOU: Meteoritos con estela
-            crearParticulesGalaxia();
-            crearTextosFlotants();
-            crearOnaDeXoc();
-            crearJardiDeRosesParametriques(); 
-        }
-
-        // --- NOU SISTEMA: HALOS DE GEOMETRÍA SAGRADA PROCEDURALS ---
-        function crearHalosSagrats() {
-            sacredHalosGroup = new THREE.Group();
-            
-            // Funció per dibuixar mandales ultra-complexos al Canvas
-            function generarTexturaHalo(radi, color, runes) {
-                const canvas = document.createElement('canvas'); 
-                canvas.width = 1024; canvas.height = 1024;
-                const ctx = canvas.getContext('2d');
-                const cx = 512, cy = 512;
-                
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 15;
-                
-                // Anell base
-                ctx.beginPath();
-                ctx.arc(cx, cy, radi, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Línies geomètriques internes
-                for(let i=0; i<36; i++) {
-                    const angle = (i/36) * Math.PI * 2;
-                    ctx.beginPath();
-                    ctx.moveTo(cx + Math.cos(angle)*radi*0.9, cy + Math.sin(angle)*radi*0.9);
-                    ctx.lineTo(cx + Math.cos(angle)*radi*0.95, cy + Math.sin(angle)*radi*0.95);
-                    ctx.stroke();
-                }
-
-                // Símbols o Runes de l'amor
-                if(runes) {
-                    ctx.font = "24px Arial";
-                    ctx.fillStyle = color;
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    const chars = "AMOR ETERN DESTI INFINIT LÍMIT ÀNIMA FOC BATEC LÍMIT".split(" ");
-                    for(let i=0; i<12; i++) {
-                        const angle = (i/12) * Math.PI * 2;
-                        const px = cx + Math.cos(angle) * (radi * 0.85);
-                        const py = cy + Math.sin(angle) * (radi * 0.85);
-                        
-                        ctx.save();
-                        ctx.translate(px, py);
-                        ctx.rotate(angle + Math.PI/2);
-                        ctx.fillText(chars[i%chars.length], 0, 0);
-                        ctx.restore();
-                    }
-                }
-                
-                return new THREE.CanvasTexture(canvas);
-            }
-
-            const mat1 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(450, '#ff1493', true), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-            const mat2 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(400, '#00ffff', false), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-            const mat3 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(480, '#ffd700', true), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-
-            const planeGeo = new THREE.PlaneGeometry(3, 3);
-            
-            const halo1 = new THREE.Mesh(planeGeo, mat1);
-            const halo2 = new THREE.Mesh(planeGeo, mat2);
-            const halo3 = new THREE.Mesh(planeGeo, mat3);
-
-            halo1.rotation.x = Math.PI / 2;
-            halo2.rotation.y = Math.PI / 2;
-            halo3.rotation.x = Math.PI / 4;
-            halo3.rotation.y = Math.PI / 4;
-
-            sacredHalosGroup.add(halo1, halo2, halo3);
-            mainHeartGroup.add(sacredHalosGroup); // Posa l'halo dins del cor
-        }
-
-        // --- NOU SISTEMA: LOTO DE CRISTALL DE BASE ---
-        function crearLotoDeCristall() {
-            crystalLotusGroup = new THREE.Group();
-            
-            // Material de cristall refractant (Simulat amb Shader)
-            const glassMat = new THREE.ShaderMaterial({
-                uniforms: { uTime: { value: 0.0 } },
-                vertexShader: `
-                    varying vec3 vNormal; varying vec3 vViewPosition;
-                    void main() {
-                        vNormal = normalize(normalMatrix * normal);
-                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                        vViewPosition = -mvPosition.xyz;
-                        gl_Position = projectionMatrix * mvPosition;
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uTime;
-                    varying vec3 vNormal; varying vec3 vViewPosition;
-                    void main() {
-                        vec3 normal = normalize(vNormal);
-                        vec3 viewDir = normalize(vViewPosition);
-                        
-                        // Iridescència hologràfica
-                        float fresnel = dot(viewDir, normal);
-                        fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
-                        
-                        vec3 color = vec3(0.0);
-                        color.r = sin(fresnel * 10.0 + uTime) * 0.5 + 0.5;
-                        color.g = sin(fresnel * 15.0 + uTime * 1.5) * 0.5 + 0.5;
-                        color.b = sin(fresnel * 20.0 + uTime * 2.0) * 0.5 + 0.5;
-                        
-                        color *= fresnel * 2.0;
-                        color += vec3(1.0, 0.8, 0.9) * pow(fresnel, 5.0); // Borde blanc brillant
-                        
-                        gl_FragColor = vec4(color, fresnel * 0.8);
-                    }
-                `,
-                transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
-            });
-
-            // Construir els pètals del Loto de Cristall
-            for(let i=0; i<12; i++) {
-                const petalGeo = new THREE.PlaneGeometry(0.8, 1.5, 8, 8);
-                const pos = petalGeo.attributes.position;
-                for(let j=0; j<pos.count; j++) {
-                    const x = pos.getX(j); const y = pos.getY(j);
-                    pos.setZ(j, (x*x + y*y) * -0.5); // Curvar
-                }
-                petalGeo.computeVertexNormals();
-                petalGeo.translate(0, 0.75, 0); // Moure pivot a la base
-
-                const petal = new THREE.Mesh(petalGeo, glassMat);
-                petal.rotation.y = (i / 12) * Math.PI * 2;
-                petal.rotation.x = Math.PI / 4; // Obrir
-                
-                // Animar individualment
-                petal.userData = { phase: i };
-                crystalLotusGroup.add(petal);
-            }
-            
-            crystalLotusGroup.position.y = -0.5; // Sota el cor
-            mainHeartGroup.add(crystalLotusGroup);
-        }
-
-        // --- NOU SISTEMA: DIAMANTS FLOTANTS ---
-        function crearDiamantsLevitants() {
-            const diamondGeo = new THREE.OctahedronGeometry(0.1, 0);
-            const diamondMat = new THREE.MeshStandardMaterial({
-                color: 0x00ffff, metalness: 0.9, roughness: 0.1, emissive: 0x0055ff, emissiveIntensity: 0.5,
-                transparent: true, opacity: 0.9
-            });
-
-            for(let i=0; i<30; i++) {
-                const diamond = new THREE.Mesh(diamondGeo, diamondMat);
-                diamond.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radius: 2 + Math.random() * 8,
-                    yOffset: -2 + Math.random() * 10,
-                    speed: 0.05 + Math.random() * 0.1,
-                    spinX: Math.random() * 0.05,
-                    spinY: Math.random() * 0.05
-                };
-                universeGroup.add(diamond);
-                floatingDiamonds.push(diamond);
-            }
-        }
-
-        // --- NOU SISTEMA: COMETES AMB ESTELA ---
-        function crearSistemaCometes() {
-            const cometCount = 12;
-            const cometGeo = new THREE.SphereGeometry(0.05, 8, 8);
-            const cometMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-            for(let i=0; i<cometCount; i++) {
-                const cometGroup = new THREE.Group();
-                const head = new THREE.Mesh(cometGeo, cometMat);
-                cometGroup.add(head);
-
-                // Estela (Trail) usant BufferGeometry dinàmica
-                const tailPoints = 20;
-                const tailGeo = new THREE.BufferGeometry();
-                const tailPos = new Float32Array(tailPoints * 3);
-                tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
-                
-                const tailMat = new THREE.LineBasicMaterial({ 
-                    color: 0xff1493, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending 
-                });
-                const tail = new THREE.Line(tailGeo, tailMat);
-                cometGroup.add(tail);
-
-                cometGroup.userData = {
-                    start: new THREE.Vector3(),
-                    end: new THREE.Vector3(),
-                    progress: 0,
-                    speed: 0.01 + Math.random() * 0.02,
-                    history: Array(tailPoints).fill(new THREE.Vector3()),
-                    tailGeo: tailGeo
-                };
-                
-                resetComet(cometGroup);
-                universeGroup.add(cometGroup);
-                comets.push(cometGroup);
-            }
-        }
-
-        function resetComet(comet) {
-            const startX = (Math.random() - 0.5) * 60; const startZ = (Math.random() - 0.5) * 60;
-            comet.userData.start.set(startX, 20 + Math.random() * 10, startZ);
-            comet.userData.end.set(startX + (Math.random() - 0.5) * 40, -10, startZ + (Math.random() - 0.5) * 40);
-            comet.userData.progress = 0;
-            comet.userData.history = Array(20).fill(comet.userData.start.clone());
-        }
-
-        function updateComets() {
-            comets.forEach(comet => {
-                const data = comet.userData;
-                data.progress += data.speed;
-                
-                // Posició actual del cap
-                const currentPos = new THREE.Vector3().lerpVectors(data.start, data.end, data.progress);
-                comet.children[0].position.copy(currentPos); // Moure el cap
-                
-                // Actualitzar l'historial per a l'estela
-                data.history.unshift(currentPos.clone());
-                data.history.pop();
-                
-                // Dibuixar l'estela
-                const posAttr = data.tailGeo.attributes.position;
-                for(let i=0; i<20; i++) {
-                    posAttr.setXYZ(i, data.history[i].x, data.history[i].y, data.history[i].z);
-                }
-                posAttr.needsUpdate = true;
-
-                if(data.progress >= 1.0) resetComet(comet);
-            });
-        }
-
-        // --- SISTEMA 1: EL COR MULTI-CAPA ---
-        function crearCorUltraComplex() {
-            universeGroup.add(mainHeartGroup);
-
-            // 1. Forma Base del Cor
-            const heartShape = new THREE.Shape();
-            const x = 0, y = 0;
-            heartShape.moveTo( x + 5, y + 5 );
-            heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
-            heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7, x - 6, y + 7 );
-            heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 );
-            heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 );
-            heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y );
-            heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
-
-            const extrudeSettings = { depth: 3.5, bevelEnabled: true, bevelSegments: 16, steps: 8, bevelSize: 2.5, bevelThickness: 2.5 };
-            const geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings );
-            geometry.computeBoundingBox(); geometry.translate( -5, -10, -1.75 );
-            geometry.scale(0.025, 0.025, 0.025); geometry.rotateZ(Math.PI); 
-            
-            // Centrar-lo perfectament
-            geometry.computeBoundingBox();
-            const center = new THREE.Vector3();
-            geometry.boundingBox.getCenter(center);
-            geometry.translate(-center.x, -center.y, -center.z);
-
-            // 2. Capa Exterior (Cristall Refractant Shaded)
-            heartUniforms = { uTime: { value: 0.0 } };
-            const outerMat = new THREE.ShaderMaterial({
-                uniforms: heartUniforms,
-                vertexShader: `
-                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime;
-                    void main() {
-                        vUv = uv; vNormal = normalize(normalMatrix * normal);
-                        vec3 pos = position;
-                        float wave = sin(pos.x * 20.0 + uTime * 3.0) * 0.005 + cos(pos.y * 20.0 + uTime * 2.0) * 0.005;
-                        pos += normal * wave; 
-                        vPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform float uTime; 
-                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition;
-                    void main() {
-                        vec3 color1 = vec3(1.0, 0.05, 0.4); // Rosa intens
-                        vec3 color2 = vec3(0.5, 0.0, 1.0); // Púrpura
-                        
-                        float mixValue = sin(vPosition.y * 10.0 + uTime * 2.0) * 0.5 + 0.5;
-                        vec3 color = mix(color1, color2, mixValue);
-                        
-                        // Càlcul de Fresnel per a efecte de cristall
-                        vec3 viewDir = normalize(cameraPosition - vPosition);
-                        float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0);
-                        float fresnelPow = pow(fresnel, 2.5);
-                        
-                        // Brillantor per batec
-                        float pulse = pow(abs(sin(uTime * 1.5)), 8.0) + pow(abs(sin(uTime * 1.5 + 0.4)), 8.0) * 0.5;
-                        
-                        color += vec3(1.0, 0.9, 0.9) * fresnelPow * 2.0; // Vora blanca
-                        color += vec3(1.0, 0.3, 0.5) * pulse * 1.5; // Resplendor
-                        
-                        gl_FragColor = vec4(color, 0.7 + fresnelPow * 0.3); 
-                    }
-                `,
-                transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
-            });
-            const outerMesh = new THREE.Mesh(geometry, outerMat);
-            mainHeartGroup.add(outerMesh);
-
-            // 3. Nucli Interior (Plasma Calent)
-            const innerGeo = geometry.clone();
-            innerGeo.scale(0.85, 0.85, 0.85); // Més petit, a l'interior
-            innerCoreUniforms = { uTime: { value: 0 } };
-            const innerMat = new THREE.ShaderMaterial({
-                uniforms: innerCoreUniforms,
-                vertexShader: `varying vec3 vPos; void main() { vPos=position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `
-                    uniform float uTime; varying vec3 vPos;
-                    void main() {
-                        float pulse = sin(vPos.y * 30.0 - uTime * 10.0) * 0.5 + 0.5;
-                        vec3 coreColor = mix(vec3(1.0, 0.8, 0.0), vec3(1.0, 0.0, 0.0), pulse); // Or a Vermell
-                        gl_FragColor = vec4(coreColor, 1.0);
-                    }
-                `,
-            });
-            const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-            mainHeartGroup.add(innerMesh);
-
-            // 4. Jaula de Filferro (Malla d'Energia)
-            const wireGeo = geometry.clone();
-            wireGeo.scale(1.05, 1.05, 1.05);
-            wireframeUniforms = { uTime: { value: 0 } };
-            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending });
-            const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-            mainHeartGroup.add(wireMesh);
-        }
-
-        // --- SISTEMA 2: ALES CELESTIALS ---
-        function crearAlesCelestials() {
-            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,1024,1024);
-            ctx.globalCompositeOperation = "lighter";
-            
-            // Generació complexa de plomes de llum
-            for(let i=0; i<80; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, 512); // Pìvot
-                
-                // Corbes de Bezier Cúbiques per a forma de ploma real
-                const cp1x = 300 + Math.random() * 200; const cp1y = 100 + Math.random() * 400;
-                const cp2x = 600 + Math.random() * 300; const cp2y = Math.random() * 800;
-                const endX = 800 + Math.random() * 224; const endY = Math.random() * 1024;
-                
-                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
-                
-                const r = 200 + Math.random() * 55;
-                const g = 100 + Math.random() * 155;
-                const b = 255;
-                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 + Math.random()*0.2})`;
-                ctx.lineWidth = 1 + Math.random() * 8;
-                ctx.shadowColor = `rgba(255, 255, 255, 0.8)`;
-                ctx.shadowBlur = 10;
-                ctx.stroke();
-            }
-            
-            const wingTex = new THREE.CanvasTexture(canvas);
-            const wingMat = new THREE.MeshBasicMaterial({ map: wingTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-
-            wingL = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), wingMat);
-            wingL.geometry.translate(2, 0, 0); // Ajustar el centre de rotació
-            wingL.position.set(0, 0, -0.3); 
-            
-            wingR = new THREE.Mesh(wingL.geometry, wingMat);
-            wingR.rotation.y = Math.PI; 
-            wingR.position.set(0, 0, -0.3);
-
-            mainHeartGroup.add(wingL);
-            mainHeartGroup.add(wingR);
-        }
-
-        // --- SISTEMA 3: JARDÍ DE ROSES PARAMÈTRIQUES ---
-        function crearJardiDeRosesParametriques() {
-            const numRoses = 100; 
-            const roseMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0xff0040, emissive: 0x330011, roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide
-            });
-
-            for(let r=0; r<numRoses; r++) {
-                const roseGroup = new THREE.Group();
-                const petalsCount = 15 + Math.floor(Math.random() * 10);
-                const scale = 0.05 + Math.random() * 0.04;
-                
-                for(let p=0; p<petalsCount; p++) {
-                    const t = p / petalsCount; 
-                    const angle = t * Math.PI * 10.0; 
-                    
-                    const petalGeo = new THREE.PlaneGeometry(1, 1, 4, 4);
-                    const pos = petalGeo.attributes.position;
-                    
-                    for(let i=0; i<pos.count; i++) {
-                        const x = pos.getX(i);
-                        const y = pos.getY(i);
-                        const z = (x*x + y*y) * -0.5 + Math.sin(y*3.0)*0.2; 
-                        pos.setZ(i, z);
-                    }
-                    petalGeo.computeVertexNormals();
-                    const petalMesh = new THREE.Mesh(petalGeo, roseMaterial);
-                    const radius = t * 0.8;
-                    petalMesh.position.set(Math.cos(angle)*radius, t*0.5, Math.sin(angle)*radius);
-                    petalMesh.rotation.y = -angle + Math.PI/2;
-                    petalMesh.rotation.x = Math.PI/4 + (1.0-t)*Math.PI/4; 
-                    
-                    roseGroup.add(petalMesh);
-                }
-                
-                roseGroup.scale.set(scale, scale, scale);
-                const gardenRadius = 1.5 + Math.random() * 15;
-                const gardenAngle = Math.random() * Math.PI * 2;
-                
-                roseGroup.position.set(
-                    Math.cos(gardenAngle) * gardenRadius,
-                    -1.45, 
-                    Math.sin(gardenAngle) * gardenRadius
-                );
-                
-                roseGroup.rotation.y = Math.random() * Math.PI * 2;
-                roseGroup.rotation.z = (Math.random() - 0.5) * 0.2;
-                roseGroup.rotation.x = (Math.random() - 0.5) * 0.2;
-                
-                roseGroup.userData = {
-                    targetScale: scale,
-                    currentScale: 0.001,
-                    growthSpeed: 0.02 + Math.random() * 0.03,
-                    delay: Math.random() * 3.0 
-                };
-                
-                roseGroup.scale.set(0.001, 0.001, 0.001);
-                
-                parametricRoses.push(roseGroup);
-                universeGroup.add(roseGroup);
-            }
-        }
-
-        // --- SISTEMA 4: INTEL·LIGÈNCIA ARTIFICIAL DE BOIDS (Ocells de Llum) ---
-        function crearSistemaBoids() {
-            const boidGeo = new THREE.ConeGeometry(0.02, 0.1, 3);
-            boidGeo.rotateX(Math.PI / 2); 
-            const boidMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending 
-            });
-
-            const wingGeo = new THREE.PlaneGeometry(0.1, 0.04);
-            const wingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-
-            const numBoids = 150;
-            for (let i = 0; i < numBoids; i++) {
-                const boidGroup = new THREE.Group();
-                const body = new THREE.Mesh(boidGeo, boidMat);
-                
-                const w1 = new THREE.Mesh(wingGeo, wingMat);
-                w1.position.set(0.05, 0, 0); w1.geometry.translate(0.05, 0, 0);
-                
-                const w2 = new THREE.Mesh(wingGeo, wingMat);
-                w2.position.set(-0.05, 0, 0); w2.geometry.translate(-0.05, 0, 0);
-                
-                boidGroup.add(body, w1, w2);
-                
-                boidGroup.userData = {
-                    velocity: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(0.05),
-                    acceleration: new THREE.Vector3(),
-                    maxSpeed: 0.04 + Math.random() * 0.02,
-                    maxForce: 0.002,
-                    wings: [w1, w2],
-                    wingPhase: Math.random() * Math.PI * 2,
-                    wingSpeed: 15 + Math.random() * 10
-                };
-                
-                boidGroup.position.set((Math.random()-0.5)*10, Math.random()*10, (Math.random()-0.5)*10);
-                
-                boids.push(boidGroup);
-                universeGroup.add(boidGroup);
-            }
-        }
-
-        function actualitzarBoids(delta, time) {
-            const targetPos = mainHeartGroup.position.clone(); 
-            
-            for (let i = 0; i < boids.length; i++) {
-                const boid = boids[i];
-                const data = boid.userData;
-                
-                let sep = new THREE.Vector3();
-                let ali = new THREE.Vector3();
-                let coh = new THREE.Vector3();
-                let count = 0;
-                
-                for (let j = 0; j < boids.length; j++) {
-                    if (i === j) continue;
-                    const other = boids[j];
-                    const dist = boid.position.distanceTo(other.position);
-                    
-                    if (dist > 0 && dist < 1.0) { 
-                        const diff = boid.position.clone().sub(other.position).normalize().divideScalar(dist);
-                        sep.add(diff);
-                        ali.add(other.userData.velocity);
-                        coh.add(other.position);
-                        count++;
-                    }
-                }
-                
-                if (count > 0) {
-                    sep.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
-                    ali.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
-                    coh.divideScalar(count).sub(boid.position).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
-                }
-                
-                const attractor = targetPos.clone().sub(boid.position);
-                const distToTarget = attractor.length();
-                attractor.normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 1.5);
-                
-                const vortex = new THREE.Vector3(boid.position.z - targetPos.z, 0, -(boid.position.x - targetPos.x)).normalize().multiplyScalar(data.maxForce * 2.0);
-                
-                sep.multiplyScalar(2.0);
-                ali.multiplyScalar(1.0);
-                coh.multiplyScalar(1.0);
-                attractor.multiplyScalar(0.5);
-                
-                data.acceleration.add(sep).add(ali).add(coh).add(attractor).add(vortex);
-                
-                if(boid.position.y < -1.0) data.acceleration.y += 0.01;
-                if(distToTarget > 15) data.acceleration.add(targetPos.clone().sub(boid.position).normalize().multiplyScalar(0.01));
-
-                data.velocity.add(data.acceleration);
-                data.velocity.clampLength(0, data.maxSpeed);
-                boid.position.add(data.velocity);
-                data.acceleration.set(0,0,0); 
-                
-                if(data.velocity.lengthSq() > 0.0001) {
-                    const lookTarget = boid.position.clone().add(data.velocity);
-                    boid.lookAt(lookTarget);
-                }
-                
-                data.wingPhase += data.wingSpeed * delta;
-                const flap = Math.sin(data.wingPhase);
-                data.wings[0].rotation.z = flap;
-                data.wings[1].rotation.z = -flap;
-            }
-        }
-
-        // --- SISTEMA 5: CONSTEL·LACIONS DEL DESTÍ ---
-        function crearConstel·lacionsDesti() {
-            const lineMaterial = new THREE.LineBasicMaterial({ 
-                color: 0xffffff, transparent: true, opacity: 0.3, linewidth: 2, blending: THREE.AdditiveBlending 
-            });
-            const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
-            const starGeo = new THREE.SphereGeometry(0.1, 8, 8);
-
-            function dibuixarForma(puntsMathFunc, numPunts, radi, offsetX, offsetY, offsetZ) {
-                const punts = [];
-                const estels = new THREE.Group();
-                for(let i=0; i<numPunts; i++) {
-                    const t = i / (numPunts - 1);
-                    const coord = puntsMathFunc(t);
-                    coord.multiplyScalar(radi);
-                    coord.set(coord.x + offsetX, coord.y + offsetY, coord.z + offsetZ);
-                    punts.push(coord);
-                    
-                    const estrella = new THREE.Mesh(starGeo, starMaterial);
-                    estrella.position.copy(coord);
-                    const glowGeo = new THREE.SphereGeometry(0.3, 8, 8);
-                    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
-                    estrella.add(new THREE.Mesh(glowGeo, glowMat));
-                    
-                    estels.add(estrella);
-                }
-                
-                const liniaGeo = new THREE.BufferGeometry().setFromPoints(punts);
-                const linia = new THREE.Line(liniaGeo, lineMaterial);
-                
-                const grupTotal = new THREE.Group();
-                grupTotal.add(linia, estels);
-                universeGroup.add(grupTotal);
-                constellationLines.push({ group: grupTotal, phase: Math.random()*Math.PI*2 });
-            }
-
-            dibuixarForma((t) => {
-                const angle = t * Math.PI * 2;
-                const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle));
-                const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle));
-                return new THREE.Vector3(x, y, 0);
-            }, 50, 15, -20, 25, -40);
-
-            dibuixarForma((t) => {
-                const angle = t * Math.PI * 2;
-                const x = 16 * Math.pow(Math.sin(angle), 3);
-                const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle);
-                return new THREE.Vector3(x/16, y/16, 0); 
-            }, 60, 20, 25, 20, -50);
-            
-            dibuixarForma((t) => {
-                const angle = t * Math.PI * 2;
-                const x = 16 * Math.pow(Math.sin(angle), 3);
-                const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle);
-                return new THREE.Vector3(x/16, y/16, 0); 
-            }, 60, 15, 15, 22, -45);
-        }
-
-        // --- FUNCIONS ESTRUCTURALS EXISTENTS MILLORADES ---
-        
-        function crearSòlMandalaLoto() {
-            const floorGeo = new THREE.PlaneGeometry(50, 50, 64, 64);
-            lotusUniforms = { uTime: { value: 0.0 } };
-            
-            const floorMat = new THREE.ShaderMaterial({
-                uniforms: lotusUniforms,
                 vertexShader: `
                     varying vec2 vUv; uniform float uTime;
                     void main() { 
-                        vUv = uv; 
-                        vec3 pos = position;
-                        float dist = distance(uv, vec2(0.5));
-                        pos.z += sin(dist * 50.0 - uTime * 5.0) * 0.05 * smoothstep(0.5, 0.0, dist);
+                        vUv = uv; vec3 pos = position;
+                        pos.z += sin(pos.y * 10.0 + uTime*2.0) * 0.05;
                         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
                     }
                 `,
                 fragmentShader: `
                     uniform float uTime; varying vec2 vUv;
                     void main() {
-                        vec2 uv = vUv * 2.0 - 1.0;
-                        float r = length(uv);
-                        float a = atan(uv.y, uv.x);
+                        float flow = sin(vUv.y * 30.0 + uTime * 8.0) * 0.5 + 0.5;
+                        float edge = sin(vUv.x * 3.1415); 
+                        float fade = smoothstep(0.0, 1.0, vUv.y);
                         
-                        float f = cos(a * 16.0);
-                        float pulse = sin(uTime * 2.0) * 0.02 + 0.98;
-                        float shape = smoothstep(0.5 * pulse, 0.51 * pulse, r + f * 0.05) - smoothstep(0.51 * pulse, 0.54 * pulse, r + f * 0.05);
+                        vec3 color = vec3(1.0, 0.1, 0.8) * flow + vec3(0.0, 1.0, 1.0) * (1.0 - flow);
                         
-                        float ring1 = smoothstep(0.2, 0.21, r) - smoothstep(0.21, 0.22, r);
-                        float ring2 = smoothstep(0.4, 0.41, r) - smoothstep(0.41, 0.42, r);
-                        float geom = ring1 + ring2;
-                        
-                        float ripple = sin(r * 60.0 - uTime * 6.0) * 0.5 + 0.5;
-                        
-                        vec3 colorLotus = vec3(1.0, 0.1, 0.5); 
-                        vec3 colorGeom = vec3(0.0, 1.0, 1.0); 
-                        vec3 colorBase = vec3(0.02, 0.0, 0.1); 
-                        
-                        vec3 color = colorBase;
-                        color += colorLotus * shape * 3.0;
-                        color += colorGeom * geom * 2.0;
-                        color += vec3(1.0, 0.8, 0.0) * ripple * geom * 4.0; 
-                        
-                        float fade = smoothstep(1.0, 0.6, r);
-                        float alpha = clamp((shape + geom + ripple*0.1) * fade, 0.0, 1.0);
-                        
-                        gl_FragColor = vec4(color, alpha * 0.8);
+                        // Partículas simuladas en el shader
+                        float sparkles = pow(fract(sin(dot(vUv+uTime*0.1, vec2(12.9898,78.233))) * 43758.5453), 20.0);
+                        color += vec3(1.0) * sparkles * 5.0;
+
+                        gl_FragColor = vec4(color, pow(edge, 2.0) * fade * 0.8);
                     }
                 `,
                 transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
             });
-            
-            lotusMandalaFloor = new THREE.Mesh(floorGeo, floorMat);
-            lotusMandalaFloor.rotation.x = -Math.PI / 2;
-            lotusMandalaFloor.position.y = -1.5; 
-            universeGroup.add(lotusMandalaFloor);
+            const path = new THREE.Mesh(pathGeo, pathMat);
+            path.rotation.x = -Math.PI / 2; path.position.set(0, -1.4, -1.0); 
+            pathGroup.add(path); rootGroup.add(pathGroup);
         }
 
-        function crearVoltaNebulosa() {
-            const domeGeo = new THREE.SphereGeometry(80, 64, 64); 
-            domeGeo.scale(-1, 1, 1); 
+        // ============================================================================
+        // 6. CONSTRUCCIÓN DEL ECOSISTEMA EXTREMO 360 (Fase 2 - Santuario)
+        // ============================================================================
+        function construirEcosistemaExtremo360() {
+            // Sistemas Centrales (El Núcleo del Amor)
+            crearCorazonTetradimensional();
+            crearLotoDeCristall(); 
+            crearHalosSagradosProcedurales(); 
+            crearAlesCelestialsMagnificas();
+            crearAnillosDelDestino();
+            crearHiloRojoCuantico();
             
-            nebulaUniforms = { uTime: { value: 0 } };
-            const domeMat = new THREE.ShaderMaterial({
-                uniforms: nebulaUniforms,
-                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv;
+            // Entorno de 360 Grados (El Mundo)
+            crearTerrenoMontanoso360(); // NOU MASSIU
+            crearSolMandalaLoto();
+            crearArbolesFractalesDeLaVida(); // NOU MASSIU
+            crearVoltaNebulosaMulticapa();
+            crearPilaresDeLuzInfinitos();
+            crearConstelacionesCosmicas();
+            
+            // Sistemas de Partículas y Físicas (El Flujo vital)
+            crearTornadoDePetalosMasivo();
+            crearSistemaBoidsIA(); 
+            crearGalaxiaParticulas10K();
+            crearLlanternasRomanticas360();
+            crearDiamantesLevitantes(); // CORREGIDO AQUÍ
+            crearSistemaCometesEstelas(); 
+            crearTextosEsfericos100(); // NOU MASSIU
+            
+            // Transiciones Post-Procesado
+            crearOndasDeChoqueColosales();
+        }
+
+        // --- SISTEMAS GEOMÉTRICOS Y FÍSICOS MASIVOS ---
+
+        // 6.1 Terreno Montañoso 360 Procedural (Usando el motor Simplex Noise)
+        function crearTerrenoMontanoso360() {
+            terrainGroup = new THREE.Group();
+            // Geometría masiva circular para rodear al jugador a gran distancia
+            const terrainGeo = new THREE.PlaneGeometry(200, 200, 128, 128);
+            terrainGeo.rotateX(-Math.PI / 2);
+            
+            const vertices = terrainGeo.attributes.position.array;
+            
+            // Esculpir montañas con Simplex Noise
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const z = vertices[i + 2];
+                
+                const dist = Math.sqrt(x*x + z*z);
+                
+                // Zona plana en el centro (Santuario), montañas en los bordes
+                let elevation = 0;
+                if (dist > 15.0) {
+                    // Múltiples octavas de ruido para detalle fractal
+                    const nx = x * 0.05;
+                    const nz = z * 0.05;
+                    let e = 1.0 * simplex.noise3D(1 * nx, 1 * nz, 0)
+                          + 0.5 * simplex.noise3D(2 * nx, 2 * nz, 0)
+                          + 0.25 * simplex.noise3D(4 * nx, 4 * nz, 0);
                     
-                    float random(vec2 p) { return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453123); }
-                    float noise(vec2 p) {
-                        vec2 i = floor(p); vec2 f = fract(p);
-                        float a = random(i); float b = random(i + vec2(1.0, 0.0));
-                        float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0));
-                        vec2 u = f * f * (3.0 - 2.0 * f);
-                        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-                    }
-                    float fbm(vec2 p) {
-                        float value = 0.0; float amp = 0.5;
-                        for(int i=0; i<5; i++) { value += amp * noise(p); p *= 2.0; amp *= 0.5; }
-                        return value;
-                    }
+                    e = e / (1.0 + 0.5 + 0.25); // Normalizar
                     
+                    // Curva de poder para hacer picos afilados
+                    e = Math.pow(Math.abs(e), 2.0) * Math.sign(e);
+                    
+                    // Suavizar la transición del borde del santuario a las montañas
+                    const blend = smoothstep(15.0, 40.0, dist);
+                    elevation = e * 30.0 * blend; // Altura máxima 30m
+                }
+                
+                vertices[i + 1] = elevation; // Asignar altura Y
+            }
+            
+            terrainGeo.computeVertexNormals();
+
+            terrainUniforms = { uTime: { value: 0 } };
+            const terrainMat = new THREE.ShaderMaterial({
+                uniforms: terrainUniforms,
+                vertexShader: `
+                    varying float vElevation; varying vec2 vUv; varying vec3 vNormal;
                     void main() {
-                        vec2 uv = vUv * 4.0;
-                        float n = fbm(uv + vec2(uTime*0.02, uTime*0.01));
-                        float n2 = fbm(uv*2.0 - vec2(uTime*0.03, 0.0));
-                        
-                        float nebula = (n + n2*0.5) * 0.8;
-                        
-                        vec3 bg = vec3(0.01, 0.0, 0.05); 
-                        vec3 col1 = vec3(0.6, 0.0, 0.8); 
-                        vec3 col2 = vec3(1.0, 0.2, 0.5); 
-                        vec3 col3 = vec3(0.0, 0.8, 1.0); 
-                        
-                        vec3 color = bg;
-                        color = mix(color, col1, smoothstep(0.2, 0.8, nebula));
-                        color = mix(color, col2, smoothstep(0.4, 1.0, nebula));
-                        color = mix(color, col3, smoothstep(0.6, 1.2, nebula));
-                        
-                        float star = random(vUv * 500.0);
-                        if(star > 0.998) color += vec3(1.0);
-                        
-                        float alpha = clamp(nebula * 0.6 + 0.2, 0.0, 0.9);
-                        gl_FragColor = vec4(color, alpha);
+                        vElevation = position.y; vUv = uv; vNormal = normalize(normalMatrix * normal);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                     }
                 `,
-                transparent: true, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false
+                fragmentShader: `
+                    varying float vElevation; varying vec2 vUv; varying vec3 vNormal; uniform float uTime;
+                    void main() {
+                        // Colores de la montaña cósmica
+                        vec3 baseColor = vec3(0.01, 0.0, 0.05); // Profundo abismo
+                        vec3 peakColor = vec3(1.0, 0.2, 0.8); // Picos magenta iluminados
+                        vec3 gridColor = vec3(0.0, 1.0, 1.0); // Retícula cian Tron-style
+                        
+                        // Mezcla basada en la elevación
+                        float h = clamp(vElevation / 30.0, 0.0, 1.0);
+                        vec3 color = mix(baseColor, peakColor, h);
+                        
+                        // Añadir retícula tecnológica (Grid)
+                        vec2 grid = abs(fract(vUv * 100.0 - 0.5) - 0.5) / fwidth(vUv * 100.0);
+                        float line = min(grid.x, grid.y);
+                        float gridAlpha = 1.0 - min(line, 1.0);
+                        
+                        // Pulsación de la retícula
+                        float pulse = sin(vElevation * 2.0 - uTime * 5.0) * 0.5 + 0.5;
+                        color += gridColor * gridAlpha * pulse * h * 2.0;
+
+                        // Efecto Fresnel en los bordes de la geometría
+                        float fresnel = dot(vec3(0.0, 0.0, 1.0), vNormal);
+                        fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+                        color += vec3(0.5, 0.0, 1.0) * pow(fresnel, 3.0);
+
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `,
+                wireframe: false,
+                side: THREE.DoubleSide
             });
-            nebulaDome = new THREE.Mesh(domeGeo, domeMat); 
-            universeGroup.add(nebulaDome);
+
+            proceduralTerrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+            proceduralTerrainMesh.position.y = -1.6; // Debajo del mandala
+            terrainGroup.add(proceduralTerrainMesh);
+            universeGroup.add(terrainGroup);
         }
 
-        function crearFilVermellDesti() {
-            redThreadCurve = new THREE.QuadraticBezierCurve3(
-                new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0)
-            );
-            
-            const numPoints = 100; 
-            const threadGeo = new THREE.BufferGeometry();
-            const positions = new Float32Array(numPoints * 3);
-            threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            
-            const threadMat = new THREE.LineBasicMaterial({ 
-                color: 0xff0022, linewidth: 5, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending 
-            });
-            
-            redThreadLine = new THREE.Line(threadGeo, threadMat);
-            universeGroup.add(redThreadLine);
-
-            const pulseGeo = new THREE.SphereGeometry(0.08, 16, 16);
-            const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
-            threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
-            
-            const auraGeo = new THREE.SphereGeometry(0.2, 16, 16);
-            const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending });
-            threadPulse.add(new THREE.Mesh(auraGeo, auraMat));
-            
-            universeGroup.add(threadPulse);
+        // Función matemática auxiliar
+        function smoothstep(edge0, edge1, x) {
+            const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+            return t * t * (3 - 2 * t);
         }
 
-        function crearTornatDePetals() {
-            const petalGeo = new THREE.PlaneGeometry(0.06, 0.1, 4, 4);
-            const pos = petalGeo.attributes.position.array;
-            for(let i=0; i<pos.length; i+=3) pos[i+2] = Math.sin(pos[i]*15) * 0.02 + Math.cos(pos[i+1]*15) * 0.01; 
-            
-            const petalMat = new THREE.MeshStandardMaterial({ 
-                color: 0xff1493, side: THREE.DoubleSide, transparent: true, opacity: 0.85, roughness: 0.6 
+        // 6.2 Generador Fractal de Árboles de la Vida Mágicos
+        function crearArbolesFractalesDeLaVida() {
+            const treeMat = new THREE.MeshStandardMaterial({ 
+                color: 0x220033, emissive: 0x110022, roughness: 0.8, metalness: 0.2
+            });
+            const leafMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
             });
 
-            for(let i=0; i<350; i++) { 
-                const petal = new THREE.Mesh(petalGeo, petalMat);
-                petal.userData = {
-                    angle: Math.random() * Math.PI * 2,
-                    radiusOffset: Math.random() * 2.0,
-                    baseRadius: 1.0 + Math.random() * 3.0,
-                    height: -2 + Math.random() * 15,
-                    rotSpeed: 0.01 + Math.random() * 0.03, 
-                    riseSpeed: 0.01 + Math.random() * 0.03,
-                    tumbleX: Math.random() * 0.08,
-                    tumbleY: Math.random() * 0.08
-                };
-                universeGroup.add(petal);
-                petals.push(petal);
+            // Función recursiva para construir geometría del árbol
+            function buildBranch(startPoint, dir, length, radius, depth, maxDepth, group) {
+                if(depth >= maxDepth) {
+                    // Añadir hoja luminosa en la punta
+                    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), leafMat);
+                    leaf.position.copy(startPoint);
+                    leaf.lookAt(startPoint.clone().add(dir));
+                    group.add(leaf);
+                    return;
+                }
+
+                const endPoint = startPoint.clone().add(dir.clone().multiplyScalar(length));
+                
+                // Cilindro para la rama
+                const branchGeo = new THREE.CylinderGeometry(radius * 0.7, radius, length, 8);
+                // Mover pivote a la base
+                branchGeo.translate(0, length/2, 0); 
+                
+                const branch = new THREE.Mesh(branchGeo, treeMat);
+                branch.position.copy(startPoint);
+                
+                // Orientación de la rama
+                const axis = new THREE.Vector3(0, 1, 0);
+                branch.quaternion.setFromUnitVectors(axis, dir.clone().normalize());
+                group.add(branch);
+
+                // Ramificar (2 o 3 ramas)
+                const numBranches = depth === 0 ? 3 : 2;
+                for(let i=0; i<numBranches; i++) {
+                    const spread = 0.5 + Math.random() * 0.5; // Ángulo de apertura
+                    const angle = (i / numBranches) * Math.PI * 2 + (Math.random() * 0.5);
+                    
+                    // Calcular nueva dirección con perturbación esférica
+                    const newDir = dir.clone().normalize();
+                    const perp1 = new THREE.Vector3(1,0,0).cross(newDir).normalize();
+                    if(perp1.lengthSq() < 0.1) perp1.set(0,0,1).cross(newDir).normalize();
+                    const perp2 = perp1.clone().cross(newDir).normalize();
+                    
+                    newDir.multiplyScalar(Math.cos(spread));
+                    newDir.add(perp1.multiplyScalar(Math.sin(spread) * Math.cos(angle)));
+                    newDir.add(perp2.multiplyScalar(Math.sin(spread) * Math.sin(angle)));
+                    
+                    buildBranch(endPoint, newDir.normalize(), length * 0.75, radius * 0.6, depth + 1, maxDepth, group);
+                }
+            }
+
+            // Distribuir 8 Árboles Colosales en el horizonte
+            for(let i=0; i<8; i++) {
+                const treeGroup = new THREE.Group();
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 25 + Math.random() * 5; // A 25 metros
+                
+                treeGroup.position.set(Math.cos(angle)*distance, -1.5, Math.sin(angle)*distance);
+                
+                // Raíz orientada hacia arriba con ligera inclinación al centro
+                const rootDir = new THREE.Vector3(
+                    -Math.cos(angle) * 0.2, // Apunta un poco al centro
+                    1.0, 
+                    -Math.sin(angle) * 0.2
+                ).normalize();
+                
+                buildBranch(new THREE.Vector3(0,0,0), rootDir, 6.0, 0.8, 0, 5, treeGroup); // 5 niveles de recursión
+                
+                universeGroup.add(treeGroup);
+                fractalTrees.push(treeGroup);
             }
         }
 
-        function crearTextosFlotants() {
+        // 6.3 Textos Esféricos Masivos (El Códice)
+        function crearTextosEsfericos100() {
+            // Renderizado hiper-optimizado usando Sprites
             frasesAmor.forEach((texto, index) => {
-                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); 
+                const canvas = document.createElement('canvas'); 
+                const ctx = canvas.getContext('2d'); 
                 canvas.width = 2048; canvas.height = 256; 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.font = "italic bold 70px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 
-                ctx.shadowColor = "#ff00ff"; ctx.shadowBlur = 30; 
+                ctx.font = "italic 900 80px Georgia"; 
+                ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                
+                // Efecto Multi-Shadow Neón
+                ctx.shadowColor = "#ff1493"; ctx.shadowBlur = 40; 
                 ctx.fillStyle = "#ffffff"; 
                 ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
-                ctx.shadowBlur = 10; ctx.shadowColor = "#00ffff";
+                ctx.shadowBlur = 15; ctx.shadowColor = "#00ffff";
                 ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
 
                 const texture = new THREE.CanvasTexture(canvas);
@@ -1260,149 +864,582 @@
                 
                 const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.AdditiveBlending });
                 const sprite = new THREE.Sprite(spriteMaterial);
-                sprite.scale.set(7, 0.875, 1);
+                sprite.scale.set(10, 1.25, 1); // Más grandes
+                
+                // Matemáticas Esféricas Perfectas (Distribución de Fibonacci adaptada)
+                const phi = Math.acos(1 - 2 * (index + 0.5) / frasesAmor.length);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * index; // Golden angle
+                
+                const radius = 8.0 + (index % 5); // Profundidades intercaladas
                 
                 sprite.userData = { 
-                    angle: (index / frasesAmor.length) * Math.PI * 2, 
-                    radius: 3.5 + Math.random() * 3.0, 
-                    speed: 0.05 + Math.random() * 0.1, // Moviment lent i màgic
-                    yOffset: -1.5 + Math.random() * 4.0 
+                    theta: theta,
+                    phi: phi,
+                    radius: radius, 
+                    speed: 0.02 + Math.random() * 0.05,
+                    verticalSway: Math.random() * Math.PI * 2,
+                    originY: radius * Math.cos(phi) // Guardar Y original
                 };
-                universeGroup.add(sprite); floatingTexts.push(sprite);
+                
+                // Evitar que colisionen con el suelo
+                if(sprite.userData.originY < 1.0) {
+                    sprite.userData.originY = 1.0 + Math.random() * 5.0;
+                }
+
+                universeGroup.add(sprite); 
+                floatingTexts.push(sprite);
             });
         }
 
-        function crearPilarsDeLlum() {
-            const pillarsGroup = new THREE.Group();
-            const pillarGeo = new THREE.CylinderGeometry(0.5, 1.2, 30, 32, 1, true);
-            pillarGeo.translate(0, 15, 0); 
+        // --- SISTEMAS CENTRALES DEL CORAZÓN ---
 
+        function crearCorazonTetradimensional() {
+            universeGroup.add(mainHeartGroup);
+            
+            // Extrusión Compleja
+            const heartShape = new THREE.Shape(); const x = 0, y = 0;
+            heartShape.moveTo( x + 5, y + 5 ); heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y ); heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7, x - 6, y + 7 ); heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 ); heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 ); heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y ); heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
+            const extrudeSettings = { depth: 4.0, bevelEnabled: true, bevelSegments: 32, steps: 16, bevelSize: 3.0, bevelThickness: 3.0 };
+            const geometry = new THREE.ExtrudeGeometry( heartShape, extrudeSettings ); 
+            geometry.computeBoundingBox(); geometry.translate( -5, -10, -2.0 ); geometry.scale(0.03, 0.03, 0.03); geometry.rotateZ(Math.PI); 
+            geometry.computeBoundingBox(); const center = new THREE.Vector3(); geometry.boundingBox.getCenter(center); geometry.translate(-center.x, -center.y, -center.z);
+
+            // Shaders de Refracción Cuántica (Avanzados)
+            heartUniforms = { uTime: { value: 0.0 } };
+            const outerMat = new THREE.ShaderMaterial({
+                uniforms: heartUniforms,
+                vertexShader: `
+                    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime; 
+                    void main() { 
+                        vUv = uv; vNormal = normalize(normalMatrix * normal); vec3 pos = position; 
+                        // Micro-vibraciones paramétricas
+                        float wave = sin(pos.x * 25.0 + uTime * 4.0) * 0.008 + cos(pos.y * 25.0 + uTime * 3.0) * 0.008; 
+                        pos += normal * wave; 
+                        vPosition = (modelMatrix * vec4(pos, 1.0)).xyz; 
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); 
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; 
+                    void main() { 
+                        vec3 color1 = vec3(1.0, 0.0, 0.3); // Carmesí 
+                        vec3 color2 = vec3(0.4, 0.0, 1.0); // Violeta 
+                        float mixValue = sin(vPosition.y * 15.0 + uTime * 2.5) * 0.5 + 0.5; 
+                        vec3 color = mix(color1, color2, mixValue); 
+                        vec3 viewDir = normalize(cameraPosition - vPosition); 
+                        float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0); 
+                        float fresnelPow = pow(fresnel, 2.0); 
+                        float pulse = pow(abs(sin(uTime * 1.5)), 10.0) + pow(abs(sin(uTime * 1.5 + 0.35)), 10.0) * 0.6; 
+                        color += vec3(1.0, 0.8, 1.0) * fresnelPow * 2.5; 
+                        color += vec3(1.0, 0.2, 0.6) * pulse * 2.0; 
+                        
+                        // Rayos internos de luz (Volumetric Fake)
+                        float rays = pow(fract(sin(dot(vNormal.xy+uTime*0.1, vec2(12.98,78.23))) * 43758.54), 10.0);
+                        color += vec3(1.0) * rays * pulse;
+
+                        gl_FragColor = vec4(color, 0.8 + fresnelPow * 0.2); 
+                    }
+                `,
+                transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
+            });
+            const outerMesh = new THREE.Mesh(geometry, outerMat); mainHeartGroup.add(outerMesh);
+
+            const innerGeo = geometry.clone(); innerGeo.scale(0.8, 0.8, 0.8); innerCoreUniforms = { uTime: { value: 0 } };
+            const innerMat = new THREE.ShaderMaterial({ 
+                uniforms: innerCoreUniforms, 
+                vertexShader: `varying vec3 vPos; void main() { vPos=position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, 
+                fragmentShader: `uniform float uTime; varying vec3 vPos; void main() { float pulse = sin(vPos.y * 40.0 - uTime * 12.0) * 0.5 + 0.5; vec3 coreColor = mix(vec3(1.0, 0.9, 0.0), vec3(1.0, 0.0, 0.0), pulse); gl_FragColor = vec4(coreColor, 1.0); }` 
+            });
+            const innerMesh = new THREE.Mesh(innerGeo, innerMat); mainHeartGroup.add(innerMesh);
+
+            const wireGeo = geometry.clone(); wireGeo.scale(1.08, 1.08, 1.08); wireframeUniforms = { uTime: { value: 0 } };
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending });
+            const wireMesh = new THREE.Mesh(wireGeo, wireMat); mainHeartGroup.add(wireMesh);
+        }
+
+        // HALOS SAGRADOS (DIBUJADOS A MANO EN CANVAS 2D)
+        function crearHalosSagradosProcedurales() {
+            sacredHalosGroup = new THREE.Group();
+            
+            function generarTexturaHalo(radi, colorPrincipal, incluirRunas, grosor) {
+                const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 2048; const ctx = canvas.getContext('2d');
+                const cx = 1024, cy = 1024; 
+                ctx.strokeStyle = colorPrincipal; ctx.lineWidth = grosor; ctx.shadowColor = colorPrincipal; ctx.shadowBlur = 30;
+                
+                // Anillo exterior triple
+                ctx.beginPath(); ctx.arc(cx, cy, radi, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(cx, cy, radi - 15, 0, Math.PI * 2); ctx.lineWidth = 1; ctx.stroke();
+                ctx.beginPath(); ctx.arc(cx, cy, radi + 15, 0, Math.PI * 2); ctx.stroke();
+
+                // Geometría compleja interna (Estrella de múltiples puntas)
+                ctx.lineWidth = grosor * 0.5;
+                const puntas = 48;
+                for(let i=0; i<puntas; i++) {
+                    const angle1 = (i/puntas) * Math.PI * 2;
+                    const angle2 = ((i+3)%puntas/puntas) * Math.PI * 2;
+                    ctx.beginPath(); 
+                    ctx.moveTo(cx + Math.cos(angle1)*radi*0.95, cy + Math.sin(angle1)*radi*0.95); 
+                    ctx.lineTo(cx + Math.cos(angle2)*radi*0.85, cy + Math.sin(angle2)*radi*0.85); 
+                    ctx.stroke();
+                }
+
+                if(incluirRunas) {
+                    ctx.font = "bold 35px Arial"; ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    const mantras = "∞ AMOR ∞ VERDAD ∞ LUZ ∞ VIDA ∞ PAZ ∞ ALMA ∞ ETERNIDAD ∞ DESTINO ".repeat(3).split(" ");
+                    for(let i=0; i<mantras.length; i++) {
+                        const angle = (i/mantras.length) * Math.PI * 2; 
+                        const px = cx + Math.cos(angle) * (radi * 0.75); 
+                        const py = cy + Math.sin(angle) * (radi * 0.75);
+                        ctx.save(); ctx.translate(px, py); ctx.rotate(angle + Math.PI/2); ctx.fillText(mantras[i], 0, 0); ctx.restore();
+                    }
+                }
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            const mat1 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(900, '#ff1493', true, 6), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const mat2 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(800, '#00ffff', false, 4), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const mat3 = new THREE.MeshBasicMaterial({ map: generarTexturaHalo(950, '#ffd700', true, 8), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            
+            const planeGeo = new THREE.PlaneGeometry(4, 4);
+            const halo1 = new THREE.Mesh(planeGeo, mat1); const halo2 = new THREE.Mesh(planeGeo, mat2); const halo3 = new THREE.Mesh(planeGeo, mat3);
+            
+            halo1.rotation.x = Math.PI / 2; halo2.rotation.y = Math.PI / 2; halo3.rotation.x = Math.PI / 4; halo3.rotation.y = Math.PI / 4;
+            sacredHalosGroup.add(halo1, halo2, halo3); mainHeartGroup.add(sacredHalosGroup); 
+        }
+
+        // ESFERA ARMILAR 360 GIGANTE (Envolviendo al jugador)
+        function crearEsferaArmilarCelestial() {
+            armillarySphereGroup = new THREE.Group();
+            function generarTexturaRuna(color) {
+                const canvas = document.createElement('canvas'); canvas.width = 4096; canvas.height = 128; const ctx = canvas.getContext('2d');
+                ctx.fillStyle = color; ctx.font = "bold 70px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.shadowColor = color; ctx.shadowBlur = 30;
+                const texto = "✦ CONEXIÓN ✦ CÓSMICA ✦ ALMAS ✦ GEMELAS ✦ ".repeat(8);
+                ctx.fillText(texto, 2048, 64);
+                // Borde brillante
+                ctx.strokeStyle = "#ffffff"; ctx.lineWidth=2; ctx.strokeRect(0, 10, 4096, 108);
+                const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(8, 1);
+                return tex;
+            }
+
+            const rad = 35; // 35 Metros de radio
+            const matOr = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#ffd700'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const matCian = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#00ffff'), transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            const matMagenta = new THREE.MeshBasicMaterial({ map: generarTexturaRuna('#ff1493'), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+
+            const r1 = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 1.5, 128, 1, true), matOr);
+            const r2 = new THREE.Mesh(new THREE.CylinderGeometry(rad+1, rad+1, 0.8, 128, 1, true), matCian);
+            const r3 = new THREE.Mesh(new THREE.CylinderGeometry(rad-1, rad-1, 2.0, 128, 1, true), matMagenta);
+
+            r1.rotation.x = Math.PI / 2; r2.rotation.y = Math.PI / 4; r2.rotation.x = Math.PI / 4; r3.rotation.y = -Math.PI / 4; r3.rotation.x = Math.PI / 3;
+            armillarySphereGroup.add(r1, r2, r3); universeGroup.add(armillarySphereGroup); 
+        }
+
+        // LOTO DE CRISTAL
+        function crearLotoDeCristall() {
+            crystalLotusGroup = new THREE.Group();
+            const glassMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0.0 } },
+                vertexShader: `varying vec3 vNormal; varying vec3 vViewPosition; void main() { vNormal = normalize(normalMatrix * normal); vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); vViewPosition = -mvPosition.xyz; gl_Position = projectionMatrix * mvPosition; }`,
+                fragmentShader: `
+                    uniform float uTime; varying vec3 vNormal; varying vec3 vViewPosition;
+                    void main() {
+                        vec3 normal = normalize(vNormal); vec3 viewDir = normalize(vViewPosition);
+                        float fresnel = dot(viewDir, normal); fresnel = clamp(1.0 - fresnel, 0.0, 1.0);
+                        vec3 color = vec3(0.0);
+                        color.r = sin(fresnel * 12.0 + uTime*1.2) * 0.5 + 0.5; color.g = sin(fresnel * 18.0 + uTime * 1.8) * 0.5 + 0.5; color.b = sin(fresnel * 24.0 + uTime * 2.4) * 0.5 + 0.5;
+                        color *= pow(fresnel, 1.5) * 2.5; color += vec3(1.0, 1.0, 1.0) * pow(fresnel, 6.0) * 2.0; 
+                        gl_FragColor = vec4(color, fresnel * 0.9);
+                    }
+                `,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false
+            });
+
+            for(let i=0; i<16; i++) { // 16 Pétalos base
+                const petalGeo = new THREE.PlaneGeometry(1.0, 2.0, 16, 16); const pos = petalGeo.attributes.position;
+                for(let j=0; j<pos.count; j++) { const x = pos.getX(j); const y = pos.getY(j); pos.setZ(j, (x*x + y*y) * -0.6); } // Más curvos
+                petalGeo.computeVertexNormals(); petalGeo.translate(0, 1.0, 0); 
+                const petal = new THREE.Mesh(petalGeo, glassMat); petal.rotation.y = (i / 16) * Math.PI * 2; petal.rotation.x = Math.PI / 3; 
+                petal.userData = { phase: i }; crystalLotusGroup.add(petal);
+            }
+            crystalLotusGroup.position.y = -0.8; mainHeartGroup.add(crystalLotusGroup);
+        }
+
+        // ALES DE LUZ
+        function crearAlesCelestialsMagnificas() {
+            const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 2048; const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,2048,2048); ctx.globalCompositeOperation = "lighter";
+            for(let i=0; i<150; i++) { 
+                ctx.beginPath(); ctx.moveTo(0, 1024); 
+                const cp1x = 500 + Math.random() * 500; const cp1y = 200 + Math.random() * 800; 
+                const cp2x = 1000 + Math.random() * 600; const cp2y = Math.random() * 1600; 
+                const endX = 1500 + Math.random() * 548; const endY = Math.random() * 2048; 
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY); 
+                const r = 200 + Math.random() * 55; const g = 100 + Math.random() * 155; const b = 255; 
+                ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 + Math.random()*0.3})`; ctx.lineWidth = 2 + Math.random() * 12; ctx.shadowColor = `rgba(255, 255, 255, 1.0)`; ctx.shadowBlur = 15; ctx.stroke(); 
+            }
+            const wingTex = new THREE.CanvasTexture(canvas); const wingMat = new THREE.MeshBasicMaterial({ map: wingTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
+            wingL = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), wingMat); wingL.geometry.translate(3, 0, 0); wingL.position.set(0, 0, -0.4); wingR = new THREE.Mesh(wingL.geometry, wingMat); wingR.rotation.y = Math.PI; wingR.position.set(0, 0, -0.4); mainHeartGroup.add(wingL); mainHeartGroup.add(wingR);
+        }
+
+        // EL HILO ROJO MATEMÁTICO
+        function crearHiloRojoCuantico() {
+            redThreadCurve = new THREE.QuadraticBezierCurve3( new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,0) );
+            const numPoints = 150; const threadGeo = new THREE.BufferGeometry(); const positions = new Float32Array(numPoints * 3); threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            // Shader para el hilo brillante pulsante
+            const threadMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: {value: 0} },
+                vertexShader: `varying float vRatio; void main() { vRatio = float(gl_VertexID) / 150.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying float vRatio; void main() { float glow = sin(vRatio * 50.0 - uTime * 10.0) * 0.5 + 0.5; vec3 col = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 0.5, 0.5), glow); gl_FragColor = vec4(col, 0.8 + glow*0.2); }`,
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            
+            redThreadLine = new THREE.Line(threadGeo, threadMat); universeGroup.add(redThreadLine);
+
+            const pulseGeo = new THREE.SphereGeometry(0.12, 32, 32); const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending });
+            threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
+            const auraGeo = new THREE.SphereGeometry(0.3, 32, 32); const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending });
+            threadPulse.add(new THREE.Mesh(auraGeo, auraMat)); universeGroup.add(threadPulse);
+        }
+
+        // --- SISTEMAS DE 360 GRADOS (EL MUNDO) ---
+
+        function crearSolMandalaLoto() {
+            const floorGeo = new THREE.PlaneGeometry(150, 150, 128, 128); // Masivo
+            lotusUniforms = { uTime: { value: 0.0 } };
+            const floorMat = new THREE.ShaderMaterial({
+                uniforms: lotusUniforms,
+                vertexShader: `varying vec2 vUv; uniform float uTime; void main() { vUv = uv; vec3 pos = position; float dist = distance(uv, vec2(0.5)); pos.z += sin(dist * 100.0 - uTime * 8.0) * 0.05 * smoothstep(0.5, 0.0, dist); gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; void main() { vec2 uv = vUv * 2.0 - 1.0; float r = length(uv); float a = atan(uv.y, uv.x); float f = cos(a * 24.0); float pulse = sin(uTime * 3.0) * 0.02 + 0.98; float shape = smoothstep(0.5 * pulse, 0.51 * pulse, r + f * 0.05) - smoothstep(0.51 * pulse, 0.53 * pulse, r + f * 0.05); float ring1 = smoothstep(0.2, 0.205, r) - smoothstep(0.205, 0.21, r); float ring2 = smoothstep(0.4, 0.405, r) - smoothstep(0.405, 0.41, r); float ring3 = smoothstep(0.6, 0.605, r) - smoothstep(0.605, 0.61, r); float geom = ring1 + ring2 + ring3; float ripple = sin(r * 100.0 - uTime * 10.0) * 0.5 + 0.5; vec3 colorLotus = vec3(1.0, 0.1, 0.6); vec3 colorGeom = vec3(0.0, 1.0, 0.8); vec3 colorBase = vec3(0.01, 0.0, 0.05); vec3 color = colorBase; color += colorLotus * shape * 4.0; color += colorGeom * geom * 3.0; color += vec3(1.0, 0.9, 0.0) * ripple * geom * 5.0; float fade = smoothstep(1.0, 0.4, r); float alpha = clamp((shape + geom + ripple*0.2) * fade, 0.0, 1.0); gl_FragColor = vec4(color, alpha * 0.9); }`,
+                transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            lotusMandalaFloor = new THREE.Mesh(floorGeo, floorMat); lotusMandalaFloor.rotation.x = -Math.PI / 2; lotusMandalaFloor.position.y = -1.5; universeGroup.add(lotusMandalaFloor);
+        }
+
+        function crearVoltaNebulosaMulticapa() {
+            const domeGeo = new THREE.SphereGeometry(150, 128, 128); domeGeo.scale(-1, 1, 1); 
+            nebulaUniforms = { uTime: { value: 0 } };
+            const domeMat = new THREE.ShaderMaterial({
+                uniforms: nebulaUniforms,
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; float random(vec2 p) { return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453123); } float noise(vec2 p) { vec2 i = floor(p); vec2 f = fract(p); float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0)); vec2 u = f * f * (3.0 - 2.0 * f); return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y; } float fbm(vec2 p) { float value = 0.0; float amp = 0.5; for(int i=0; i<6; i++) { value += amp * noise(p); p *= 2.0; amp *= 0.5; } return value; } void main() { vec2 uv = vUv * 6.0; float n = fbm(uv + vec2(uTime*0.015, uTime*0.01)); float n2 = fbm(uv*3.0 - vec2(uTime*0.02, 0.0)); float nebula = (n + n2*0.5) * 0.9; vec3 bg = vec3(0.005, 0.0, 0.02); vec3 col1 = vec3(0.5, 0.0, 0.7); vec3 col2 = vec3(1.0, 0.1, 0.4); vec3 col3 = vec3(0.0, 0.9, 1.0); vec3 color = bg; color = mix(color, col1, smoothstep(0.1, 0.7, nebula)); color = mix(color, col2, smoothstep(0.3, 0.9, nebula)); color = mix(color, col3, smoothstep(0.5, 1.2, nebula)); float star = random(vUv * 800.0); if(star > 0.999) color += vec3(2.0); float alpha = clamp(nebula * 0.7 + 0.1, 0.0, 1.0); gl_FragColor = vec4(color, alpha); }`,
+                transparent: true, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false
+            });
+            nebulaDome = new THREE.Mesh(domeGeo, domeMat); universeGroup.add(nebulaDome);
+        }
+
+        function crearPilaresDeLuzInfinitos() {
+            const pillarsGroup = new THREE.Group();
+            const pillarGeo = new THREE.CylinderGeometry(0.8, 2.0, 100, 32, 1, true); pillarGeo.translate(0, 50, 0); 
             const pillarMat = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0 } },
                 vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `
-                    uniform float uTime; varying vec2 vUv;
-                    void main() {
-                        float alpha = pow(1.0 - vUv.y, 2.0); 
-                        float pulse = sin(vUv.y * 15.0 - uTime * 3.0) * 0.5 + 0.5;
-                        float ray = sin(vUv.x * 30.0 + uTime) * 0.5 + 0.5; 
-                        
-                        vec3 color = mix(vec3(1.0, 0.2, 0.8), vec3(0.0, 0.8, 1.0), pulse * ray);
-                        gl_FragColor = vec4(color, alpha * (pulse * 0.5 + 0.5) * 0.4); 
-                    }
-                `,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; void main() { float alpha = pow(1.0 - vUv.y, 3.0); float pulse = sin(vUv.y * 20.0 - uTime * 4.0) * 0.5 + 0.5; float ray = sin(vUv.x * 40.0 + uTime*1.5) * 0.5 + 0.5; vec3 color = mix(vec3(1.0, 0.0, 0.5), vec3(0.0, 1.0, 1.0), pulse * ray); gl_FragColor = vec4(color, alpha * (pulse * 0.6 + 0.4) * 0.6); }`,
                 transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
             });
 
-            for(let i = 0; i < 12; i++) {
-                const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-                const angle = (i / 12) * Math.PI * 2;
-                const radius = 9; 
-                pillar.position.set(Math.cos(angle) * radius, -2, Math.sin(angle) * radius);
-                pillarsGroup.add(pillar);
-            }
+            // Tres anillos masivos
+            const rings = [ {count: 12, rad: 18}, {count: 24, rad: 35}, {count: 36, rad: 60} ];
+            rings.forEach(ring => {
+                for(let i = 0; i < ring.count; i++) {
+                    const pillar = new THREE.Mesh(pillarGeo, pillarMat); const angle = (i / ring.count) * Math.PI * 2;
+                    pillar.position.set(Math.cos(angle) * ring.rad, -2, Math.sin(angle) * ring.rad); pillarsGroup.add(pillar);
+                }
+            });
             universeGroup.add(pillarsGroup);
         }
 
-        // --- ELEMENTS DE DETALL (Llums, Estrelles, Anells) ---
-        function crearLlanternesRomanitques() {
-            const lanternGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.4, 16);
-            const lanternMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffa500, emissive: 0xff4500, emissiveIntensity: 0.5, transparent: true, opacity: 0.85, side: THREE.DoubleSide 
-            });
-            const glowGeo = new THREE.SphereGeometry(0.1, 16, 16); 
-            const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            
-            for(let i=0; i<80; i++) {
-                const lanternGroup = new THREE.Group();
-                lanternGroup.add(new THREE.Mesh(lanternGeo, lanternMat)); 
-                lanternGroup.add(new THREE.Mesh(glowGeo, glowMat));
-                
-                const stringGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.2);
-                stringGeo.translate(0, -0.3, 0);
-                const stringMat = new THREE.MeshBasicMaterial({color: 0x555555});
-                lanternGroup.add(new THREE.Mesh(stringGeo, stringMat));
+        // --- SISTEMAS DE PARTÍCULAS Y DINÁMICOS ---
 
+        function crearTornadoDePetalosMasivo() {
+            const petalGeo = new THREE.PlaneGeometry(0.1, 0.15, 6, 6);
+            const pos = petalGeo.attributes.position.array;
+            for(let i=0; i<pos.length; i+=3) {
+                const x = pos[i]; const y = pos[i+1];
+                pos[i+2] = Math.sin(x*10)*0.03 + Math.cos(y*10)*0.02; // Pliegue orgánico
+            }
+            petalGeo.computeVertexNormals();
+            
+            const petalMat = new THREE.MeshStandardMaterial({ color: 0xff1493, emissive: 0x550022, side: THREE.DoubleSide, transparent: true, opacity: 0.9, roughness: 0.4 });
+
+            for(let i=0; i<1500; i++) { // MASIVO
+                const petal = new THREE.Mesh(petalGeo, petalMat);
+                petal.userData = {
+                    angle: Math.random() * Math.PI * 2,
+                    radiusOffset: Math.random() * 5.0,
+                    baseRadius: 1.0 + Math.random() * 25.0, // Envuelve toda el área visible
+                    height: -2 + Math.random() * 30,
+                    rotSpeed: 0.01 + Math.random() * 0.04, 
+                    riseSpeed: 0.015 + Math.random() * 0.05,
+                    tumbleX: Math.random() * 0.1,
+                    tumbleY: Math.random() * 0.1,
+                    tumbleZ: Math.random() * 0.1
+                };
+                universeGroup.add(petal); petals.push(petal);
+            }
+        }
+
+        function crearGalaxiaParticulas10K() {
+            const particleCount = 15000; // SUPER MASIVO
+            const posArray = new Float32Array(particleCount * 3);
+            const colorsArray = new Float32Array(particleCount * 3);
+            const sizesArray = new Float32Array(particleCount);
+
+            for(let i = 0; i < particleCount; i++) {
+                const radius = 3 + Math.random() * 80; 
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                
+                posArray[i*3] = radius * Math.sin(phi) * Math.cos(theta); 
+                posArray[i*3+1] = radius * Math.sin(phi) * Math.sin(theta); 
+                posArray[i*3+2] = radius * Math.cos(phi);
+                
+                const rand = Math.random();
+                let r=1, g=0.2, b=0.8; 
+                if(rand>0.4){r=0; g=0.9; b=1;} 
+                if(rand>0.7){r=1; g=0.9; b=0;} 
+                if(rand>0.9){r=1; g=1; b=1;} 
+                colorsArray[i*3]=r; colorsArray[i*3+1]=g; colorsArray[i*3+2]=b;
+                
+                sizesArray[i] = Math.random() * 2.0 + 0.5; // Variedad en tamaños
+            }
+            
+            const geo = new THREE.BufferGeometry(); 
+            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); 
+            geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+            geo.setAttribute('size', new THREE.BufferAttribute(sizesArray, 1));
+            
+            // Custom Shader Material para tener tamaños individuales por partícula
+            const mat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } },
+                vertexShader: `
+                    attribute float size; varying vec3 vColor; varying vec2 vUv; uniform float uTime;
+                    void main() {
+                        vColor = color; vUv = uv;
+                        vec3 pos = position;
+                        // Pequeño temblor
+                        pos.x += sin(uTime * 2.0 + pos.y) * 0.05;
+                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                        gl_PointSize = size * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    void main() {
+                        // Circulo suave
+                        vec2 xy = gl_PointCoord.xy - vec2(0.5);
+                        float ll = length(xy);
+                        if(ll > 0.5) discard;
+                        float alpha = (0.5 - ll) * 2.0;
+                        gl_FragColor = vec4(vColor, alpha * 0.8);
+                    }
+                `,
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true
+            });
+            
+            particleSystem = new THREE.Points(geo, mat); 
+            universeGroup.add(particleSystem);
+        }
+
+        function crearSistemaBoidsIA() {
+            const boidGeo = new THREE.ConeGeometry(0.04, 0.2, 4); boidGeo.rotateX(Math.PI / 2); 
+            const boidMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            const wingGeo = new THREE.PlaneGeometry(0.2, 0.1); const wingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+            
+            const numBoids = 300; // Incremento masivo para el enjambre
+            for (let i = 0; i < numBoids; i++) {
+                const boidGroup = new THREE.Group(); const body = new THREE.Mesh(boidGeo, boidMat);
+                const w1 = new THREE.Mesh(wingGeo, wingMat); w1.position.set(0.1, 0, 0); w1.geometry.translate(0.1, 0, 0);
+                const w2 = new THREE.Mesh(wingGeo, wingMat); w2.position.set(-0.1, 0, 0); w2.geometry.translate(-0.1, 0, 0);
+                boidGroup.add(body, w1, w2);
+                
+                // Colorización aleatoria del boid
+                if(Math.random() > 0.5) w1.material = w2.material = new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+
+                boidGroup.userData = { 
+                    velocity: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize().multiplyScalar(0.08), 
+                    acceleration: new THREE.Vector3(), maxSpeed: 0.06 + Math.random() * 0.04, maxForce: 0.003, wings: [w1, w2], wingPhase: Math.random() * Math.PI * 2, wingSpeed: 18 + Math.random() * 12 
+                };
+                boidGroup.position.set((Math.random()-0.5)*40, 2 + Math.random()*20, (Math.random()-0.5)*40);
+                boids.push(boidGroup); universeGroup.add(boidGroup);
+            }
+        }
+
+        function actualitzarBoids(delta, time) {
+            const targetPos = mainHeartGroup.position.clone(); 
+            // Optimización: No calcular N^2 si no están cerca (Spatial Hash simplificado mentalmente: solo chequeamos un sub-sample aleatorio por frame para 300 entidades)
+            for (let i = 0; i < boids.length; i++) {
+                const boid = boids[i]; const data = boid.userData;
+                let sep = new THREE.Vector3(), ali = new THREE.Vector3(), coh = new THREE.Vector3(); let count = 0;
+                
+                // Chequear solo 20 boids aleatorios por frame para rendimiento
+                for (let k = 0; k < 20; k++) {
+                    const j = Math.floor(Math.random() * boids.length);
+                    if (i === j) continue; const other = boids[j]; const dist = boid.position.distanceTo(other.position);
+                    if (dist > 0 && dist < 2.0) { 
+                        sep.add(boid.position.clone().sub(other.position).normalize().divideScalar(dist));
+                        ali.add(other.userData.velocity); coh.add(other.position); count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    sep.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 1.5);
+                    ali.divideScalar(count).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
+                    coh.divideScalar(count).sub(boid.position).normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce);
+                }
+                
+                const attractor = targetPos.clone().sub(boid.position); const distToTarget = attractor.length();
+                attractor.normalize().multiplyScalar(data.maxSpeed).sub(data.velocity).clampLength(0, data.maxForce * 2.0);
+                const vortex = new THREE.Vector3(boid.position.z - targetPos.z, 0, -(boid.position.x - targetPos.x)).normalize().multiplyScalar(data.maxForce * 3.0);
+                
+                sep.multiplyScalar(2.5); ali.multiplyScalar(1.0); coh.multiplyScalar(1.0); attractor.multiplyScalar(0.8);
+                data.acceleration.add(sep).add(ali).add(coh).add(attractor).add(vortex);
+                
+                // Muros invisibles
+                if(boid.position.y < 0.0) data.acceleration.y += 0.02;
+                if(distToTarget > 35) data.acceleration.add(targetPos.clone().sub(boid.position).normalize().multiplyScalar(0.02));
+
+                data.velocity.add(data.acceleration); data.velocity.clampLength(0, data.maxSpeed); boid.position.add(data.velocity); data.acceleration.set(0,0,0); 
+                if(data.velocity.lengthSq() > 0.0001) { const lookTarget = boid.position.clone().add(data.velocity); boid.lookAt(lookTarget); }
+                
+                data.wingPhase += data.wingSpeed * delta; const flap = Math.sin(data.wingPhase);
+                data.wings[0].rotation.z = flap; data.wings[1].rotation.z = -flap;
+            }
+        }
+
+        function crearConstelacionesCosmicas() {
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4, linewidth: 3, blending: THREE.AdditiveBlending });
+            const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+            const starGeo = new THREE.SphereGeometry(0.15, 16, 16);
+
+            function dibuixarForma(puntsMathFunc, numPunts, radi, offsetX, offsetY, offsetZ) {
+                const punts = []; const estels = new THREE.Group();
+                for(let i=0; i<numPunts; i++) {
+                    const t = i / (numPunts - 1); const coord = puntsMathFunc(t); coord.multiplyScalar(radi); coord.set(coord.x + offsetX, coord.y + offsetY, coord.z + offsetZ); punts.push(coord);
+                    const estrella = new THREE.Mesh(starGeo, starMaterial); estrella.position.copy(coord);
+                    const glowGeo = new THREE.SphereGeometry(0.5, 16, 16); const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+                    estrella.add(new THREE.Mesh(glowGeo, glowMat)); estels.add(estrella);
+                }
+                const liniaGeo = new THREE.BufferGeometry().setFromPoints(punts); const linia = new THREE.Line(liniaGeo, lineMaterial);
+                const grupTotal = new THREE.Group(); grupTotal.add(linia, estels); universeGroup.add(grupTotal); constellationLines.push({ group: grupTotal, phase: Math.random()*Math.PI*2 });
+            }
+
+            // Múltiples constelaciones rodeando en 360
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); return new THREE.Vector3(x, y, 0); }, 80, 25, -30, 40, -50);
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = 16 * Math.pow(Math.sin(angle), 3); const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle); return new THREE.Vector3(x/16, y/16, 0); }, 100, 30, 40, 35, -60);
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = 16 * Math.pow(Math.sin(angle), 3); const y = 13 * Math.cos(angle) - 5 * Math.cos(2*angle) - 2 * Math.cos(3*angle) - Math.cos(4*angle); return new THREE.Vector3(x/16, y/16, 0); }, 100, 35, 0, 50, 60); // Detrás
+            dibuixarForma((t) => { const angle = t * Math.PI * 2; const x = (Math.cos(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); const y = (Math.cos(angle) * Math.sin(angle)) / (1 + Math.sin(angle)*Math.sin(angle)); return new THREE.Vector3(x, y, 0); }, 80, 20, -50, 20, 20); // Izquierda
+        }
+
+        function crearLlanternasRomanticas360() {
+            const lanternGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.6, 16);
+            const lanternMat = new THREE.MeshStandardMaterial({ color: 0xffa500, emissive: 0xff4500, emissiveIntensity: 0.6, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+            const glowGeo = new THREE.SphereGeometry(0.15, 16, 16); const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            for(let i=0; i<250; i++) { // MASIVO
+                const lanternGroup = new THREE.Group(); lanternGroup.add(new THREE.Mesh(lanternGeo, lanternMat)); lanternGroup.add(new THREE.Mesh(glowGeo, glowMat));
+                const stringGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.3); stringGeo.translate(0, -0.45, 0); lanternGroup.add(new THREE.Mesh(stringGeo, new THREE.MeshBasicMaterial({color: 0x555555})));
+                
                 lanternGroup.userData = { 
                     angle: Math.random() * Math.PI * 2, 
-                    radius: 3.0 + Math.random() * 15, 
-                    speed: 0.01 + Math.random() * 0.03, 
+                    radius: 3.0 + Math.random() * 40, 
+                    speed: 0.01 + Math.random() * 0.04, 
                     swaySpeed: 0.5 + Math.random() * 1.5, 
                     swayOffset: Math.random() * Math.PI * 2, 
-                    yOffset: -3 + Math.random() * 25 
+                    yOffset: -5 + Math.random() * 50 
                 };
                 universeGroup.add(lanternGroup); lanterns.push(lanternGroup);
             }
         }
 
-        function crearAnellsDaurats() {
-            goldenRingsGroup = new THREE.Group();
-            const ringGeo = new THREE.TorusGeometry(1.6, 0.03, 64, 150);
-            const ringMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffdf00, metalness: 1.0, roughness: 0.2, emissive: 0xffcc00, emissiveIntensity: 0.4, side: THREE.DoubleSide 
+        function crearDiamantesLevitantes() {
+            const diamondGeo = new THREE.OctahedronGeometry(0.25, 0);
+            const diamondMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, metalness: 1.0, roughness: 0.0, emissive: 0x0055ff, emissiveIntensity: 0.6, transparent: true, opacity: 0.95 });
+            for(let i=0; i<100; i++) { 
+                const diamond = new THREE.Mesh(diamondGeo, diamondMat);
+                diamond.userData = { angle: Math.random() * Math.PI * 2, radius: 4 + Math.random() * 25, yOffset: -2 + Math.random() * 20, speed: 0.03 + Math.random() * 0.08, spinX: Math.random() * 0.08, spinY: Math.random() * 0.08 };
+                universeGroup.add(diamond); floatingDiamonds.push(diamond);
+            }
+        }
+
+        function crearSistemaCometesEstelas() {
+            const cometCount = 30; // MASIVO
+            const cometGeo = new THREE.SphereGeometry(0.1, 16, 16); const cometMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            for(let i=0; i<cometCount; i++) {
+                const cometGroup = new THREE.Group(); const head = new THREE.Mesh(cometGeo, cometMat); cometGroup.add(head);
+                const tailPoints = 30; const tailGeo = new THREE.BufferGeometry(); const tailPos = new Float32Array(tailPoints * 3); tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
+                const tailMat = new THREE.LineBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0.8, linewidth: 2, blending: THREE.AdditiveBlending });
+                const tail = new THREE.Line(tailGeo, tailMat); cometGroup.add(tail);
+                cometGroup.userData = { start: new THREE.Vector3(), end: new THREE.Vector3(), progress: 0, speed: 0.005 + Math.random() * 0.015, history: Array(tailPoints).fill(new THREE.Vector3()), tailGeo: tailGeo };
+                resetComet(cometGroup); universeGroup.add(cometGroup); comets.push(cometGroup);
+            }
+        }
+
+        function resetComet(comet) {
+            const startX = (Math.random() - 0.5) * 100; const startZ = (Math.random() - 0.5) * 100;
+            comet.userData.start.set(startX, 30 + Math.random() * 20, startZ);
+            comet.userData.end.set(startX + (Math.random() - 0.5) * 80, -20, startZ + (Math.random() - 0.5) * 80);
+            comet.userData.progress = 0; comet.userData.history = Array(30).fill(comet.userData.start.clone());
+        }
+
+        function updateComets() {
+            comets.forEach(comet => {
+                const data = comet.userData; data.progress += data.speed;
+                const currentPos = new THREE.Vector3().lerpVectors(data.start, data.end, data.progress);
+                comet.children[0].position.copy(currentPos); 
+                data.history.unshift(currentPos.clone()); data.history.pop();
+                const posAttr = data.tailGeo.attributes.position;
+                for(let i=0; i<30; i++) { posAttr.setXYZ(i, data.history[i].x, data.history[i].y, data.history[i].z); }
+                posAttr.needsUpdate = true;
+                if(data.progress >= 1.0) resetComet(comet);
             });
+        }
+
+        function crearAnillosDelDestino() {
+            goldenRingsGroup = new THREE.Group();
+            const ringGeo = new THREE.TorusGeometry(2.0, 0.04, 64, 200);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0xffdf00, metalness: 1.0, roughness: 0.1, emissive: 0xffaa00, emissiveIntensity: 0.5, side: THREE.DoubleSide });
             
             const ring1 = new THREE.Mesh(ringGeo, ringMat); ring1.rotation.x = Math.PI / 2; goldenRingsGroup.add(ring1);
             const ring2 = new THREE.Mesh(ringGeo, ringMat); ring2.rotation.y = Math.PI / 3; ring2.rotation.x = Math.PI / 4; goldenRingsGroup.add(ring2);
             const ring3 = new THREE.Mesh(ringGeo, ringMat); ring3.rotation.y = -Math.PI / 3; ring3.rotation.x = -Math.PI / 4; goldenRingsGroup.add(ring3);
+            const ring4 = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.02, 64, 200), ringMat); ring4.rotation.x = Math.PI/2; goldenRingsGroup.add(ring4); // Aro exterior
             
             mainHeartGroup.add(goldenRingsGroup); 
         }
 
-        function crearParticulesGalaxia() {
-            const particleCount = 4000;
-            const posArray = new Float32Array(particleCount * 3);
-            const colorsArray = new Float32Array(particleCount * 3);
-            for(let i = 0; i < particleCount * 3; i+=3) {
-                const radius = 2 + Math.random() * 20; 
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos((Math.random() * 2) - 1);
-                posArray[i] = radius * Math.sin(phi) * Math.cos(theta); posArray[i+1] = radius * Math.sin(phi) * Math.sin(theta); posArray[i+2] = radius * Math.cos(phi);
-                
-                const rand = Math.random();
-                let r=1, g=0.2, b=0.8; 
-                if(rand>0.5){r=0; g=0.8; b=1;} 
-                if(rand>0.8){r=1; g=0.9; b=0;} 
-                if(rand>0.95){r=1; g=1; b=1;} 
-                colorsArray[i]=r; colorsArray[i+1]=g; colorsArray[i+2]=b;
-            }
-            const geo = new THREE.BufferGeometry(); 
-            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3)); 
-            geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
-            
-            const canvas = document.createElement('canvas'); canvas.width=32; canvas.height=32; const ctx=canvas.getContext('2d');
-            const gr = ctx.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'white'); gr.addColorStop(0.2,'rgba(255,255,255,0.8)'); gr.addColorStop(1,'transparent'); 
-            ctx.fillStyle=gr; ctx.fillRect(0,0,32,32);
-            
-            const mat = new THREE.PointsMaterial({ 
-                size: 0.08, vertexColors: true, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, map: new THREE.CanvasTexture(canvas) 
-            });
-            particleSystem = new THREE.Points(geo, mat); 
-            universeGroup.add(particleSystem);
+        function crearOndasDeChoqueColosales() {
+            flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); scene.add(flashSphere);
+            shockwaveRing = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 64, 256), new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); shockwaveRing.rotation.x = Math.PI / 2; scene.add(shockwaveRing);
+            shockwaveDisk = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.8, 128), new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false})); shockwaveDisk.rotation.x = Math.PI / 2; scene.add(shockwaveDisk);
         }
 
-        function crearOnaDeXoc() {
-            flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); 
-            scene.add(flashSphere);
-            
-            shockwaveRing = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 32, 200), new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
-            shockwaveRing.rotation.x = Math.PI / 2; 
-            scene.add(shockwaveRing);
-
-            shockwaveDisk = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.5, 64), new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false}));
-            shockwaveDisk.rotation.x = Math.PI / 2;
-            scene.add(shockwaveDisk);
+        function crearJardiDeRosesParametriques() {
+            const numRoses = 200; // MUCHAS ROSAS
+            const roseMaterial = new THREE.MeshStandardMaterial({ color: 0xff0040, emissive: 0x330011, roughness: 0.3, metalness: 0.2, side: THREE.DoubleSide });
+            for(let r=0; r<numRoses; r++) {
+                const roseGroup = new THREE.Group(); const petalsCount = 18 + Math.floor(Math.random() * 12); const scale = 0.06 + Math.random() * 0.05;
+                for(let p=0; p<petalsCount; p++) {
+                    const t = p / petalsCount; const angle = t * Math.PI * 12.0; const petalGeo = new THREE.PlaneGeometry(1, 1, 6, 6); const pos = petalGeo.attributes.position;
+                    for(let i=0; i<pos.count; i++) { const x = pos.getX(i); const y = pos.getY(i); const z = (x*x + y*y) * -0.5 + Math.sin(y*3.0)*0.3; pos.setZ(i, z); }
+                    petalGeo.computeVertexNormals(); const petalMesh = new THREE.Mesh(petalGeo, roseMaterial); const radius = t * 0.9; petalMesh.position.set(Math.cos(angle)*radius, t*0.6, Math.sin(angle)*radius); petalMesh.rotation.y = -angle + Math.PI/2; petalMesh.rotation.x = Math.PI/4 + (1.0-t)*Math.PI/3; roseGroup.add(petalMesh);
+                }
+                roseGroup.scale.set(scale, scale, scale); const gardenRadius = 2.0 + Math.random() * 30; const gardenAngle = Math.random() * Math.PI * 2;
+                roseGroup.position.set( Math.cos(gardenAngle) * gardenRadius, -1.45, Math.sin(gardenAngle) * gardenRadius );
+                roseGroup.rotation.y = Math.random() * Math.PI * 2; roseGroup.rotation.z = (Math.random() - 0.5) * 0.3; roseGroup.rotation.x = (Math.random() - 0.5) * 0.3;
+                roseGroup.userData = { targetScale: scale, currentScale: 0.001, growthSpeed: 0.015 + Math.random() * 0.02, delay: Math.random() * 4.0 };
+                roseGroup.scale.set(0.001, 0.001, 0.001); parametricRoses.push(roseGroup); universeGroup.add(roseGroup);
+            }
         }
 
         // ============================================================================
-        // 5. LÒGICA D'INTERACCIÓ I COL·LISIONS
+        // 7. LÓGICA DE INTERACCIÓN FÍSICA (Raycasting)
         // ============================================================================
         
         function triggerPortalCrossing(currentCamPos) {
             if (hasCrossedPortal) return; 
             hasCrossedPortal = true;
             isFlashing = true; 
-            
             universeGroup.visible = true;
             userCenter.copy(currentCamPos);
             universeGroup.position.copy(userCenter);
@@ -1412,7 +1449,6 @@
                 shockwaveRing.position.copy(currentCamPos); shockwaveRing.scale.setScalar(1); shockwaveRing.material.opacity = 1; shockwaveRing.visible = true;
                 shockwaveDisk.position.copy(currentCamPos); shockwaveDisk.scale.setScalar(1); shockwaveDisk.material.opacity = 0.8; shockwaveDisk.visible = true;
             }
-
             portalGroup.visible = false; pathGroup.visible = false;
             document.getElementById('instruction-layer').style.opacity = '0';
             setTimeout(()=> document.getElementById('instruction-layer').style.display = 'none', 2000);
@@ -1420,102 +1456,63 @@
 
         function setupInteraction() {
             const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
-            
             function onTouch(event) {
                 if(!isStarted) return;
-                
                 if(!hasCrossedPortal) {
-                    if (renderer.xr.isPresenting) {
-                        const tempCamPos = new THREE.Vector3(); camera.getWorldPosition(tempCamPos); triggerPortalCrossing(tempCamPos);
-                    } else { isAutoWalking = true; }
+                    if (renderer.xr.isPresenting) { const tempCamPos = new THREE.Vector3(); camera.getWorldPosition(tempCamPos); triggerPortalCrossing(tempCamPos); } else { isAutoWalking = true; }
                     return;
                 }
-                
-                let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0);
-                let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
+                let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0); let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
                 mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
-                
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects([lotusMandalaFloor, mainHeartGroup.children[0]]);
                 
-                // Explosiò d'estrelles interactive en qualsevol lloc
-                crearMicroEstrellasTouch(raycaster.ray.origin, raycaster.ray.direction);
+                crearOndaMagicaTacto(raycaster.ray.origin, raycaster.ray.direction);
 
                 if (intersects.length > 0) {
                     const hit = intersects[0];
-                    if(hit.object.parent === mainHeartGroup) {
-                        crearExplosioAmor(mainHeartGroup.position);
-                        boids.forEach(b => {
-                            b.userData.velocity.add(b.position.clone().sub(mainHeartGroup.position).normalize().multiplyScalar(0.2));
-                        });
-                    } else {
-                        crearOnaAigua(hit.point);
+                    if(hit.object.parent === mainHeartGroup) { 
+                        crearExplosionNuclearAmor(mainHeartGroup.position); 
+                        boids.forEach(b => { b.userData.velocity.add(b.position.clone().sub(mainHeartGroup.position).normalize().multiplyScalar(0.4)); }); 
+                    } else { 
+                        crearOnaAigua(hit.point); 
                     }
                 }
             }
             window.addEventListener('click', onTouch); window.addEventListener('touchstart', onTouch);
         }
 
-        function crearMicroEstrellasTouch(origin, dir) {
-            // Un efecte màgic addicional on toquis
-            const distance = 2.0; 
-            const pos = origin.clone().add(dir.multiplyScalar(distance));
-            
-            const starGeo = new THREE.SphereGeometry(0.02, 8, 8);
-            const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending });
-            
-            for(let i=0; i<15; i++) {
-                const s = new THREE.Mesh(starGeo, starMat);
-                s.position.copy(pos);
-                s.userData = {
-                    vel: new THREE.Vector3((Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05, (Math.random()-0.5)*0.05)
-                };
-                universeGroup.add(s);
-                
+        function crearOndaMagicaTacto(origin, dir) {
+            const distance = 3.0; const pos = origin.clone().add(dir.multiplyScalar(distance));
+            const starGeo = new THREE.SphereGeometry(0.03, 8, 8); const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending });
+            for(let i=0; i<30; i++) {
+                const s = new THREE.Mesh(starGeo, starMat); s.position.copy(pos); s.userData = { vel: new THREE.Vector3((Math.random()-0.5)*0.1, (Math.random()-0.5)*0.1, (Math.random()-0.5)*0.1) }; universeGroup.add(s);
                 let life = 1.0;
-                function animStar() {
-                    life -= 0.02;
-                    s.position.add(s.userData.vel);
-                    s.material.opacity = life;
-                    if(life > 0) requestAnimationFrame(animStar);
-                    else { universeGroup.remove(s); s.geometry.dispose(); s.material.dispose(); }
-                }
+                function animStar() { life -= 0.02; s.position.add(s.userData.vel); s.material.opacity = life; if(life > 0) requestAnimationFrame(animStar); else { universeGroup.remove(s); s.geometry.dispose(); s.material.dispose(); } }
                 animStar();
             }
         }
 
-        function crearExplosioAmor(posicio) {
-            const ring = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 2), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, blending: THREE.AdditiveBlending }));
+        function crearExplosionNuclearAmor(posicio) {
+            const ring = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 3), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, blending: THREE.AdditiveBlending }));
             ring.position.copy(posicio); universeGroup.add(ring);
-            
             let scale = 1;
-            function anim() {
-                scale += 0.3; ring.scale.set(scale, scale, scale); ring.material.opacity -= 0.04;
-                ring.rotation.y += 0.1; ring.rotation.x += 0.1;
-                if (ring.material.opacity > 0) requestAnimationFrame(anim); else { universeGroup.remove(ring); ring.geometry.dispose(); ring.material.dispose(); }
-            }
+            function anim() { scale += 0.4; ring.scale.set(scale, scale, scale); ring.material.opacity -= 0.03; ring.rotation.y += 0.15; ring.rotation.x += 0.15; if (ring.material.opacity > 0) requestAnimationFrame(anim); else { universeGroup.remove(ring); ring.geometry.dispose(); ring.material.dispose(); } }
             anim();
         }
 
         function crearOnaAigua(posicioLocal) {
-            const wave = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.3, 32), new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide }));
-            wave.position.copy(posicioLocal);
-            wave.position.y += 0.05; 
-            wave.rotation.x = -Math.PI/2;
-            universeGroup.add(wave);
-            
+            const wave = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.5, 64), new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+            wave.position.copy(posicioLocal); wave.position.y += 0.05; wave.rotation.x = -Math.PI/2; universeGroup.add(wave);
             let s = 1;
-            function anim() {
-                s += 0.5; wave.scale.set(s, s, s); wave.material.opacity -= 0.02;
-                if(wave.material.opacity > 0) requestAnimationFrame(anim); else { universeGroup.remove(wave); wave.geometry.dispose(); wave.material.dispose(); }
-            }
+            function anim() { s += 0.8; wave.scale.set(s, s, s); wave.material.opacity -= 0.02; if(wave.material.opacity > 0) requestAnimationFrame(anim); else { universeGroup.remove(wave); wave.geometry.dispose(); wave.material.dispose(); } }
             anim();
         }
 
         function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 
         // ============================================================================
-        // 6. BUCLE D'ANIMACIÓ PRINCIPAL I ACTUALITZACIÓ DE SISTEMES
+        // 8. BUCLE PRINCIPAL DE ANIMACIÓN Y RENDER (EL CORAZÓN DEL MOTOR)
         // ============================================================================
         function render() {
             if(!isStarted) { renderer.render(scene, camera); return; }
@@ -1525,13 +1522,13 @@
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
 
-            // --- FASE 1: PRE-PORTAL ---
+            // --- FASE 1: PORTAL ---
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1; 
 
                 if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 5.0; 
+                    camera.position.z -= delta * 6.0; // Velocidad inmersiva
                     camera.getWorldPosition(camPos); 
                 }
                 
@@ -1539,31 +1536,34 @@
                     triggerPortalCrossing(camPos);
                 }
             } 
-            // --- FASE 2: EL SANTUARI ---
+            // --- FASE 2: SANTUARIO 360 EXTREMO ---
             else {
                 universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.08);
-
-                userCenter.lerp(camPos, 0.01); 
-
+                userCenter.lerp(camPos, 0.005); // Suave seguimiento para explorar
+                
+                // --- Actualización de Entornos Estáticos/Shaders ---
                 lotusUniforms.uTime.value = elapsedTime;
-                if (nebulaDome) {
-                    nebulaUniforms.uTime.value = elapsedTime;
-                    nebulaDome.rotation.y += 0.0003; 
-                    nebulaDome.rotation.x = Math.sin(elapsedTime * 0.1) * 0.05;
+                if (nebulaDome) { nebulaUniforms.uTime.value = elapsedTime; nebulaDome.rotation.y += 0.0002; nebulaDome.rotation.x = Math.sin(elapsedTime * 0.05) * 0.05; }
+                if (armillarySphereGroup) {
+                    armillarySphereGroup.children[0].rotation.y += 0.001;
+                    armillarySphereGroup.children[1].rotation.z -= 0.0015;
+                    armillarySphereGroup.children[2].rotation.x += 0.0012;
+                }
+                if (terrainUniforms) {
+                    terrainUniforms.uTime.value = elapsedTime;
                 }
 
-                // --- CINEMÀTICA DEL COR PRINCIPAL ---
-                const forwardVec = new THREE.Vector3(0, 0, -2.5);
+                // --- CINEMÁTICA DEL CORAZÓN (Centro del Todo) ---
+                const forwardVec = new THREE.Vector3(0, 0, -3.0); // A 3 metros al frente
                 forwardVec.applyQuaternion(camera.quaternion); 
-                
                 const targetPosGlobal = camPos.clone().add(forwardVec);
                 const targetPosLocal = universeGroup.worldToLocal(targetPosGlobal);
                 
-                mainHeartGroup.position.lerp(targetPosLocal, 0.03);
+                mainHeartGroup.position.lerp(targetPosLocal, 0.04);
                 const localCamPos = universeGroup.worldToLocal(camPos.clone());
                 mainHeartGroup.lookAt(localCamPos); 
 
-                // --- SHADERS DEL COR I ALES ---
+                // Latidos del Corazón Matemáticos
                 heartUniforms.uTime.value = elapsedTime;
                 innerCoreUniforms.uTime.value = elapsedTime;
                 wireframeUniforms.uTime.value = elapsedTime;
@@ -1571,218 +1571,123 @@
                 const tHeart = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(tHeart), 12.0);
                 const beat2 = Math.pow(Math.sin(tHeart + 0.35), 12.0) * 0.4; 
-                const scaleOffset = 1.0 + (beat1 + beat2) * 0.18;
+                const scaleOffset = 1.0 + (beat1 + beat2) * 0.22; // Latido más fuerte
                 
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
-                mainHeartGroup.children[1].scale.setScalar(0.85 + beat1 * 0.1);
-                mainHeartGroup.children[2].rotation.y += 0.01;
-                mainHeartGroup.children[2].rotation.z += 0.005;
+                mainHeartGroup.children[1].scale.setScalar(0.85 + beat1 * 0.15);
+                mainHeartGroup.children[2].rotation.y += 0.02;
+                mainHeartGroup.children[2].rotation.z += 0.01;
 
-                // Animació d'Halos de Geometria Sagrada
                 if (sacredHalosGroup) {
-                    sacredHalosGroup.children[0].rotation.z -= 0.002;
-                    sacredHalosGroup.children[1].rotation.z += 0.003;
-                    sacredHalosGroup.children[2].rotation.z -= 0.001;
-                    
-                    const haloPulse = 1.0 + beat1 * 0.1;
-                    sacredHalosGroup.scale.set(haloPulse, haloPulse, haloPulse);
+                    sacredHalosGroup.children[0].rotation.z -= 0.003; sacredHalosGroup.children[1].rotation.z += 0.004; sacredHalosGroup.children[2].rotation.z -= 0.002;
+                    const haloPulse = 1.0 + beat1 * 0.15; sacredHalosGroup.scale.set(haloPulse, haloPulse, haloPulse);
                 }
 
-                // Animació Loto de Cristall
                 if (crystalLotusGroup) {
                     crystalLotusGroup.rotation.y += 0.005;
                     crystalLotusGroup.children.forEach(petal => {
                         petal.material.uniforms.uTime.value = elapsedTime;
-                        petal.rotation.x = Math.PI/4 + Math.sin(elapsedTime * 2.0 + petal.userData.phase) * 0.1;
+                        petal.rotation.x = Math.PI/4 + Math.sin(elapsedTime * 2.0 + petal.userData.phase) * 0.15;
                     });
                 }
 
                 if (wingL && wingR) {
-                    const flap = Math.sin(elapsedTime * 2.0) * 0.5 + beat1 * 0.3;
-                    wingL.rotation.y = flap + 0.2;
-                    wingR.rotation.y = -flap - 0.2;
-                    wingL.rotation.z = Math.sin(elapsedTime) * 0.1;
-                    wingR.rotation.z = -Math.sin(elapsedTime) * 0.1;
+                    const flap = Math.sin(elapsedTime * 2.0) * 0.6 + beat1 * 0.4;
+                    wingL.rotation.y = flap + 0.2; wingR.rotation.y = -flap - 0.2;
+                    wingL.rotation.z = Math.sin(elapsedTime) * 0.1; wingR.rotation.z = -Math.sin(elapsedTime) * 0.1;
                 }
                 
                 if (goldenRingsGroup) {
-                    goldenRingsGroup.rotation.y += 0.015; 
-                    goldenRingsGroup.rotation.z += 0.008;
-                    goldenRingsGroup.children[0].rotation.x += 0.01; 
-                    goldenRingsGroup.children[1].rotation.y -= 0.012;
-                    goldenRingsGroup.children[2].rotation.z += 0.015;
+                    goldenRingsGroup.rotation.y += 0.02; goldenRingsGroup.rotation.z += 0.01;
+                    goldenRingsGroup.children[0].rotation.x += 0.015; goldenRingsGroup.children[1].rotation.y -= 0.018; goldenRingsGroup.children[2].rotation.z += 0.02;
+                    if(goldenRingsGroup.children[3]) goldenRingsGroup.children[3].rotation.y -= 0.02;
                 }
 
-                // --- ACTUALITZACIÓ DEL FIL VERMELL DEL DESTÍ ---
+                // --- FÍSICAS DEL HILO ROJO ---
                 if (redThreadLine) {
-                    const chestPosLocal = new THREE.Vector3(0, -0.4, -0.2);
-                    chestPosLocal.applyQuaternion(camera.quaternion);
-                    chestPosLocal.add(localCamPos); 
-                    
-                    const endLocal = mainHeartGroup.position.clone();
-                    const dist = chestPosLocal.distanceTo(endLocal);
-                    
-                    const midLocal = chestPosLocal.clone().lerp(endLocal, 0.5);
-                    midLocal.y -= dist * 0.4; 
-                    midLocal.x += Math.sin(elapsedTime) * dist * 0.2; 
-                    
-                    redThreadCurve.v0.copy(chestPosLocal);
-                    redThreadCurve.v1.copy(midLocal);
-                    redThreadCurve.v2.copy(endLocal);
-                    
-                    const pts = redThreadCurve.getPoints(99);
-                    const posAttr = redThreadLine.geometry.attributes.position;
-                    for(let i=0; i<100; i++) {
-                        posAttr.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
-                    }
-                    posAttr.needsUpdate = true;
-
-                    const tPulse = (elapsedTime * 0.5) % 1.0;
-                    threadPulse.position.copy(redThreadCurve.getPoint(tPulse));
-                    const pulseScale = 1.0 + Math.sin(elapsedTime * 20.0) * 0.5;
-                    threadPulse.scale.set(pulseScale, pulseScale, pulseScale);
+                    const chestPosLocal = new THREE.Vector3(0, -0.4, -0.2); chestPosLocal.applyQuaternion(camera.quaternion); chestPosLocal.add(localCamPos); 
+                    const endLocal = mainHeartGroup.position.clone(); const dist = chestPosLocal.distanceTo(endLocal);
+                    const midLocal = chestPosLocal.clone().lerp(endLocal, 0.5); midLocal.y -= dist * 0.5; midLocal.x += Math.sin(elapsedTime * 2.0) * dist * 0.3; 
+                    redThreadCurve.v0.copy(chestPosLocal); redThreadCurve.v1.copy(midLocal); redThreadCurve.v2.copy(endLocal);
+                    const pts = redThreadCurve.getPoints(149); const posAttr = redThreadLine.geometry.attributes.position;
+                    for(let i=0; i<150; i++) { posAttr.setXYZ(i, pts[i].x, pts[i].y, pts[i].z); } posAttr.needsUpdate = true;
+                    redThreadLine.material.uniforms.uTime.value = elapsedTime;
+                    const tPulse = (elapsedTime * 0.6) % 1.0; threadPulse.position.copy(redThreadCurve.getPoint(tPulse));
+                    const pulseScale = 1.0 + Math.sin(elapsedTime * 30.0) * 0.5; threadPulse.scale.set(pulseScale, pulseScale, pulseScale);
                 }
 
-                // --- BOIDS I ROSES ---
+                // --- ACTUALIZACIÓN DE MÚLTIPLES ENTIDADES ---
                 actualitzarBoids(delta, elapsedTime);
+                updateComets();
+
+                particleSystem.material.uniforms.uTime.value = elapsedTime;
+                particleSystem.rotation.y = elapsedTime * 0.005; 
 
                 parametricRoses.forEach(rose => {
                     const data = rose.userData;
                     if(elapsedTime > data.delay) { 
                         data.currentScale += (data.targetScale - data.currentScale) * data.growthSpeed;
-                        rose.scale.setScalar(data.currentScale);
-                        rose.rotation.z = Math.sin(elapsedTime * 2.0 + data.delay) * 0.05;
+                        rose.scale.setScalar(data.currentScale); rose.rotation.z = Math.sin(elapsedTime * 2.0 + data.delay) * 0.05;
                     }
                 });
 
                 constellationLines.forEach(c => {
                     c.phase += delta;
                     c.group.children[1].children.forEach((star, index) => {
-                        const starPulse = Math.sin(c.phase * 3.0 + index) * 0.5 + 0.5;
-                        star.scale.setScalar(0.5 + starPulse);
-                        if(star.children[0]) {
-                            star.children[0].material.opacity = starPulse * 0.4;
-                        }
+                        const starPulse = Math.sin(c.phase * 4.0 + index) * 0.5 + 0.5; star.scale.setScalar(0.5 + starPulse);
+                        if(star.children[0]) { star.children[0].material.opacity = starPulse * 0.5; }
                     });
                     c.group.rotation.y = Math.sin(c.phase * 0.1) * 0.1;
                 });
 
-                // --- ACTUALITZACIÓ COMETES AMB ESTELA ---
-                updateComets();
-
-                // --- ACTUALITZACIÓ DIAMANTS FLOTANTS ---
                 floatingDiamonds.forEach(diamond => {
-                    const d = diamond.userData;
-                    d.angle += d.speed * delta;
-                    d.yOffset += Math.sin(elapsedTime * d.speed) * 0.02;
-                    diamond.position.set(
-                        userCenter.x + Math.cos(d.angle) * d.radius,
-                        userCenter.y + d.yOffset,
-                        userCenter.z + Math.sin(d.angle) * d.radius
-                    );
-                    diamond.rotation.x += d.spinX;
-                    diamond.rotation.y += d.spinY;
+                    const d = diamond.userData; d.angle += d.speed * delta; d.yOffset += Math.sin(elapsedTime * d.speed) * 0.03;
+                    diamond.position.set( localCamPos.x + Math.cos(d.angle) * d.radius, localCamPos.y + d.yOffset, localCamPos.z + Math.sin(d.angle) * d.radius );
+                    diamond.rotation.x += d.spinX; diamond.rotation.y += d.spinY;
                 });
 
-                // --- ELEMENTS EN ÒRBITA LENTA ---
                 lanterns.forEach((lantern) => {
-                    const data = lantern.userData; 
-                    data.yOffset += data.speed; 
-                    
-                    lantern.position.x = Math.cos(data.angle) * data.radius + Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.8;
-                    lantern.position.z = Math.sin(data.angle) * data.radius + Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.8;
+                    const data = lantern.userData; data.yOffset += data.speed; 
+                    lantern.position.x = localCamPos.x + Math.cos(data.angle) * data.radius + Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 1.5;
+                    lantern.position.z = localCamPos.z + Math.sin(data.angle) * data.radius + Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 1.5;
                     lantern.position.y = data.yOffset;
-                    
-                    if(data.yOffset > 25) { 
-                        data.yOffset = -5; 
-                        data.angle = Math.random() * Math.PI * 2; 
-                        data.radius = 3.0 + Math.random() * 15; 
-                    }
-                    
-                    lantern.rotation.z = Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.15;
-                    lantern.rotation.x = Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.15;
-                    
-                    if(lantern.children[1]) {
-                        lantern.children[1].scale.setScalar(1.0 + Math.sin(elapsedTime * 5.0 + data.swayOffset) * 0.2);
-                    }
+                    if(data.yOffset > 40) { data.yOffset = -5; data.angle = Math.random() * Math.PI * 2; data.radius = 3.0 + Math.random() * 40; }
+                    lantern.rotation.z = Math.sin(elapsedTime * data.swaySpeed + data.swayOffset) * 0.2; lantern.rotation.x = Math.cos(elapsedTime * data.swaySpeed + data.swayOffset) * 0.2;
+                    if(lantern.children[1]) { lantern.children[1].scale.setScalar(1.0 + Math.sin(elapsedTime * 6.0 + data.swayOffset) * 0.3); }
                 });
 
-                // Textos rotatius súper lents i romàntics
+                // TEXTOS 360 GRADOS (ESFÉRICOS Y REACTIVOS)
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData; 
-                    data.angle += 0.001 * data.speed; 
+                    data.theta += 0.001 * data.speed; 
                     
-                    sprite.position.x = Math.cos(data.angle) * data.radius; 
-                    sprite.position.z = Math.sin(data.angle) * data.radius;
-                    sprite.position.y = data.yOffset + Math.sin(elapsedTime * 1.5 + data.angle) * 0.5;
+                    sprite.position.x = localCamPos.x + data.radius * Math.sin(data.phi) * Math.cos(data.theta); 
+                    sprite.position.y = localCamPos.y + data.radius * Math.cos(data.phi) + Math.sin(elapsedTime * 1.5 + data.verticalSway) * 0.8;
+                    sprite.position.z = localCamPos.z + data.radius * Math.sin(data.phi) * Math.sin(data.theta);
                     
-                    // Efecte d'aparició i desaparició (Fade in/out) basat en la posició
                     const viewDot = localCamPos.clone().sub(sprite.position).normalize().dot(localCamPos.clone().normalize());
-                    sprite.material.opacity = smoothstep(-0.5, 0.5, viewDot);
-
+                    sprite.material.opacity = smoothstep(-0.8, 0.8, viewDot);
                     sprite.lookAt(localCamPos);
                 });
-                
-                // Funció de suport matemàtic per al shader
-                function smoothstep(edge0, edge1, x) {
-                    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-                    return t * t * (3 - 2 * t);
-                }
 
-                fireflies.forEach((fly) => {
-                    const data = fly.userData; 
-                    data.angle += 0.01 * data.speed;
-                    const cx = localCamPos.x; const cz = localCamPos.z;
-                    fly.position.x = cx + Math.cos(data.angle) * data.radius; 
-                    fly.position.z = cz + Math.sin(data.angle) * data.radius;
-                    fly.position.y = localCamPos.y + data.yOffset + Math.sin(elapsedTime * 3.0 + data.phase) * 0.5;
-                });
-
-                particleSystem.rotation.y = elapsedTime * 0.02; 
-
-                // --- TORNAT DE PÈTALS ---
+                // TORNADO DE PÉTALOS EXTREMO 360
                 petals.forEach(petal => {
-                    const data = petal.userData;
-                    data.angle += data.rotSpeed; 
-                    data.height += data.riseSpeed; 
-                    
-                    const currentRadius = data.baseRadius + data.radiusOffset * Math.sin(data.height * 0.2);
-                    
+                    const data = petal.userData; data.angle += data.rotSpeed; data.height += data.riseSpeed; 
+                    const currentRadius = data.baseRadius + data.radiusOffset * Math.sin(data.height * 0.15);
                     petal.position.x = localCamPos.x + Math.cos(data.angle) * currentRadius;
                     petal.position.z = localCamPos.z + Math.sin(data.angle) * currentRadius;
                     petal.position.y = data.height;
-                    
-                    petal.rotation.x += data.tumbleX; 
-                    petal.rotation.y += data.tumbleY;
-                    
-                    if (data.height > 12) { 
-                        data.height = -2; 
-                        data.baseRadius = 1.0 + Math.random() * 4.0; 
-                    } 
+                    petal.rotation.x += data.tumbleX; petal.rotation.y += data.tumbleY; petal.rotation.z += data.tumbleZ;
+                    if (data.height > 30) { data.height = -2; data.baseRadius = 1.0 + Math.random() * 25.0; } 
                 });
             }
 
-            // --- ANIMACIÓ CRÍTICA: ONA DE XOC MASSIVA ---
+            // --- DESTRUCCIÓN NUCLEAR DE LUZ ---
             if (isFlashing) {
-                if(flashSphere) { 
-                    flashSphere.scale.addScalar(1.2); 
-                    flashSphere.material.opacity -= 0.018; 
-                }
-                if(shockwaveRing) { 
-                    shockwaveRing.scale.addScalar(1.8); 
-                    shockwaveRing.material.opacity -= 0.015; 
-                }
-                if(shockwaveDisk) {
-                    shockwaveDisk.scale.addScalar(2.5);
-                    shockwaveDisk.material.opacity -= 0.02;
-                }
-                
-                if (flashSphere && flashSphere.material.opacity <= 0) { 
-                    isFlashing = false; 
-                    flashSphere.visible = false; 
-                    shockwaveRing.visible = false; 
-                    shockwaveDisk.visible = false;
-                }
+                if(flashSphere) { flashSphere.scale.addScalar(1.5); flashSphere.material.opacity -= 0.015; }
+                if(shockwaveRing) { shockwaveRing.scale.addScalar(2.5); shockwaveRing.material.opacity -= 0.012; }
+                if(shockwaveDisk) { shockwaveDisk.scale.addScalar(3.5); shockwaveDisk.material.opacity -= 0.018; }
+                if (flashSphere && flashSphere.material.opacity <= 0) { isFlashing = false; flashSphere.visible = false; shockwaveRing.visible = false; shockwaveDisk.visible = false; }
             }
 
             renderer.render(scene, camera);
