@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Santuario del Amor Infinito - AR 360 Extremo</title>
+    
+    <!-- Mapa de Importación para resolver dependencias de módulos de Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
     <style>
         /* ============================================================================
            1. ESTILOS DE INTERFAZ DE USUARIO Y HUD (CASCADING STYLE SHEETS)
@@ -205,6 +216,7 @@
          ============================================================================ -->
     <div id="ui-layer">
         <script>
+            // Generador de polvo estelar CSS para la pantalla de carga
             for(let i=0; i<150; i++) {
                 const s = document.createElement('div');
                 s.className = 'magic-dust';
@@ -218,6 +230,7 @@
                 s.style.animation = `pulseText ${duration}s infinite alternate ${delay}s, floatText ${duration*2}s infinite ease-in-out ${delay}s`;
                 s.style.boxShadow = `0 0 ${size*3}px rgba(255, 255, 255, 0.8)`;
                 
+                // Colores aleatorios
                 const colors = ['#ff1493', '#00ffff', '#ffd700', '#ffffff'];
                 s.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
                 
@@ -232,9 +245,9 @@
 
     <div id="instruction-layer">
         <h2 class="text-glow instruction-text">
-            ✨ El Portal te atrae... ✨<br>
+            ✨ Atraviesa el Portal de Luz ✨<br>
             <span style="font-size:1.2rem; color:#b0e0e6; font-weight:normal; letter-spacing:2px; display:block; margin-top:15px;">
-                (Espera a ser absorbido o toca la pantalla para cruzar a la velocidad de la luz)
+                (Camina hacia adelante en AR o toca la pantalla para sumergirte en el cosmos 360º)
             </span>
         </h2>
     </div>
@@ -246,8 +259,10 @@
          3. LÓGICA PRINCIPAL (THREE.JS MODULES Y MOTORES PERSONALIZADOS)
          ============================================================================ -->
     <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
-        import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/webxr/ARButton.js';
+        // Se utilizan las rutas configuradas en el importmap
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+        import { DeviceOrientationControls } from 'three/addons/controls/DeviceOrientationControls.js';
 
         // ============================================================================
         // 3.1. MOTORES MATEMÁTICOS Y FÍSICOS PERSONALIZADOS
@@ -390,6 +405,9 @@
         // 3.3. VARIABLES GLOBALES DEL ECOSISTEMA
         // ============================================================================
         let scene, camera, renderer;
+        let cameraGroup = new THREE.Group(); 
+        let gyroControls; 
+        
         let clock = new THREE.Clock();
         let isStarted = false;
         let hasCrossedPortal = false;
@@ -431,6 +449,9 @@
         let crystalLotusGroup; 
         let proceduralTerrainMesh;
 
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
         // ============================================================================
         // 4. FUNCIÓN DE INICIALIZACIÓN MAESTRA
         // ============================================================================
@@ -441,14 +462,15 @@
             scene.fog = new THREE.FogExp2(0x010008, 0.015); 
 
             camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.01, 1000); 
-            camera.position.set(0, 0, 3); 
+            cameraGroup.add(camera);
+            scene.add(cameraGroup);
+            cameraGroup.position.set(0, 0, 3); 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
             renderer.xr.enabled = true; 
             
-            // ¡CRUCIAL PARA LA CÁMARA DE FONDO! Asegura que el canvas sea transparente
             renderer.setClearColor(0x000000, 0); 
             
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -477,22 +499,22 @@
         // 4.1 SUBSISTEMAS DE INICIALIZACIÓN
         // ============================================================================
         function setupLighting() {
-            const ambientLight = new THREE.AmbientLight(0xffb6c1, 0.8);
+            const ambientLight = new THREE.AmbientLight(0xffb6c1, 0.6);
             scene.add(ambientLight);
             
-            const pointLight = new THREE.PointLight(0xff1493, 5, 40);
+            const pointLight = new THREE.PointLight(0xff1493, 3, 40);
             pointLight.position.set(0, 2, 0);
             scene.add(pointLight);
             
-            const blueLight = new THREE.PointLight(0x00ffff, 4, 80);
+            const blueLight = new THREE.PointLight(0x00ffff, 2, 80);
             blueLight.position.set(0, 20, -20);
             universeGroup.add(blueLight);
 
-            const purpleLight = new THREE.PointLight(0x8a2be2, 4, 80);
+            const purpleLight = new THREE.PointLight(0x8a2be2, 2, 80);
             purpleLight.position.set(30, 10, 30);
             universeGroup.add(purpleLight);
             
-            const goldLight = new THREE.PointLight(0xffd700, 4, 80);
+            const goldLight = new THREE.PointLight(0xffd700, 2, 80);
             goldLight.position.set(-30, 10, -30);
             universeGroup.add(goldLight);
         }
@@ -517,7 +539,6 @@
             document.getElementById('start-btn').addEventListener('click', (e) => {
                 e.stopPropagation(); 
                 
-                // --- INICIO DE CÁMARA MANUAL (FALLBACK SI FALLA WEBXR) ---
                 const video = document.getElementById('camera-bg');
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
@@ -527,8 +548,18 @@
                         video.style.transform = 'scaleX(1)'; 
                     })
                     .catch(function(err) {
-                        console.warn("No se pudo acceder a la cámara nativa: ", err);
+                        console.warn("Cámara nativa no disponible: ", err);
                     });
+                }
+
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission().then(permissionState => {
+                        if (permissionState === 'granted') {
+                            gyroControls = new DeviceOrientationControls(camera);
+                        }
+                    }).catch(console.error);
+                } else {
+                    gyroControls = new DeviceOrientationControls(camera);
                 }
                 
                 document.getElementById('ui-layer').style.opacity = '0';
@@ -548,16 +579,15 @@
         // ============================================================================
         function construirMonPortalEntrada() {
             rootGroup.add(portalGroup);
-            // Portal más cerca para no exigir caminar tanto
-            portalGroup.position.set(0, 0, -2.0);
+            portalGroup.position.set(0, 0, -2.5);
             
             const ringGeo = new THREE.TorusGeometry(1.5, 0.08, 64, 200);
-            const ringMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.8 });
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.05, emissive: 0xffa500, emissiveIntensity: 0.5 });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             portalGroup.add(ring);
 
             const innerRingGeo = new THREE.TorusGeometry(1.35, 0.03, 32, 150);
-            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
             portalGroup.add(new THREE.Mesh(innerRingGeo, innerRingMat));
 
             const veilGeo = new THREE.PlaneGeometry(2.9, 2.9, 128, 128);
@@ -613,8 +643,6 @@
             crearOndasDeChoqueColosales();
             crearEsferaArmilarCelestial();
         }
-
-        // --- SISTEMAS GEOMÉTRICOS Y FÍSICOS MASIVOS ---
 
         function crearTerrenoMontanoso360() {
             terrainGroup = new THREE.Group();
@@ -712,7 +740,7 @@
             const outerMat = new THREE.ShaderMaterial({
                 uniforms: heartUniforms,
                 vertexShader: `varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; uniform float uTime; void main() { vUv = uv; vNormal = normalize(normalMatrix * normal); vec3 pos = position; float wave = sin(pos.x * 25.0 + uTime * 4.0) * 0.008 + cos(pos.y * 25.0 + uTime * 3.0) * 0.008; pos += normal * wave; vPosition = (modelMatrix * vec4(pos, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0); }`,
-                fragmentShader: `uniform float uTime; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; void main() { vec3 color1 = vec3(1.0, 0.0, 0.3); vec3 color2 = vec3(0.4, 0.0, 1.0); float mixValue = sin(vPosition.y * 15.0 + uTime * 2.5) * 0.5 + 0.5; vec3 color = mix(color1, color2, mixValue); vec3 viewDir = normalize(cameraPosition - vPosition); float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0); float fresnelPow = pow(fresnel, 2.0); float pulse = pow(abs(sin(uTime * 1.5)), 10.0) + pow(abs(sin(uTime * 1.5 + 0.35)), 10.0) * 0.6; color += vec3(1.0, 0.8, 1.0) * fresnelPow * 2.5; color += vec3(1.0, 0.2, 0.6) * pulse * 2.0; float rays = pow(fract(sin(dot(vNormal.xy+uTime*0.1, vec2(12.98,78.23))) * 43758.54), 10.0); color += vec3(1.0) * rays * pulse; gl_FragColor = vec4(color, 0.8 + fresnelPow * 0.2); }`,
+                fragmentShader: `uniform float uTime; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPosition; void main() { vec3 color1 = vec3(1.0, 0.0, 0.3); vec3 color2 = vec3(0.4, 0.0, 1.0); float mixValue = sin(vPosition.y * 15.0 + uTime * 2.5) * 0.5 + 0.5; vec3 color = mix(color1, color2, mixValue); vec3 viewDir = normalize(cameraPosition - vPosition); float fresnel = clamp(1.0 - dot(viewDir, vNormal), 0.0, 1.0); float fresnelPow = pow(fresnel, 2.0); float pulse = pow(abs(sin(uTime * 1.5)), 10.0) + pow(abs(sin(uTime * 1.5 + 0.35)), 10.0) * 0.6; color += vec3(1.0, 0.8, 1.0) * fresnelPow * 2.5; color += vec3(1.0, 0.2, 0.6) * pulse * 2.0; float rays = pow(fract(sin(dot(vNormal.xy+uTime*0.1, vec2(12.98,78.23))) * 43758.54), 10.0); color += vec3(1.0, 0.5, 0.8) * rays * pulse * 0.2; gl_FragColor = vec4(color, 0.8 + fresnelPow * 0.2); }`,
                 transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
             });
             const outerMesh = new THREE.Mesh(geometry, outerMat); mainHeartGroup.add(outerMesh);
@@ -787,10 +815,10 @@
         }
 
         function crearAlesCelestialsMagnificas() {
-            const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = 2048; const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,2048,2048); ctx.globalCompositeOperation = "lighter";
-            for(let i=0; i<150; i++) { ctx.beginPath(); ctx.moveTo(0, 1024); const cp1x = 500 + Math.random() * 500; const cp1y = 200 + Math.random() * 800; const cp2x = 1000 + Math.random() * 600; const cp2y = Math.random() * 1600; const endX = 1500 + Math.random() * 548; const endY = Math.random() * 2048; ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY); const r = 200 + Math.random() * 55; const g = 100 + Math.random() * 155; const b = 255; ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 + Math.random()*0.3})`; ctx.lineWidth = 2 + Math.random() * 12; ctx.shadowColor = `rgba(255, 255, 255, 1.0)`; ctx.shadowBlur = 15; ctx.stroke(); }
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0,0,1024,1024); ctx.globalCompositeOperation = "lighter";
+            for(let i=0; i<50; i++) { ctx.beginPath(); ctx.moveTo(0, 512); const cp1x = 250 + Math.random() * 250; const cp1y = 100 + Math.random() * 400; const cp2x = 500 + Math.random() * 300; const cp2y = Math.random() * 800; const endX = 750 + Math.random() * 274; const endY = Math.random() * 1024; ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY); const r = 255; const g = 100 + Math.random() * 100; const b = 200 + Math.random() * 55; ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.05 + Math.random()*0.1})`; ctx.lineWidth = 1 + Math.random() * 3; ctx.shadowColor = `rgba(255, 105, 180, 0.5)`; ctx.shadowBlur = 5; ctx.stroke(); }
             const wingTex = new THREE.CanvasTexture(canvas); const wingMat = new THREE.MeshBasicMaterial({ map: wingTex, transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false });
-            wingL = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), wingMat); wingL.geometry.translate(3, 0, 0); wingL.position.set(0, 0, -0.4); wingR = new THREE.Mesh(wingL.geometry, wingMat); wingR.rotation.y = Math.PI; wingR.position.set(0, 0, -0.4); mainHeartGroup.add(wingL); mainHeartGroup.add(wingR);
+            wingL = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 2.5), wingMat); wingL.geometry.translate(1.25, 0, 0); wingL.position.set(0, 0, -0.4); wingR = new THREE.Mesh(wingL.geometry, wingMat); wingR.rotation.y = Math.PI; wingR.position.set(0, 0, -0.4); mainHeartGroup.add(wingL); mainHeartGroup.add(wingR);
         }
 
         function crearHiloRojoCuantico() {
@@ -798,8 +826,8 @@
             const numPoints = 150; const threadGeo = new THREE.BufferGeometry(); const positions = new Float32Array(numPoints * 3); threadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             const threadMat = new THREE.ShaderMaterial({ uniforms: { uTime: {value: 0} }, vertexShader: `varying float vRatio; void main() { vRatio = float(gl_VertexID) / 150.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: `uniform float uTime; varying float vRatio; void main() { float glow = sin(vRatio * 50.0 - uTime * 10.0) * 0.5 + 0.5; vec3 col = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 0.5, 0.5), glow); gl_FragColor = vec4(col, 0.8 + glow*0.2); }`, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
             redThreadLine = new THREE.Line(threadGeo, threadMat); universeGroup.add(redThreadLine);
-            const pulseGeo = new THREE.SphereGeometry(0.12, 32, 32); const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
-            const auraGeo = new THREE.SphereGeometry(0.3, 32, 32); const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }); threadPulse.add(new THREE.Mesh(auraGeo, auraMat)); universeGroup.add(threadPulse);
+            const pulseGeo = new THREE.SphereGeometry(0.04, 16, 16); const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending }); threadPulse = new THREE.Mesh(pulseGeo, pulseMat);
+            const auraGeo = new THREE.SphereGeometry(0.1, 16, 16); const auraMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }); threadPulse.add(new THREE.Mesh(auraGeo, auraMat)); universeGroup.add(threadPulse);
         }
 
         function crearSolMandalaLoto() {
@@ -1016,9 +1044,11 @@
         }
 
         function crearOndasDeChoqueColosales() {
-            flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); scene.add(flashSphere);
-            shockwaveRing = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 64, 256), new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); shockwaveRing.rotation.x = Math.PI / 2; scene.add(shockwaveRing);
-            shockwaveDisk = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.8, 128), new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false})); shockwaveDisk.rotation.x = Math.PI / 2; scene.add(shockwaveDisk);
+            flashSphere = new THREE.Mesh(new THREE.SphereGeometry(0.1, 64, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide })); scene.add(flashSphere);
+            shockwaveRing = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 64, 256), new THREE.MeshBasicMaterial({ color: 0xff1493, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false })); shockwaveRing.rotation.x = Math.PI / 2; scene.add(shockwaveRing);
+            shockwaveDisk = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.8, 128), new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false})); shockwaveDisk.rotation.x = Math.PI / 2; scene.add(shockwaveDisk);
+            
+            flashSphere.visible = false; shockwaveRing.visible = false; shockwaveDisk.visible = false;
         }
 
         function crearJardiDeRosesParametriques() {
@@ -1040,7 +1070,7 @@
         }
 
         // ============================================================================
-        // 7. LÓGICA DE INTERACCIÓN FÍSICA (Raycasting)
+        // 7. LÓGICA DE INTERACCIÓN FÍSICA (Controles Táctiles y Raycasting)
         // ============================================================================
         
         function triggerPortalCrossing(currentCamPos) {
@@ -1052,9 +1082,9 @@
             universeGroup.position.copy(userCenter);
 
             if(flashSphere && shockwaveRing && shockwaveDisk) {
-                flashSphere.position.copy(currentCamPos); flashSphere.scale.setScalar(1); flashSphere.material.opacity = 1; flashSphere.visible = true;
-                shockwaveRing.position.copy(currentCamPos); shockwaveRing.scale.setScalar(1); shockwaveRing.material.opacity = 1; shockwaveRing.visible = true;
-                shockwaveDisk.position.copy(currentCamPos); shockwaveDisk.scale.setScalar(1); shockwaveDisk.material.opacity = 0.8; shockwaveDisk.visible = true;
+                flashSphere.position.copy(currentCamPos); flashSphere.scale.setScalar(1); flashSphere.material.opacity = 0.5; flashSphere.visible = true;
+                shockwaveRing.position.copy(currentCamPos); shockwaveRing.scale.setScalar(1); shockwaveRing.material.opacity = 0.6; shockwaveRing.visible = true;
+                shockwaveDisk.position.copy(currentCamPos); shockwaveDisk.scale.setScalar(1); shockwaveDisk.material.opacity = 0.5; shockwaveDisk.visible = true;
             }
             portalGroup.visible = false; pathGroup.visible = false;
             document.getElementById('instruction-layer').style.opacity = '0';
@@ -1063,15 +1093,24 @@
 
         function setupInteraction() {
             const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
-            function onTouch(event) {
+            
+            function onTouchStart(event) {
                 if(!isStarted) return;
+                
+                // CRITICAL FIX: Si toca la pantalla y no ha cruzado el portal, forzar absorción
                 if(!hasCrossedPortal) {
                     isAutoWalking = true;
-                    // ABSORCIÓN FORZADA TÁCTIL (El portal vuela hacia el usuario al tocar)
+                    // ABSORCIÓN FORZADA TÁCTIL a la velocidad de la luz
                     portalGroup.position.z = camera.position.z - 0.5;
                     return;
                 }
-                let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0); let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
+
+                isDragging = true;
+                previousMousePosition.x = event.touches ? event.touches[0].clientX : event.clientX;
+                previousMousePosition.y = event.touches ? event.touches[0].clientY : event.clientY;
+
+                let clientX = event.touches ? event.touches[0].clientX : event.clientX; 
+                let clientY = event.touches ? event.touches[0].clientY : event.clientY;
                 mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects([lotusMandalaFloor, mainHeartGroup.children[0]]);
@@ -1088,7 +1127,35 @@
                     }
                 }
             }
-            window.addEventListener('click', onTouch); window.addEventListener('touchstart', onTouch);
+
+            function onTouchMove(event) {
+                if (isDragging && !renderer.xr.isPresenting) {
+                    // Controles táctiles de paneo si el giroscopio falla
+                    let currentX = event.touches ? event.touches[0].clientX : event.clientX;
+                    let currentY = event.touches ? event.touches[0].clientY : event.clientY;
+                    let deltaX = currentX - previousMousePosition.x;
+                    let deltaY = currentY - previousMousePosition.y;
+
+                    // Rotar el GRUPO de la cámara para mirar alrededor
+                    cameraGroup.rotation.y -= deltaX * 0.005;
+                    cameraGroup.rotation.x -= deltaY * 0.005;
+                    
+                    // Limitar rotación vertical
+                    cameraGroup.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraGroup.rotation.x));
+
+                    previousMousePosition = { x: currentX, y: currentY };
+                }
+            }
+
+            function onTouchEnd() { isDragging = false; }
+
+            window.addEventListener('mousedown', onTouchStart); 
+            window.addEventListener('mousemove', onTouchMove);
+            window.addEventListener('mouseup', onTouchEnd);
+            
+            window.addEventListener('touchstart', onTouchStart, {passive: false}); 
+            window.addEventListener('touchmove', onTouchMove, {passive: false});
+            window.addEventListener('touchend', onTouchEnd);
         }
 
         function crearOndaMagicaTacto(origin, dir) {
@@ -1131,6 +1198,11 @@
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
 
+            // Actualizar Controles de Giroscopio si están disponibles
+            if (gyroControls && !renderer.xr.isPresenting) {
+                gyroControls.update();
+            }
+
             // --- FASE 1: PORTAL ---
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
@@ -1141,7 +1213,7 @@
                 pathGroup.position.z += delta * 0.8;
 
                 if (isAutoWalking) {
-                    camera.position.z -= delta * 12.0; // Velocidad de absorción masiva
+                    cameraGroup.position.z -= delta * 12.0; // Mover el grupo de cámara
                     camera.getWorldPosition(camPos); 
                 }
                 
@@ -1155,7 +1227,7 @@
             // --- FASE 2: SANTUARIO 360 EXTREMO ---
             else {
                 universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.08);
-                userCenter.lerp(camPos, 0.005); // Suave seguimiento para explorar
+                userCenter.lerp(camPos, 0.005); 
                 
                 // --- Actualización de Entornos Estáticos/Shaders ---
                 lotusUniforms.uTime.value = elapsedTime;
@@ -1170,7 +1242,7 @@
                 }
 
                 // --- CINEMÁTICA DEL CORAZÓN (Centro del Todo) ---
-                const forwardVec = new THREE.Vector3(0, 0, -3.0); // A 3 metros al frente
+                const forwardVec = new THREE.Vector3(0, 0, -3.0); 
                 forwardVec.applyQuaternion(camera.quaternion); 
                 const targetPosGlobal = camPos.clone().add(forwardVec);
                 const targetPosLocal = universeGroup.worldToLocal(targetPosGlobal);
@@ -1187,7 +1259,7 @@
                 const tHeart = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(tHeart), 12.0);
                 const beat2 = Math.pow(Math.sin(tHeart + 0.35), 12.0) * 0.4; 
-                const scaleOffset = 1.0 + (beat1 + beat2) * 0.22; // Latido más fuerte
+                const scaleOffset = 1.0 + (beat1 + beat2) * 0.22; 
                 
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
                 mainHeartGroup.children[1].scale.setScalar(0.85 + beat1 * 0.15);
@@ -1272,7 +1344,7 @@
                     if(lantern.children[1]) { lantern.children[1].scale.setScalar(1.0 + Math.sin(elapsedTime * 6.0 + data.swayOffset) * 0.3); }
                 });
 
-                // TEXTOS 360 GRADOS (ESFÉRICOS Y REACTIVOS)
+                // TEXTOS 360 GRADOS 
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData; 
                     data.theta += 0.001 * data.speed; 
@@ -1298,11 +1370,11 @@
                 });
             }
 
-            // --- DESTRUCCIÓN NUCLEAR DE LUZ ---
+            // --- DESTRUCCIÓN NUCLEAR DE LUZ (Corregida Opacidad y Tamaño) ---
             if (isFlashing) {
-                if(flashSphere) { flashSphere.scale.addScalar(1.5); flashSphere.material.opacity -= 0.015; }
-                if(shockwaveRing) { shockwaveRing.scale.addScalar(2.5); shockwaveRing.material.opacity -= 0.012; }
-                if(shockwaveDisk) { shockwaveDisk.scale.addScalar(3.5); shockwaveDisk.material.opacity -= 0.018; }
+                if(flashSphere) { flashSphere.scale.addScalar(1.2); flashSphere.material.opacity -= 0.03; }
+                if(shockwaveRing) { shockwaveRing.scale.addScalar(1.8); shockwaveRing.material.opacity -= 0.03; }
+                if(shockwaveDisk) { shockwaveDisk.scale.addScalar(2.5); shockwaveDisk.material.opacity -= 0.03; }
                 if (flashSphere && flashSphere.material.opacity <= 0) { isFlashing = false; flashSphere.visible = false; shockwaveRing.visible = false; shockwaveDisk.visible = false; }
             }
 
