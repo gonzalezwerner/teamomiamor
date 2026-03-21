@@ -127,6 +127,7 @@
         let clock = new THREE.Clock();
         let isStarted = false;
         let hasCrossedPortal = false;
+        let isAutoWalking = false; // Nueva variable para simular la caminata
         
         let userCenter = new THREE.Vector3(); // El centro del universo que seguirá al usuario
         let floatingTexts = [];
@@ -645,8 +646,16 @@
             function onTouch(event) {
                 if(!isStarted) return;
                 
+                // Si aún no hemos cruzado el portal...
                 if(!hasCrossedPortal) {
-                    portalGroup.position.z = camera.position.z + 1; 
+                    if (renderer.xr.isPresenting) {
+                        // En AR, si tocan la pantalla pero no pueden caminar,
+                        // traemos el portal violentamente hacia la cámara
+                        portalGroup.position.z = camera.position.z - 0.1; 
+                    } else {
+                        // En escritorio/móvil normal, iniciamos caminata automática
+                        isAutoWalking = true;
+                    }
                     return;
                 }
 
@@ -692,6 +701,7 @@
             if(!isStarted) { renderer.render(scene, camera); return; }
 
             const elapsedTime = clock.getElapsedTime();
+            const delta = clock.getDelta(); // Obtenemos el tiempo transcurrido por frame
             
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
@@ -701,16 +711,22 @@
                 portalUniforms.uTime.value = elapsedTime;
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1;
 
-                // Lógica de colisión con el portal
-                if (camPos.z < portalGroup.position.z + 0.3 || camPos.distanceTo(portalGroup.position) < 0.8) {
+                // LÓGICA DE CAMINATA AUTOMÁTICA
+                if (isAutoWalking && !renderer.xr.isPresenting) {
+                    camera.position.z -= delta * 3.0; // Avanzar 3 metros por segundo visualmente
+                    camera.getWorldPosition(camPos); // Actualizar posición después de moverse
+                }
+
+                // Lógica ESTRICTA de colisión con el portal
+                // Activamos SOLO cuando la cámara pasa la coordenada Z del portal
+                if (camPos.z <= portalGroup.position.z + 0.1 && Math.abs(camPos.x - portalGroup.position.x) < 2.0) {
                     hasCrossedPortal = true;
                     
-                    // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN!
+                    // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN EXACTAMENTE AL CRUZAR!
                     isFlashing = true; 
                     
                     // Nacer el universo instantáneamente
                     universeGroup.visible = true;
-                    // Centrar el universo inmediatamente en el usuario para evitar el efecto de que viene de lejos
                     userCenter.copy(camPos);
                     universeGroup.position.copy(userCenter);
 
@@ -726,7 +742,6 @@
                         shockwaveRing.visible = true;
                     }
 
-                    // Eliminar el portal instantáneamente
                     portalGroup.visible = false;
                     pathGroup.visible = false;
 
@@ -742,22 +757,18 @@
 
                 userCenter.lerp(camPos, 0.05);
                 universeGroup.position.copy(userCenter); // Todo el grupo sigue al usuario
-                // Compensamos para que los elementos orbiten relativos al grupo central
                 particleSystem.position.set(0,0,0); 
 
-                // Actualizar Shaders de Entorno (WOW effects)
                 auroraUniforms.uTime.value = elapsedTime;
                 floorUniforms.uTime.value = elapsedTime;
 
-                // El corazón siempre flota al frente
                 const forwardVec = new THREE.Vector3(0, 0, -1.5);
                 forwardVec.applyQuaternion(camera.quaternion); 
                 const targetPosLocal = forwardVec.clone(); 
                 
                 mainHeartGroup.position.lerp(targetPosLocal, 0.05);
-                mainHeartGroup.lookAt(camPos.clone().sub(userCenter)); // Mirar a la cámara localmente
+                mainHeartGroup.lookAt(camPos.clone().sub(userCenter)); 
 
-                // Latidos del Corazón
                 heartUniforms.uTime.value = elapsedTime;
                 const t = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(t), 10.0);
@@ -765,7 +776,6 @@
                 const scaleOffset = 1.0 + (beat1 + beat2) * 0.15;
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
                 
-                // Animación de Frases
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData;
                     data.angle += 0.003 * data.speed; 
@@ -775,7 +785,6 @@
                     sprite.lookAt(camPos.clone().sub(userCenter));
                 });
 
-                // Mariposas de Cristal Aleteando
                 butterflies.forEach((butterfly) => {
                     const data = butterfly.userData;
                     data.angle += 0.008 * data.speed;
@@ -784,16 +793,13 @@
                     butterfly.position.z = Math.sin(data.angle) * data.radius;
                     butterfly.position.y = data.heightOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.5;
                     
-                    // Aleteo matemático
                     const flap = Math.sin(elapsedTime * data.flapSpeed);
                     data.wing1.rotation.y = flap * 0.8;
                     data.wing2.rotation.y = Math.PI - (flap * 0.8);
 
-                    // Orientar la mariposa hacia donde vuela
                     butterfly.rotation.y = -data.angle;
                 });
 
-                // Luciérnagas
                 fireflies.forEach((fly) => {
                     const data = fly.userData;
                     data.angle += 0.01 * data.speed;
@@ -804,7 +810,6 @@
 
                 particleSystem.rotation.y = elapsedTime * 0.05;
 
-                // Flor Geométrica
                 if(geometricFlower) {
                     geometricFlower.rotation.z -= 0.005; 
                     geometricFlower.rotation.y = Math.sin(elapsedTime * 0.5) * 0.2; 
@@ -819,7 +824,6 @@
                     });
                 }
 
-                // Caída de Pétalos
                 petals.forEach(petal => {
                     petal.position.y -= petal.userData.speed;
                     petal.position.x += Math.sin(elapsedTime * petal.userData.swaySpeed + petal.userData.sway) * 0.015;
@@ -833,7 +837,6 @@
                     }
                 });
 
-                // Estrellas Fugaces
                 shootingStars.forEach(star => {
                     star.userData.progress += star.userData.speed;
                     star.position.lerpVectors(star.userData.startPos, star.userData.target, star.userData.progress);
@@ -848,7 +851,7 @@
                     flashSphere.material.opacity -= 0.015; 
                 }
                 if(shockwaveRing) {
-                    shockwaveRing.scale.addScalar(0.6); // Se expande súper rápido horizontalmente
+                    shockwaveRing.scale.addScalar(0.6); 
                     shockwaveRing.material.opacity -= 0.02;
                 }
                 
