@@ -122,7 +122,7 @@
         let scene, camera, renderer;
         let portalGroup, pathGroup, universeGroup;
         let mainHeartGroup, particleSystem;
-        let heartUniforms, portalUniforms;
+        let heartUniforms, portalUniforms, auroraUniforms, floorUniforms;
         
         let clock = new THREE.Clock();
         let isStarted = false;
@@ -136,8 +136,10 @@
         let petals = [];
         let shootingStars = [];
         let geometricFlower;
-        let flashSphere;
+        let flashSphere, shockwaveRing;
         let isFlashing = false;
+        let butterflies = [];
+        let auroraBorealis, magicFloor;
         
         const frases = [
             "Eres mi destino",
@@ -172,10 +174,10 @@
             pointLight.position.set(0, 0, 0);
             scene.add(pointLight);
 
-            // 1. Crear el grupo del Universo (Romance), oculto al inicio
+            // 1. Crear el grupo del Universo (Romance), ESTRICTAMENTE OCULTO al inicio
             universeGroup = new THREE.Group();
             universeGroup.visible = false;
-            universeGroup.scale.set(0.01, 0.01, 0.01); // Nace desde un punto diminuto
+            universeGroup.scale.set(0.001, 0.001, 0.001); // Nace desde un punto microscópico
             scene.add(universeGroup);
 
             // 2. Construir Elementos
@@ -190,7 +192,10 @@
             createPetals();
             createShootingStars();
             createGeometricFlower();
-            createFlash();
+            createFlashAndShockwave();
+            createButterflies();
+            createAuroraBorealis();
+            createMagicFloor();
 
             setupInteraction();
             window.addEventListener('resize', onWindowResize, false);
@@ -212,16 +217,13 @@
         // --- LA PUERTA (PORTAL MÁGICO) ---
         function createPortal() {
             portalGroup = new THREE.Group();
-            // Posicionar el portal a 2.5 metros frente al usuario
             portalGroup.position.set(0, 0, -2.5);
             
-            // Anillo del portal (Un círculo de cristal dorado)
             const ringGeo = new THREE.TorusGeometry(1.2, 0.05, 16, 100);
             const ringMat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.9 });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             portalGroup.add(ring);
 
-            // Resplandor interior (El vórtice)
             const veilGeo = new THREE.PlaneGeometry(2.35, 2.35);
             portalUniforms = { uTime: { value: 0 } };
             
@@ -238,11 +240,9 @@
                         vec2 uv = vUv - 0.5;
                         float dist = length(uv);
                         float angle = atan(uv.y, uv.x);
-                        // Vórtice giratorio complejo
                         float spiral = sin(dist * 20.0 - uTime * 3.0 + angle * 2.0);
                         float alpha = smoothstep(0.5, 0.2, dist) * (0.6 + 0.4 * spiral);
                         vec3 color = mix(vec3(0.1, 0.0, 0.4), vec3(1.0, 0.4, 0.8), spiral * 0.5 + 0.5);
-                        // Brillo central que llama al usuario
                         color += vec3(1.0, 0.9, 1.0) * smoothstep(0.15, 0.0, dist) * 2.0;
                         gl_FragColor = vec4(color, alpha * 0.9);
                     }
@@ -262,13 +262,12 @@
             pathGroup = new THREE.Group();
             const pathGeo = new THREE.PlaneGeometry(1.5, 3);
             
-            // Textura procedimental para el camino luminoso
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 512;
             const ctx = canvas.getContext('2d');
-            const grad = ctx.createLinearGradient(0, 512, 0, 0); // De abajo hacia arriba
-            grad.addColorStop(0, "rgba(255, 105, 180, 0)"); // Transparente cerca del usuario
-            grad.addColorStop(1, "rgba(255, 20, 147, 0.6)"); // Rosa brillante en el portal
+            const grad = ctx.createLinearGradient(0, 512, 0, 0); 
+            grad.addColorStop(0, "rgba(255, 105, 180, 0)"); 
+            grad.addColorStop(1, "rgba(255, 20, 147, 0.6)"); 
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, 256, 512);
             const tex = new THREE.CanvasTexture(canvas);
@@ -277,8 +276,8 @@
                 map: tex, transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending 
             });
             const path = new THREE.Mesh(pathGeo, pathMat);
-            path.rotation.x = -Math.PI / 2; // Acostarlo en el suelo
-            path.position.set(0, -1.2, -1.25); // Desde el usuario hasta el portal
+            path.rotation.x = -Math.PI / 2; 
+            path.position.set(0, -1.2, -1.25); 
             pathGroup.add(path);
             
             scene.add(pathGroup);
@@ -287,7 +286,6 @@
         // --- GEOMETRÍA COMPLEJA: EL CORAZÓN ---
         function createMagicalHeart() {
             mainHeartGroup = new THREE.Group();
-            // No posicionamos aquí; seguirá a la cámara luego
             universeGroup.add(mainHeartGroup);
 
             const heartShape = new THREE.Shape();
@@ -362,7 +360,7 @@
             mainHeartGroup.add(new THREE.Mesh(auraGeo, auraMat));
         }
 
-        // --- SISTEMA DE PARTÍCULAS (Mundo entero) ---
+        // --- SISTEMA DE PARTÍCULAS ---
         function createGalaxyParticles() {
             const particleCount = 3000;
             const posArray = new Float32Array(particleCount * 3);
@@ -370,8 +368,7 @@
             const color1 = new THREE.Color(0xff69b4); const color2 = new THREE.Color(0xffd700); const color3 = new THREE.Color(0xffffff);
 
             for(let i = 0; i < particleCount * 3; i+=3) {
-                // Radio masivo para que el usuario quede DENTRO de la nube de partículas
-                const radius = 1 + Math.random() * 6; 
+                const radius = 1 + Math.random() * 8; 
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
 
@@ -389,7 +386,7 @@
             geo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
 
             const mat = new THREE.PointsMaterial({
-                size: 0.03, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false,
+                size: 0.04, vertexColors: true, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false,
                 map: (()=>{
                     const c = document.createElement('canvas'); c.width = 32; c.height = 32;
                     const ctx = c.getContext('2d');
@@ -403,7 +400,6 @@
             universeGroup.add(particleSystem);
         }
 
-        // --- LUCIÉRNAGAS ROMÁNTICAS ---
         function createFireflies() {
             const fireflyGeo = new THREE.SphereGeometry(0.015, 8, 8);
             const fireflyMat = new THREE.MeshBasicMaterial({ color: 0xfffafa, transparent: true, opacity: 0.9 });
@@ -412,7 +408,7 @@
                 const fly = new THREE.Mesh(fireflyGeo, fireflyMat);
                 fly.userData = {
                     angle: Math.random() * Math.PI * 2,
-                    radius: 0.5 + Math.random() * 3, // Orbitan cerca del cuerpo del usuario
+                    radius: 0.5 + Math.random() * 3,
                     speed: 0.2 + Math.random() * 0.8,
                     yOffset: -1.5 + Math.random() * 3,
                     phase: Math.random() * Math.PI * 2
@@ -422,14 +418,124 @@
             }
         }
 
-        // --- NUEVAS GEOMETRÍAS Y EFECTOS SÚPER COMPLEJOS ---
+        // --- LOS NUEVOS EFECTOS SÚPER WOW ---
+        
+        function createButterflies() {
+            // Mariposas de cristal con alas que aletean
+            const wingGeo = new THREE.PlaneGeometry(0.06, 0.1);
+            wingGeo.translate(0.03, 0, 0); // Anclar el ala por el borde
+            const wingMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending
+            });
+
+            for(let i=0; i<25; i++) {
+                const butterfly = new THREE.Group();
+                const wing1 = new THREE.Mesh(wingGeo, wingMat);
+                const wing2 = new THREE.Mesh(wingGeo, wingMat);
+                wing2.rotation.y = Math.PI; // Espejar la segunda ala
+                
+                butterfly.add(wing1, wing2);
+                
+                butterfly.userData = {
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 0.5 + Math.random() * 2.5,
+                    heightOffset: -1 + Math.random() * 2,
+                    speed: 0.5 + Math.random() * 1.5,
+                    flapSpeed: 15 + Math.random() * 10,
+                    wing1: wing1,
+                    wing2: wing2
+                };
+                
+                universeGroup.add(butterfly);
+                butterflies.push(butterfly);
+            }
+        }
+
+        function createAuroraBorealis() {
+            // Una inmensa cortina de luz procedural
+            const auroraGeo = new THREE.CylinderGeometry(8, 8, 15, 64, 1, true);
+            auroraUniforms = { uTime: { value: 0.0 } };
+            
+            const auroraMat = new THREE.ShaderMaterial({
+                uniforms: auroraUniforms,
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    void main() {
+                        vec2 uv = vUv;
+                        float wave1 = sin(uv.x * 15.0 + uTime * 0.5) * 0.5 + 0.5;
+                        float wave2 = sin(uv.x * 25.0 - uTime * 0.8) * 0.5 + 0.5;
+                        float alpha = sin(uv.y * 3.1415) * (wave1 * wave2); // Difuminar arriba y abajo
+                        vec3 color = mix(vec3(0.0, 1.0, 0.8), vec3(0.8, 0.0, 1.0), uv.y + wave1*0.3); // Cian a Magenta
+                        gl_FragColor = vec4(color, alpha * 0.35); // Translúcido
+                    }
+                `,
+                transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+            });
+            
+            auroraBorealis = new THREE.Mesh(auroraGeo, auroraMat);
+            universeGroup.add(auroraBorealis);
+        }
+
+        function createMagicFloor() {
+            // Suelo que pulsa ondas de energía
+            const floorGeo = new THREE.PlaneGeometry(20, 20, 32, 32);
+            floorUniforms = { uTime: { value: 0.0 } };
+            
+            const floorMat = new THREE.ShaderMaterial({
+                uniforms: floorUniforms,
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec2 vUv;
+                    void main() {
+                        vec2 uv = vUv - 0.5;
+                        float dist = length(uv);
+                        float ripple = sin(dist * 40.0 - uTime * 5.0) * 0.5 + 0.5;
+                        float alpha = smoothstep(0.5, 0.0, dist) * ripple;
+                        vec3 color = vec3(0.2, 0.8, 1.0); // Azul eléctrico
+                        gl_FragColor = vec4(color, alpha * 0.4);
+                    }
+                `,
+                transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+            });
+            
+            magicFloor = new THREE.Mesh(floorGeo, floorMat);
+            magicFloor.rotation.x = -Math.PI / 2;
+            magicFloor.position.y = -1.5; // Bajo los pies
+            universeGroup.add(magicFloor);
+        }
+
+        function createFlashAndShockwave() {
+            // 1. Esfera Flash
+            const geo = new THREE.SphereGeometry(0.1, 32, 32);
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
+            });
+            flashSphere = new THREE.Mesh(geo, mat);
+            scene.add(flashSphere);
+
+            // 2. Anillo Shockwave
+            const ringGeo = new THREE.TorusGeometry(0.5, 0.05, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            shockwaveRing = new THREE.Mesh(ringGeo, ringMat);
+            shockwaveRing.rotation.x = Math.PI / 2; // Acostado
+            scene.add(shockwaveRing);
+        }
+
         function createPetals() {
-            // Crear una forma de pétalo real doblado matemáticamente
             const petalGeo = new THREE.PlaneGeometry(0.04, 0.06, 2, 2);
             const pos = petalGeo.attributes.position.array;
-            for(let i=0; i<pos.length; i+=3) {
-                pos[i+2] = Math.sin(pos[i]*20) * 0.01; // Curvatura 3D del plano
-            }
+            for(let i=0; i<pos.length; i+=3) pos[i+2] = Math.sin(pos[i]*20) * 0.01; 
             
             const petalMat = new THREE.MeshBasicMaterial({ 
                 color: 0xff1493, side: THREE.DoubleSide, transparent: true, opacity: 0.85 
@@ -438,7 +544,6 @@
             for(let i=0; i<150; i++) {
                 const petal = new THREE.Mesh(petalGeo, petalMat);
                 petal.position.set((Math.random()-0.5)*8, Math.random()*8, (Math.random()-0.5)*8);
-                // Física procedural para cada pétalo
                 petal.userData = {
                     speed: 0.01 + Math.random()*0.02,
                     sway: Math.random() * Math.PI * 2,
@@ -452,7 +557,6 @@
         }
 
         function createShootingStars() {
-            // Estrellas hiper-rápidas cruzando el cielo
             for(let i=0; i<8; i++) {
                 const starGeo = new THREE.CylinderGeometry(0.002, 0.01, 1, 4);
                 starGeo.rotateX(Math.PI / 2); 
@@ -470,81 +574,52 @@
         }
 
         function resetShootingStar(star) {
-            // Calculamos un vector de caída distante
             const startX = (Math.random() - 0.5) * 20;
             const startY = 5 + Math.random() * 5;
             const startZ = (Math.random() - 0.5) * 20;
-            
             star.userData.startPos.set(startX, startY, startZ);
             star.position.copy(star.userData.startPos);
-            
-            star.userData.target.set(
-                startX + (Math.random() - 0.5) * 15, 
-                startY - 10 - Math.random() * 5, 
-                startZ + (Math.random() - 0.5) * 15
-            );
-            
+            star.userData.target.set(startX + (Math.random() - 0.5) * 15, startY - 10 - Math.random() * 5, startZ + (Math.random() - 0.5) * 15);
             star.userData.speed = 0.015 + Math.random() * 0.04;
             star.userData.progress = 0;
-            
             star.lookAt(star.userData.target);
-            star.scale.set(1, 1, 3 + Math.random() * 8); // Estirarla para simular velocidad
+            star.scale.set(1, 1, 3 + Math.random() * 8); 
         }
 
         function createGeometricFlower() {
-            // Una flor geométrica compleja (Mandala / Loto Sagrado)
             geometricFlower = new THREE.Group();
+            const outerMat = new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+            const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
 
-            const outerMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffd700, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
-            });
-            const innerMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffffff, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
-            });
-
-            // Capa Exterior (12 pétalos grandes entrelazados)
             const numPetalsOut = 12;
             const petalGeoOut = new THREE.TorusGeometry(0.9, 0.012, 16, 100);
-            petalGeoOut.scale(1, 0.3, 1); // Aplastarlo para que parezca un pétalo
+            petalGeoOut.scale(1, 0.3, 1); 
             for(let i = 0; i < numPetalsOut; i++) {
                 const petal = new THREE.Mesh(petalGeoOut, outerMat);
                 petal.rotation.z = (i / numPetalsOut) * Math.PI;
-                petal.rotation.x = (i % 2 === 0) ? 0.15 : -0.15; // Tejer en 3D
+                petal.rotation.x = (i % 2 === 0) ? 0.15 : -0.15; 
                 petal.userData = { phase: i, isInner: false };
                 geometricFlower.add(petal);
             }
 
-            // Capa Interior (8 pétalos más pequeños y brillantes)
             const numPetalsIn = 8;
             const petalGeoIn = new THREE.TorusGeometry(0.5, 0.015, 16, 100);
             petalGeoIn.scale(1, 0.35, 1);
             for(let i = 0; i < numPetalsIn; i++) {
                 const petal = new THREE.Mesh(petalGeoIn, innerMat);
                 petal.rotation.z = (i / numPetalsIn) * Math.PI;
-                petal.rotation.x = Math.PI / 6; // Sobresalir hacia afuera como un capullo
+                petal.rotation.x = Math.PI / 6; 
                 petal.userData = { phase: i, isInner: true };
                 geometricFlower.add(petal);
             }
-
-            mainHeartGroup.add(geometricFlower); // Se ancla y sigue al corazón principal
+            mainHeartGroup.add(geometricFlower); 
         }
 
-        function createFlash() {
-            // Esfera de energía de supernova sin colisiones de profundidad
-            const geo = new THREE.SphereGeometry(0.1, 32, 32);
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
-            });
-            flashSphere = new THREE.Mesh(geo, mat);
-            scene.add(flashSphere);
-        }
-
-        // --- PALABRAS FLOTANTES ORBITALES ---
         function createFloatingWords() {
             frases.forEach((texto, index) => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                canvas.width = 1024; canvas.height = 128; // Textos más grandes y nítidos
+                canvas.width = 1024; canvas.height = 128; 
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.font = "bold 60px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -556,14 +631,7 @@
                 
                 const sprite = new THREE.Sprite(spriteMaterial);
                 sprite.scale.set(3, 0.375, 1);
-                
-                sprite.userData = {
-                    angle: (index / frases.length) * Math.PI * 2,
-                    radius: 1.5 + Math.random() * 1.0, // A metro y medio del usuario, girando a su alrededor
-                    speed: 0.3 + Math.random() * 0.4,
-                    yOffset: -0.5 + Math.random() * 1.5
-                };
-                
+                sprite.userData = { angle: (index / frases.length) * Math.PI * 2, radius: 1.5 + Math.random() * 1.0, speed: 0.3 + Math.random() * 0.4, yOffset: -0.5 + Math.random() * 1.5 };
                 universeGroup.add(sprite);
                 floatingTexts.push(sprite);
             });
@@ -577,24 +645,18 @@
             function onTouch(event) {
                 if(!isStarted) return;
                 
-                // --- MECANISMO DE RESCATE (Por si no caminan) ---
                 if(!hasCrossedPortal) {
-                    // Si el usuario toca la pantalla antes de cruzar, simulamos que cruzó 
-                    // moviendo el portal hacia atrás bruscamente para forzar la colisión.
                     portalGroup.position.z = camera.position.z + 1; 
                     return;
                 }
 
                 let clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0);
                 let clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
-
-                mouse.x = (clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+                mouse.x = (clientX / window.innerWidth) * 2 - 1; mouse.y = -(clientY / window.innerHeight) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, camera);
                 const intersects = raycaster.intersectObjects(mainHeartGroup.children);
                 if (intersects.length > 0) {
-                    // Explosión romántica
                     const ring = new THREE.Mesh(
                         new THREE.RingGeometry(0.1, 0.2, 32),
                         new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true })
@@ -630,32 +692,43 @@
             if(!isStarted) { renderer.render(scene, camera); return; }
 
             const elapsedTime = clock.getElapsedTime();
-            const delta = clock.getDelta();
             
-            // Posición real del usuario en el mundo (actualizada por WebXR al caminar)
             const camPos = new THREE.Vector3();
             camera.getWorldPosition(camPos);
 
-            // 1. FASE DE PORTAL (Antes de cruzar)
+            // 1. FASE DE PORTAL (Mundo totalmente oculto hasta cruzar)
             if (!hasCrossedPortal) {
                 portalUniforms.uTime.value = elapsedTime;
-                
-                // Rotación suave del portal
                 portalGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1;
 
-                // Lógica de Proximidad Compleja
-                // Evaluamos si el usuario (camPos) pasó a través de la coordenada Z del portal
-                // O si está extremadamente cerca del centro geométrico
+                // Lógica de colisión con el portal
                 if (camPos.z < portalGroup.position.z + 0.3 || camPos.distanceTo(portalGroup.position) < 0.8) {
                     hasCrossedPortal = true;
                     
-                    // Disparar el efecto de "Supernova"
+                    // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN!
                     isFlashing = true; 
-                    if(flashSphere) {
-                        flashSphere.position.copy(camPos); // Nace justo en el cuerpo del usuario
+                    
+                    // Nacer el universo instantáneamente
+                    universeGroup.visible = true;
+                    // Centrar el universo inmediatamente en el usuario para evitar el efecto de que viene de lejos
+                    userCenter.copy(camPos);
+                    universeGroup.position.copy(userCenter);
+
+                    if(flashSphere && shockwaveRing) {
+                        flashSphere.position.copy(camPos);
+                        flashSphere.scale.setScalar(1);
                         flashSphere.material.opacity = 1; 
                         flashSphere.visible = true;
+
+                        shockwaveRing.position.copy(camPos);
+                        shockwaveRing.scale.setScalar(1);
+                        shockwaveRing.material.opacity = 1;
+                        shockwaveRing.visible = true;
                     }
+
+                    // Eliminar el portal instantáneamente
+                    portalGroup.visible = false;
+                    pathGroup.visible = false;
 
                     document.getElementById('instruction-layer').style.opacity = '0';
                     setTimeout(()=> document.getElementById('instruction-layer').style.display = 'none', 2000);
@@ -664,29 +737,27 @@
             
             // 2. FASE DE UNIVERSO INMERSIVO (Después de cruzar)
             else {
-                // Aparece el universo de golpe y se expande
-                universeGroup.visible = true;
-                universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.03);
-                
-                // Desvanecer el mundo viejo (Portal y camino)
-                portalGroup.scale.lerp(new THREE.Vector3(0.001, 0.001, 0.001), 0.05);
-                pathGroup.scale.lerp(new THREE.Vector3(0.001, 0.001, 0.001), 0.05);
+                // Escala fluida pero rápida para que nazca a tu alrededor
+                universeGroup.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
 
-                // ACTUALIZAR EL CENTRO DEL UNIVERSO HACIA EL USUARIO
-                // Esto hace que las partículas y frases orbiten ALREDEDOR DEL CUERPO de la persona
                 userCenter.lerp(camPos, 0.05);
-                particleSystem.position.copy(userCenter);
+                universeGroup.position.copy(userCenter); // Todo el grupo sigue al usuario
+                // Compensamos para que los elementos orbiten relativos al grupo central
+                particleSystem.position.set(0,0,0); 
 
-                // El corazón siempre flota un metro y medio FRENTE a los ojos del usuario
+                // Actualizar Shaders de Entorno (WOW effects)
+                auroraUniforms.uTime.value = elapsedTime;
+                floorUniforms.uTime.value = elapsedTime;
+
+                // El corazón siempre flota al frente
                 const forwardVec = new THREE.Vector3(0, 0, -1.5);
-                forwardVec.applyQuaternion(camera.quaternion); // Obtener dirección de la mirada
-                const heartTargetPos = camPos.clone().add(forwardVec); // Posición ideal del corazón
+                forwardVec.applyQuaternion(camera.quaternion); 
+                const targetPosLocal = forwardVec.clone(); 
                 
-                // Suavizar el movimiento para que se sienta orgánico, no rígido
-                mainHeartGroup.position.lerp(heartTargetPos, 0.05);
-                mainHeartGroup.lookAt(camPos); // El corazón siempre te mira a ti
+                mainHeartGroup.position.lerp(targetPosLocal, 0.05);
+                mainHeartGroup.lookAt(camPos.clone().sub(userCenter)); // Mirar a la cámara localmente
 
-                // Actualizar Shader del Corazón y Latidos
+                // Latidos del Corazón
                 heartUniforms.uTime.value = elapsedTime;
                 const t = elapsedTime * 1.5;
                 const beat1 = Math.pow(Math.sin(t), 10.0);
@@ -694,47 +765,53 @@
                 const scaleOffset = 1.0 + (beat1 + beat2) * 0.15;
                 mainHeartGroup.scale.set(scaleOffset, scaleOffset, scaleOffset);
                 
-                // Orbitar Frases alrededor del usuario (360 grados)
+                // Animación de Frases
                 floatingTexts.forEach((sprite) => {
                     const data = sprite.userData;
-                    data.angle += 0.003 * data.speed; // Velocidad de órbita
-                    
-                    sprite.position.x = userCenter.x + Math.cos(data.angle) * data.radius;
-                    sprite.position.z = userCenter.z + Math.sin(data.angle) * data.radius;
-                    sprite.position.y = userCenter.y + data.yOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.2;
-                    
-                    // Las frases giran para mirar al usuario
-                    sprite.lookAt(camPos);
+                    data.angle += 0.003 * data.speed; 
+                    sprite.position.x = Math.cos(data.angle) * data.radius;
+                    sprite.position.z = Math.sin(data.angle) * data.radius;
+                    sprite.position.y = data.yOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.2;
+                    sprite.lookAt(camPos.clone().sub(userCenter));
                 });
 
-                // Orbitar Luciérnagas/Estrellas Fugaces
+                // Mariposas de Cristal Aleteando
+                butterflies.forEach((butterfly) => {
+                    const data = butterfly.userData;
+                    data.angle += 0.008 * data.speed;
+                    
+                    butterfly.position.x = Math.cos(data.angle) * data.radius;
+                    butterfly.position.z = Math.sin(data.angle) * data.radius;
+                    butterfly.position.y = data.heightOffset + Math.sin(elapsedTime * 2.0 + data.angle) * 0.5;
+                    
+                    // Aleteo matemático
+                    const flap = Math.sin(elapsedTime * data.flapSpeed);
+                    data.wing1.rotation.y = flap * 0.8;
+                    data.wing2.rotation.y = Math.PI - (flap * 0.8);
+
+                    // Orientar la mariposa hacia donde vuela
+                    butterfly.rotation.y = -data.angle;
+                });
+
+                // Luciérnagas
                 fireflies.forEach((fly) => {
                     const data = fly.userData;
                     data.angle += 0.01 * data.speed;
-                    
-                    fly.position.x = userCenter.x + Math.cos(data.angle) * data.radius;
-                    fly.position.z = userCenter.z + Math.sin(data.angle) * data.radius;
-                    // Oscilación vertical suave
-                    fly.position.y = userCenter.y + data.yOffset + Math.sin(elapsedTime * 3.0 + data.phase) * 0.5;
+                    fly.position.x = Math.cos(data.angle) * data.radius;
+                    fly.position.z = Math.sin(data.angle) * data.radius;
+                    fly.position.y = data.yOffset + Math.sin(elapsedTime * 3.0 + data.phase) * 0.5;
                 });
 
-                // Rotación global galáctica
                 particleSystem.rotation.y = elapsedTime * 0.05;
 
-                // --- ANIMACIONES DE LA CÚSPIDE SÚPER WOW ---
-                
-                // 1. La Flor Geométrica (Rotación y respiración de pétalos)
+                // Flor Geométrica
                 if(geometricFlower) {
-                    // Rotación suave del mandala completo
                     geometricFlower.rotation.z -= 0.005; 
                     geometricFlower.rotation.y = Math.sin(elapsedTime * 0.5) * 0.2; 
                     geometricFlower.rotation.x = Math.cos(elapsedTime * 0.5) * 0.1;
-
-                    // Latido general de la flor
                     const fScale = 1.0 + Math.sin(elapsedTime * 3.0) * 0.05;
                     geometricFlower.scale.set(fScale, fScale, fScale);
 
-                    // Respiración orgánica individual de cada pétalo
                     geometricFlower.children.forEach(petal => {
                         const speed = petal.userData.isInner ? 4.0 : 2.0;
                         const breath = Math.sin(elapsedTime * speed + petal.userData.phase) * 0.05;
@@ -742,40 +819,43 @@
                     });
                 }
 
-                // 2. Lluvia Mágica de Pétalos (Física de viento y gravedad)
+                // Caída de Pétalos
                 petals.forEach(petal => {
                     petal.position.y -= petal.userData.speed;
                     petal.position.x += Math.sin(elapsedTime * petal.userData.swaySpeed + petal.userData.sway) * 0.015;
                     petal.rotation.x += petal.userData.rotSpeedX;
                     petal.rotation.y += petal.userData.rotSpeedY;
                     
-                    // Resetear altura si tocan el suelo imaginario
-                    if (petal.position.y < userCenter.y - 3) {
-                        petal.position.y = userCenter.y + 4 + Math.random() * 2;
-                        petal.position.x = userCenter.x + (Math.random() - 0.5) * 8;
-                        petal.position.z = userCenter.z + (Math.random() - 0.5) * 8;
+                    if (petal.position.y < -3) {
+                        petal.position.y = 4 + Math.random() * 2;
+                        petal.position.x = (Math.random() - 0.5) * 8;
+                        petal.position.z = (Math.random() - 0.5) * 8;
                     }
                 });
 
-                // 3. Destellos de Estrellas Fugaces en el Firmamento
+                // Estrellas Fugaces
                 shootingStars.forEach(star => {
                     star.userData.progress += star.userData.speed;
-                    // Interpolar entre el inicio y el fin
                     star.position.lerpVectors(star.userData.startPos, star.userData.target, star.userData.progress);
-                    
-                    if (star.userData.progress >= 1) {
-                        resetShootingStar(star);
-                    }
+                    if (star.userData.progress >= 1) resetShootingStar(star);
                 });
             }
 
-            // --- 3. EFECTO DE TRANSICIÓN SUPERNOVA AL CRUZAR ---
-            if (isFlashing && flashSphere) {
-                flashSphere.scale.addScalar(0.4); // Se expande masivamente
-                flashSphere.material.opacity -= 0.015; // Se disipa lentamente
-                if (flashSphere.material.opacity <= 0) {
+            // --- EFECTO DE TRANSICIÓN ONDA DE CHOQUE ---
+            if (isFlashing) {
+                if(flashSphere) {
+                    flashSphere.scale.addScalar(0.4); 
+                    flashSphere.material.opacity -= 0.015; 
+                }
+                if(shockwaveRing) {
+                    shockwaveRing.scale.addScalar(0.6); // Se expande súper rápido horizontalmente
+                    shockwaveRing.material.opacity -= 0.02;
+                }
+                
+                if (flashSphere && flashSphere.material.opacity <= 0) {
                     isFlashing = false;
                     flashSphere.visible = false;
+                    shockwaveRing.visible = false;
                 }
             }
 
