@@ -638,6 +638,39 @@
             });
         }
 
+        // --- FUNCIÓN CENTRALIZADA PARA CRUZAR EL PORTAL ---
+        function triggerPortalCrossing(currentCamPos) {
+            if (hasCrossedPortal) return; // Evitar que se dispare múltiples veces
+            hasCrossedPortal = true;
+            
+            // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN EXACTAMENTE AL CRUZAR!
+            isFlashing = true; 
+            
+            // Nacer el universo instantáneamente a tu alrededor
+            universeGroup.visible = true;
+            userCenter.copy(currentCamPos);
+            universeGroup.position.copy(userCenter);
+
+            if(flashSphere && shockwaveRing) {
+                flashSphere.position.copy(currentCamPos);
+                flashSphere.scale.setScalar(1);
+                flashSphere.material.opacity = 1; 
+                flashSphere.visible = true;
+
+                shockwaveRing.position.copy(currentCamPos);
+                shockwaveRing.scale.setScalar(1);
+                shockwaveRing.material.opacity = 1;
+                shockwaveRing.visible = true;
+            }
+
+            // Ocultar la entrada
+            portalGroup.visible = false;
+            pathGroup.visible = false;
+
+            document.getElementById('instruction-layer').style.opacity = '0';
+            setTimeout(()=> document.getElementById('instruction-layer').style.display = 'none', 2000);
+        }
+
         // --- INTERACCIONES ---
         function setupInteraction() {
             const raycaster = new THREE.Raycaster();
@@ -649,9 +682,10 @@
                 // Si aún no hemos cruzado el portal...
                 if(!hasCrossedPortal) {
                     if (renderer.xr.isPresenting) {
-                        // En AR, si tocan la pantalla pero no pueden caminar,
-                        // traemos el portal violentamente hacia la cámara
-                        portalGroup.position.z = camera.position.z - 0.1; 
+                        // En AR, si el usuario toca la pantalla forzamos el cruce por si no puede caminar.
+                        const tempCamPos = new THREE.Vector3();
+                        camera.getWorldPosition(tempCamPos);
+                        triggerPortalCrossing(tempCamPos);
                     } else {
                         // En escritorio/móvil normal, iniciamos caminata automática
                         isAutoWalking = true;
@@ -713,40 +747,14 @@
 
                 // LÓGICA DE CAMINATA AUTOMÁTICA
                 if (isAutoWalking && !renderer.xr.isPresenting) {
-                    camera.position.z -= delta * 3.0; // Avanzar 3 metros por segundo visualmente
-                    camera.getWorldPosition(camPos); // Actualizar posición después de moverse
+                    camera.position.z -= delta * 4.0; // Caminata visual un poco más rápida
+                    camera.getWorldPosition(camPos); 
                 }
 
-                // Lógica ESTRICTA de colisión con el portal
-                // Activamos SOLO cuando la cámara pasa la coordenada Z del portal
-                if (camPos.z <= portalGroup.position.z + 0.1 && Math.abs(camPos.x - portalGroup.position.x) < 2.0) {
-                    hasCrossedPortal = true;
-                    
-                    // ¡DISPARAR LA EXPLOSIÓN DE REVELACIÓN EXACTAMENTE AL CRUZAR!
-                    isFlashing = true; 
-                    
-                    // Nacer el universo instantáneamente
-                    universeGroup.visible = true;
-                    userCenter.copy(camPos);
-                    universeGroup.position.copy(userCenter);
-
-                    if(flashSphere && shockwaveRing) {
-                        flashSphere.position.copy(camPos);
-                        flashSphere.scale.setScalar(1);
-                        flashSphere.material.opacity = 1; 
-                        flashSphere.visible = true;
-
-                        shockwaveRing.position.copy(camPos);
-                        shockwaveRing.scale.setScalar(1);
-                        shockwaveRing.material.opacity = 1;
-                        shockwaveRing.visible = true;
-                    }
-
-                    portalGroup.visible = false;
-                    pathGroup.visible = false;
-
-                    document.getElementById('instruction-layer').style.opacity = '0';
-                    setTimeout(()=> document.getElementById('instruction-layer').style.display = 'none', 2000);
+                // Lógica de colisión mucho más indulgente y a prueba de fallos
+                // Activamos por distancia de captura O cruzando el umbral en Z
+                if (camPos.distanceTo(portalGroup.position) < 1.8 || camPos.z <= portalGroup.position.z + 0.5) {
+                    triggerPortalCrossing(camPos);
                 }
             } 
             
